@@ -1,0 +1,6 @@
+# vstudio - zależności produkcyjne
+# instalacja: py -3 -m pip install -r requirements.txt
+# przeglądarka do renderu HTML: py -3 -m playwright install chromium
+numpy>=2.0        # analiza klatek (analyze/compare), synteza SFX, miks cue-sheetów
+Pillow>=10        # contact sheets, motion chart, pair images
+playwright>=1.40  # stills/readcheck/events dla silnika html

@@ -1,0 +1,28 @@
+<!doctype html><html><body style="margin:0;background:#000;overflow:hidden">
+<canvas id="c" width="960" height="540"></canvas>
+<script>
+// Synthetic reference with KNOWN properties (30 fps):
+//  shot A frames 0-89   : box eases right, each frame covers 15% of remaining distance (k=0.15), starts at frame 10
+//  shot B frames 90-179 : circle moves linearly for 40 frames then stops dead
+//  shot C frames 180-269: nothing moves (frozen)
+window.DURATION = 9;
+const c = document.getElementById('c'), x = c.getContext('2d');
+window.seek = (t) => {
+  const f = Math.round(t * 30);
+  if (f < 90) {
+    x.fillStyle = '#1a2a6c'; x.fillRect(0, 0, 960, 540);
+    const n = Math.max(0, f - 10);
+    const px = 100 + 700 * (1 - Math.pow(0.85, n));
+    x.fillStyle = '#ffffff'; x.fillRect(px, 170, 160, 200);
+  } else if (f < 180) {
+    x.fillStyle = '#e65c00'; x.fillRect(0, 0, 960, 540);
+    const n = Math.min(f - 90, 40);
+    x.fillStyle = '#101010'; x.beginPath(); x.arc(120 + 16 * n, 270, 70, 0, 7); x.fill();
+  } else {
+    x.fillStyle = '#0b6623'; x.fillRect(0, 0, 960, 540);
+    x.fillStyle = '#f2f2f2'; x.fillRect(380, 200, 200, 140);
+  }
+};
+window.__ready = Promise.resolve();
+seek(0);
+</script></body></html>

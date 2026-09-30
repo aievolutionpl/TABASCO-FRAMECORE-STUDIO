@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node (opcjonalne silniki remotion / hyperframes)
+node_modules/
+
+# Środowisko
+.env
+.env.*
+*.pem
+*.key
+
+# Render i wyjście filmowe
+output/
+renders/
+delivery/
+*.mp4
+*.mov
+*.webm
+*.m4a
+# ...ale materiały demonstracyjne w repo zostają
+!assets/*.mp4
+!assets/*.png
+!assets/*.jpg
+
+# Cache przeglądarki
+.cache/
+
+# IDE i system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - showreel</title>
+<!--
+  Showreel vstudio: 25 s, 1920x1080@30, silnik html.
+  5 scen x 5 s - nowa wizualizacja co 5 sekund + przejscia (slice glitch, RGB split, rozblysk).
+  Kontrakt strony: window.DURATION / window.seek(t) / window.EV / window.TEXTS(t) / window.__ready / window.__CAPTURE__
+  Reguly: obraz jest czysta funkcja czasu (zero timerow i Math.random), nic nie zamarza,
+  ruch wchodzi szybko i laduje miekko (spring), tekst stoi i jest czytelny (vstudio readcheck).
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #04060f; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/* ============================================ 1. MARKA, CZAS, SCENY */
+const B = {
+  bg: '#04060f', navy: '#0a1230', ink: '#eef4ff', mute: '#8fa2d0', dim: '#5b6b96',
+  cyan: '#22d3ee', vio: '#a855f7', pink: '#f472b6', amber: '#fbbf24', lime: '#a3e635', white: '#ffffff',
+  font: (px, w) => (w || 700) + ' ' + px + 'px Manrope, "Segoe UI", system-ui, sans-serif',
+};
+const FPS = 30, BPM = 128, BEAT = 60 / BPM, DUR = 25;
+window.DURATION = DUR;
+const SC = [0, 5, 10, 15, 20];            // nowa wizualizacja co 5 s
+const BEATS = Math.round(DUR / BEAT);
+const PAL = [[B.cyan, B.vio], [B.pink, B.amber], [B.vio, B.cyan], [B.pink, B.cyan], [B.amber, B.pink]];
+
+/* ============================================ 2. MATEMATYKA RUCHU */
+const clamp = (x, a, b) => { a = a || 0; b = b === undefined ? 1 : b; return x < a ? a : x > b ? b : x; };
+const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
+function spring(tau, zeta, omega) {                    // szybkie wejscie, miekkie ladowanie
+  if (tau <= 0) return 0;
+  zeta = zeta === undefined ? 0.8 : zeta; omega = omega === undefined ? 16 : omega;
+  if (zeta < 1) {
+    const wd = omega * Math.sqrt(1 - zeta * zeta), e = Math.exp(-zeta * omega * tau);
+    return 1 - e * (Math.cos(wd * tau) + (zeta * omega / wd) * Math.sin(wd * tau));
+  }
+  if (zeta === 1) return 1 - Math.exp(-omega * tau) * (1 + omega * tau);
+  const q = Math.sqrt(zeta * zeta - 1), a = omega * (zeta - q), b = omega * (zeta + q);
+  return 1 - (b * Math.exp(-a * tau) - a * Math.exp(-b * tau)) / (b - a);
+}
+const rnd = (i, s) => { const x = Math.sin((i + 1) * 12.9898 + ((s || 0) + 1) * 78.233) * 43758.5453; return x - Math.floor(x); };
+const beatEnv = (t, k) => Math.pow(1 - clamp((t / BEAT) % 1), k || 1.6);
+const sceneAt = (t) => Math.min(4, Math.floor(t / 5));
+const local = (t) => t - SC[sceneAt(t)];
+const CUT = [5, 10, 15, 20];
+function cutAmt(t) { let a = 0; for (let i = 0; i < CUT.length; i++) { const d = t - CUT[i]; if (d >= -0.04 && d < 0.5) a = Math.max(a, 1 - Math.max(d, 0) / 0.5); } return a; }
+
+/* ============================================ 3. TEKSTY (jedno zrodlo prawdy) */
+const TEXTS = [
+  { id: 'brand', text: 'VSTUDIO', x: 0.045, y: 0.090, size: 2.0, align: 'left', color: 'ink', tIn: 0.05, tOut: 24.9, weight: 800 },
+  { id: 's1', text: 'SCENA 1/5 - BOOT', x: 0.955, y: 0.090, size: 1.7, align: 'right', color: 'mute', tIn: 0.05, tOut: 4.97, weight: 600 },
+  { id: 's2', text: 'SCENA 2/5 - ANALIZA', x: 0.955, y: 0.090, size: 1.7, align: 'right', color: 'cyan', tIn: 5.03, tOut: 9.97, weight: 600 },
+  { id: 's3', text: 'SCENA 3/5 - MONTAG', x: 0.955, y: 0.090, size: 1.7, align: 'right', color: 'vio', tIn: 10.03, tOut: 14.97, weight: 600 },
+  { id: 's4', text: 'SCENA 4/5 - DZWIEK', x: 0.955, y: 0.090, size: 1.7, align: 'right', color: 'pink', tIn: 15.03, tOut: 19.97, weight: 600 },
+  { id: 's5', text: 'SCENA 5/5 - WYDANIE', x: 0.955, y: 0.090, size: 1.7, align: 'right', color: 'amber', tIn: 20.03, tOut: 24.9, weight: 600 },
+  { id: 't1', text: 'vstudio', x: 0.500, y: 0.450, size: 14.0, align: 'center', color: 'ink', tIn: 0.30, tOut: 4.80, weight: 800 },
+  { id: 't2', text: 'STUDIO FILMOWE AI', x: 0.500, y: 0.560, size: 3.3, align: 'center', color: 'cyan', tIn: 1.05, tOut: 4.80, weight: 600 },
+  { id: 't3', text: 'brief - obraz - montaz - dzwiek - film', x: 0.500, y: 0.632, size: 2.3, align: 'center', color: 'mute', tIn: 1.20, tOut: 4.92, weight: 500 },
+  { id: 'a1', text: 'ANALIZA KADRU', x: 0.330, y: 0.185, size: 3.3, align: 'center', color: 'ink', tIn: 5.35, tOut: 9.85, weight: 800 },
+  { id: 'a2', text: 'kluczowa klatka 07', x: 0.235, y: 0.610, size: 2.1, align: 'center', color: 'amber', tIn: 6.60, tOut: 9.85, weight: 600 },
+  { id: 'a3', text: 'Wykryto ruch', x: 0.655, y: 0.310, size: 2.5, align: 'left', color: 'cyan', tIn: 6.10, tOut: 9.85, weight: 700 },
+  { id: 'a4', text: 'Kadrowanie stabilne', x: 0.655, y: 0.520, size: 2.5, align: 'left', color: 'vio', tIn: 6.40, tOut: 9.85, weight: 700 },
+  { id: 'a5', text: 'Kontrast w normie', x: 0.655, y: 0.730, size: 2.5, align: 'left', color: 'lime', tIn: 6.70, tOut: 9.85, weight: 700 },
+  { id: 'm1', text: 'MONTAZ - LISTA DECYZJI', x: 0.500, y: 0.165, size: 3.3, align: 'center', color: 'ink', tIn: 10.30, tOut: 14.85, weight: 800 },
+  { id: 'm2', text: 'WSTEP', x: 0.170, y: 0.505, size: 2.2, align: 'center', color: 'mute', tIn: 10.60, tOut: 14.85, weight: 600 },
+  { id: 'm3', text: 'SCENA A', x: 0.420, y: 0.505, size: 2.2, align: 'center', color: 'cyan', tIn: 10.85, tOut: 14.85, weight: 600 },
+  { id: 'm4', text: 'B-ROLL', x: 0.650, y: 0.505, size: 2.2, align: 'center', color: 'vio', tIn: 11.10, tOut: 14.85, weight: 600 },
+  { id: 'm5', text: 'WYJSCIE', x: 0.870, y: 0.505, size: 2.2, align: 'center', color: 'pink', tIn: 11.35, tOut: 14.85, weight: 600 },
+  { id: 'm6', text: 'PRZECIECIE', x: 0.500, y: 0.775, size: 2.4, align: 'center', color: 'vio', tIn: 12.60, tOut: 14.85, weight: 700 },
+  { id: 'd1', text: 'DZWIEK', x: 0.500, y: 0.165, size: 3.3, align: 'center', color: 'ink', tIn: 15.30, tOut: 19.85, weight: 800 },
+  { id: 'd2', text: 'whoosh', x: 0.180, y: 0.275, size: 2.2, align: 'center', color: 'cyan', tIn: 15.60, tOut: 19.85, weight: 600 },
+  { id: 'd3', text: 'hit', x: 0.385, y: 0.275, size: 2.2, align: 'center', color: 'vio', tIn: 16.10, tOut: 19.85, weight: 600 },
+  { id: 'd4', text: 'click', x: 0.590, y: 0.275, size: 2.2, align: 'center', color: 'pink', tIn: 16.60, tOut: 19.85, weight: 600 },
+  { id: 'd5', text: 'chime', x: 0.795, y: 0.275, size: 2.2, align: 'center', color: 'amber', tIn: 17.10, tOut: 19.85, weight: 600 },
+  { id: 'd6', text: '-14 LUFS', x: 0.898, y: 0.845, size: 2.4, align: 'center', color: 'lime', tIn: 17.40, tOut: 19.85, weight: 700 },
+  { id: 'e1', text: 'WYDANIE', x: 0.500, y: 0.165, size: 3.3, align: 'center', color: 'ink', tIn: 20.30, tOut: 24.85, weight: 800 },
+  { id: 'e2', text: '1920x1080', x: 0.235, y: 0.425, size: 2.4, align: 'center', color: 'mute', tIn: 20.70, tOut: 22.95, weight: 600 },
+  { id: 'e3', text: '30 FPS', x: 0.500, y: 0.425, size: 2.4, align: 'center', color: 'mute', tIn: 20.95, tOut: 22.95, weight: 600 },
+  { id: 'e4', text: '-14 LUFS', x: 0.765, y: 0.425, size: 2.4, align: 'center', color: 'mute', tIn: 21.00, tOut: 23.20, weight: 600 },
+  { id: 'e5', text: 'AI EVOLUTION POLSKA', x: 0.500, y: 0.615, size: 6.4, align: 'center', color: 'ink', tIn: 22.30, tOut: 24.95, weight: 800 },
+  { id: 'e6', text: 'vstudio', x: 0.500, y: 0.700, size: 2.8, align: 'center', color: 'cyan', tIn: 22.95, tOut: 24.95, weight: 600 },
+];
+
+/* ============================================ 4. BUFORY: rysunek poza -> prezentacja z efektami */
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'), o = off.getContext('2d');
+const scr = document.createElement('canvas'), sc = scr.getContext('2d');
+const uOf = () => Math.min(innerWidth, innerHeight) / 100;
+function boxOf(s, W, H) {
+  ctx.font = B.font(s.size * uOf(), s.weight);
+  const w = ctx.measureText(s.text).width, px = s.size * Math.min(W, H) / 100;
+  const cx = s.x * W, by = s.y * H;
+  const x0 = s.align === 'left' ? cx : s.align === 'right' ? cx - w : cx - w / 2;
+  return { x0: Math.round(x0), x1: Math.round(x0 + w), y0: Math.round(by - px * 0.8), y1: Math.round(by + px * 0.26) };
+}
+
+/* ============================================ 5. PRZYRZADY */
+function rrect(c, x, y, w, h, r) { r = Math.max(Math.min(r, w / 2, h / 2), 0); c.beginPath(); c.roundRect(x, y, w, h, r); }
+function glass(c, x, y, w, h, r, accent, a) {
+  c.fillStyle = 'rgba(255,255,255,' + (a || 0.055) + ')'; rrect(c, x, y, w, h, r); c.fill();
+  c.lineWidth = 1.5; c.strokeStyle = accent; c.stroke();
+}
+function grad(c, x, y, w, h, c1, c2) { const g = c.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, c1); g.addColorStop(1, c2); return g; }
+function label(c, txt, x, y, size, color, align, weight) {
+  c.font = B.font(size, weight); c.fillStyle = color; c.textAlign = align || 'left'; c.textBaseline = 'alphabetic'; c.fillText(txt, x, y);
+}
+function accentBar(c, x, y, w, h, tau, c1, c2) {
+  const k = clamp(spring(tau, 0.75, 15)); if (k <= 0.002) return;
+  const g = c.createLinearGradient(x, 0, x + w, 0); g.addColorStop(0, c1); g.addColorStop(1, c2);
+  c.fillStyle = g; rrect(c, x, y, Math.max(w * k, 2), h, h / 2); c.fill();
+}
+function textOf(s, t, c, W, H) {
+  if (t < s.tIn || t > s.tOut) return;
+  const a = clamp(Math.min((t - s.tIn) / 0.2, (s.tOut - t) / 0.2));
+  c.save(); c.globalAlpha = Math.min(1, a * 1.6);
+  label(c, s.text, s.x * W, s.y * H, s.size * uOf(), B[s.color] || B.ink, s.align || 'center', s.weight);
+  c.restore();
+}
+function brackets(c, x, y, w, h, col, lw) {          // narożne wsporniki detektora
+  c.save(); c.strokeStyle = col; c.lineWidth = lw || 2.5;
+  const L = Math.min(w, h) * 0.22;
+  const P = [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]];
+  for (let i = 0; i < 4; i++) {
+    const p = P[i]; c.beginPath();
+    c.moveTo(p[0] + p[2] * L, p[1]); c.lineTo(p[0], p[1]); c.lineTo(p[0], p[1] + p[3] * L); c.stroke();
+  }
+  c.restore();
+}
+
+/* ============================================ 6. TLO (ruch nigdy nie stoi) */
+function background(t, c, W, H, u) {
+  const s = sceneAt(t), cols = PAL[s];
+  c.fillStyle = grad(c, 0, 0, W, H, B.bg, s === 3 ? '#1b0a26' : s === 4 ? '#0b1222' : B.navy);
+  c.fillRect(0, 0, W, H);
+  const n = 58 + s * 24;                                  // gwiazdy: dryf po obu osiach
+  for (let i = 0; i < n; i++) {
+    const x = ((rnd(i, 1) + t * (0.004 + 0.004 * rnd(i, 2))) % 1) * W;
+    const y = ((rnd(i, 3) + t * (0.010 + 0.014 * rnd(i, 4))) % 1) * H;
+    const a = 0.08 + 0.34 * Math.abs(Math.sin(2 * Math.PI * (t * 0.35 + rnd(i, 5))));
+    c.fillStyle = 'rgba(190,215,255,' + a.toFixed(3) + ')'; c.fillRect(x, y, 2.2, 2.2);
+  }
+  for (let i = 0; i < 2; i++) {                           // dwa swietliki w przeciwnych rytmach
+    const cx = (i ? 0.80 : 0.22) + 0.07 * Math.sin(2 * Math.PI * t / DUR * (1 + i * 0.4)) * (s === 3 ? 2.6 : 1);
+    const cy = (i ? 0.70 : 0.28) + 0.06 * Math.cos(2 * Math.PI * t / DUR * (1.3 - i * 0.3)) * (s === 3 ? 2.6 : 1);
+    const g = c.createRadialGradient(cx * W, cy * H, 0, cx * W, cy * H, 0.55 * W);
+    g.addColorStop(0, cols[i] + (s === 3 ? '40' : '28')); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+  }
+  const hz = [0.74, 0.62, 0.54, 0.60, 0.68][s] * H;       // siatka perspektywiczna
+  c.save(); c.strokeStyle = B.cyan; c.lineWidth = 1; c.globalAlpha = 0.15;
+  for (let i = 0; i <= 20; i++) {
+    const k = Math.pow((i + ((t * 1.4) % 1)) / 20, 2.3), y = hz + k * (H - hz) * 1.3;
+    c.beginPath(); c.moveTo(W / 2, y); c.lineTo(-W * 0.4 + (i / 20) * W * 1.8, H); c.stroke();
+  }
+  for (let i = 0; i < 12; i++) {
+    const k = Math.pow((i + ((t * 0.8) % 1)) / 12, 2.5), y = hz + k * (H - hz) * 1.3;
+    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+  }
+  c.restore();
+}
+
+/* ============================================ 7. HUD */
+function hud(t, c, W, H, u) {
+  c.save();
+  c.fillStyle = B.cyan; rrect(c, 0.028 * W, 0.062 * H, 1.1 * u, 1.1 * u, 0.25 * u); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.15)'; c.lineWidth = 1.5;
+  const L = [[0.028, 0.118, 0.168, 0.118], [0.972, 0.118, 0.882, 0.118], [0.028, 0.910, 0.118, 0.910], [0.972, 0.910, 0.882, 0.910]];
+  for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(L[i][0] * W, L[i][1] * H); c.lineTo(L[i][2] * W, L[i][3] * H); c.stroke(); }
+  const x0 = 0.045 * W, bw = (0.34 * W) / BEATS, ph = clamp(t / DUR);
+  for (let i = 0; i < BEATS; i++) {
+    const on = (i + 0.5) / BEATS <= ph, hh = i % 4 === 0 ? 0.026 * H : 0.016 * H;
+    c.fillStyle = on ? (i % 4 === 0 ? B.cyan : 'rgba(34,211,238,0.40)') : 'rgba(255,255,255,0.14)';
+    c.fillRect(x0 + i * bw, 0.910 * H - hh, bw * 0.55, hh);
+  }
+  c.fillStyle = B.pink; c.beginPath(); c.arc(x0 + 0.34 * W * ph, 0.910 * H - 0.013 * H, 0.30 * u, 0, 7); c.fill();
+  c.restore();
+  brackets(c, 0.052 * W, 0.135 * H, 0.896 * W, 0.730 * H, 'rgba(34,211,238,0.5)', 2);
+  TEXTS.slice(0, 6).forEach(function (s) { textOf(s, t, c, W, H); });
+}
+
+/* ============================================ 8. SCENA 1 - BOOT */
+function scene1(t, c, W, H, u) {
+  const lt = local(t), cols = 30, cw = W / cols;
+  for (let i = 0; i < cols; i++) {                            // deszcz kodu
+    const seed = Math.floor(rnd(i, 7) * 997), speed = 7 + rnd(i, 8) * 14;
+    const head = ((t * speed + seed) % (H + 300)) - 150;
+    c.font = B.font(2.0 * u, 600); c.textAlign = 'center';
+    for (let j = 0; j < 8; j++) {
+      const y = head - j * 30; if (y < -20 || y > H + 20) continue;
+      c.fillStyle = 'rgba(34,211,238,' + ((1 - j / 8) * 0.22).toFixed(3) + ')';
+      c.fillText(String.fromCharCode(33 + Math.floor(rnd(i * 41 + j, 9) * 94)), (i + 0.5) * cw, y);
+    }
+  }
+  const word = 'vstudio', fs = 14.0 * u, y = 0.450 * H;       // tytul liter po literze
+  c.save(); c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = B.font(fs, 800);
+  const total = c.measureText(word).width; let cx = W / 2 - total / 2;
+  for (let i = 0; i < word.length; i++) {
+    const ch = word[i], w = c.measureText(ch).width;
+    const k = spring(lt - 0.28 - i * 0.075, 0.6, 24), px = cx + w / 2, py = y + (1 - k) * 0.10 * H;
+    if (k > 0.01) {
+      const col = i % 3 === 0 ? B.cyan : i % 3 === 1 ? B.vio : B.ink;
+      c.save(); c.globalAlpha = clamp(k * 1.4); c.shadowColor = col; c.shadowBlur = 28 * u; c.fillStyle = col;
+      c.fillText(ch, px, py); c.restore();
+      if (k < 0.99) { c.save(); c.globalAlpha = 0.7 * (1 - k); c.fillStyle = B.white;
+        rrect(c, px - w / 2, y + fs * 0.60, Math.max(w * k, 2), 0.5 * u, 0.25 * u); c.fill(); c.restore(); }
+    }
+    cx += w + fs * 0.02;
+  }
+  c.restore();
+  accentBar(c, 0.32 * W, 0.505 * H, 0.36 * W, 0.42 * u, lt - 0.85, B.cyan, B.vio);
+  const rk = clamp(spring(lt - 2.4, 0.7, 18));                // pasek "start"
+  if (rk > 0.01) {
+    const bx = 0.37 * W, bw2 = 0.26 * W, by = 0.755 * H, bh = 0.046 * H;
+    c.save(); c.globalAlpha = rk;
+    glass(c, bx, by, bw2, bh, bh / 2, 'rgba(34,211,238,0.5)', 0.07);
+    c.fillStyle = grad(c, bx, 0, bw2, 0, B.cyan, B.vio);
+    rrect(c, bx + 2, by + 2, Math.max((bw2 - 4) * clamp(lt / 4.2), 2), bh - 4, (bh - 4) / 2); c.fill();
+    c.restore();
+  }
+  TEXTS.slice(6, 9).forEach(function (s) { textOf(s, t, c, W, H); });
+}
+
+/* ============================================ 9. SCENA 2 - ANALIZA */
+function scene2(t, c, W, H, u) {
+  const lt = local(t), gx = 0.075 * W, gy = 0.245 * H, cw = 0.148 * W, ch = 0.108 * H, gp = 0.014 * W;
+  const hot = [2, 6, 7];
+  for (let i = 0; i < 9; i++) {
+    const cx = gx + (i % 3) * (cw + gp), cy = gy + (((i / 3) | 0)) * (ch + gp);
+    const k = spring(lt - 0.10 - i * 0.05, 0.75, 18); if (k <= 0.01) continue;
+    c.save(); c.globalAlpha = clamp(k * 1.2); c.translate((1 - k) * 0.03 * W, 0);
+    c.fillStyle = grad(c, cx, cy, cw, ch, PAL[i % 2][0] + '22', PAL[(i + 1) % 2][1] + '10'); rrect(c, cx, cy, cw, ch, 0.8 * u); c.fill();
+    c.strokeStyle = hot.indexOf(i) >= 0 ? B.amber : 'rgba(255,255,255,0.18)'; c.lineWidth = hot.indexOf(i) >= 0 ? 2 : 1;
+    c.stroke();
+    c.save(); c.globalAlpha = clamp(k * 1.2) * 0.55; c.fillStyle = PAL[i % 2][0];   // mini-zawartosc klatki
+    for (let j = 0; j < 3; j++) {
+      const bh = ch * (0.10 + 0.16 * rnd(i * 7 + j, 11)) * (0.6 + 0.6 * Math.abs(Math.sin(2 * Math.PI * (t * 0.7 + j * 0.2 + i))));
+      c.fillRect(cx + cw * 0.10, cy + ch * 0.72 - bh, cw * 0.16, bh);
+    }
+    c.fillRect(cx + cw * 0.40, cy + ch * 0.30, cw * 0.42, ch * 0.10); c.restore();
+    accentBar(c, cx + 3, cy + 3, cw - 6, 0.36 * u, lt - 0.2 - i * 0.05, PAL[i % 2][0], PAL[(i + 1) % 2][1]);
+    if (hot.indexOf(i) >= 0) {
+      const pu = 0.5 + 0.5 * Math.sin(2 * Math.PI * (t * 1.6 + i));
+      brackets(c, cx - 3, cy - 3, cw + 6, ch + 6, 'rgba(251,191,36,' + (0.45 + 0.4 * pu).toFixed(2) + ')', 2.5);
+    }
+    c.restore();
+  }
+  const vx = gx + (5 % 3) * (cw + gp), vy = gy + 1 * (ch + gp);     // wektory ruchu
+  c.save(); c.strokeStyle = B.cyan; c.lineWidth = 1.8; c.globalAlpha = 0.85;
+  c.setLineDash([1.0 * u, 0.6 * u]); c.lineDashOffset = -t * 60;
+  for (let i = 0; i < 3; i++) {
+    const ax = vx + cw * (0.2 + 0.25 * i), ay = vy + ch * (0.25 + 0.2 * i), L2 = cw * 0.20;
+    c.beginPath(); c.moveTo(ax, ay); c.lineTo(ax + L2, ay - L2 * 0.5); c.stroke();
+    c.setLineDash([]); c.fillStyle = B.cyan;
+    c.beginPath(); c.moveTo(ax + L2, ay - L2 * 0.5); c.lineTo(ax + L2 - 0.9 * u, ay - L2 * 0.5 - 0.6 * u);
+    c.lineTo(ax + L2 - 0.9 * u, ay - L2 * 0.5 + 0.6 * u); c.closePath(); c.fill();
+    c.setLineDash([1.0 * u, 0.6 * u]);
+  }
+  c.restore();
+  const px = 0.655 * W, pw = 0.285 * W, py = 0.235 * H, ph = 0.60 * H;   // panel metryk
+  const pk = clamp(spring(lt - 0.25, 0.8, 16));
+  c.save(); c.globalAlpha = pk; c.translate((1 - pk) * 0.04 * W, 0);
+  glass(c, px, py, pw, ph, 1.6 * u, 'rgba(168,85,247,0.42)');
+  const rows = [['RUCH', 0.86, B.cyan], ['KADROWANIE', 0.74, B.vio], ['KONTRAST', 0.68, B.lime], ['GLADKOSC', 0.91, B.amber]];
+  rows.forEach(function (r, i) {
+    const ry = py + ph * (0.20 + i * 0.20), k = clamp(spring(lt - 0.6 - i * 0.30, 0.8, 16));
+    label(c, r[0], px + 1.4 * u, ry - 1.4 * u, 2.1 * u, B.mute, 'left', 700);
+    label(c, Math.round(r[1] * k * 100) + '%', px + pw - 1.4 * u, ry - 1.4 * u, 2.1 * u, r[2], 'right', 800);
+    c.fillStyle = 'rgba(255,255,255,0.10)'; rrect(c, px + 1.4 * u, ry, pw - 2.8 * u, 0.7 * u, 0.35 * u); c.fill();
+    c.fillStyle = r[2]; rrect(c, px + 1.4 * u, ry, Math.max((pw - 2.8 * u) * r[1] * k, 2), 0.7 * u, 0.35 * u); c.fill();
+  });
+  c.restore();
+  const tx = 0.075 * W, tw = 0.865 * W, ty = 0.845 * H, th = 0.030 * H;    // przewijanie timeline
+  c.save(); c.fillStyle = 'rgba(255,255,255,0.10)'; rrect(c, tx, ty, tw, th, th / 2); c.fill();
+  c.fillStyle = grad(c, tx, 0, tw, 0, B.cyan, B.vio);
+  rrect(c, tx, ty, Math.max(tw * clamp((lt - 0.4) / 4.0), 2), th, th / 2); c.fill();
+  const px2 = tx + tw * clamp((lt - 0.4) / 4.0);
+  c.fillStyle = B.white; c.fillRect(px2 - 0.18 * u, ty - 1.0 * u, 0.36 * u, th + 2.0 * u); c.restore();
+  TEXTS.slice(9, 14).forEach(function (s) { textOf(s, t, c, W, H); });
+}
+
+/* ============================================ 10. SCENA 3 - MONTAZ */
+function scene3(t, c, W, H, u) {
+  const lt = local(t), tx = 0.075 * W, tw = 0.865 * W;
+  c.save(); c.strokeStyle = 'rgba(255,255,255,0.10)'; c.lineWidth = 1;   // siatka rytmu
+  for (let i = 0; i <= 40; i++) {
+    const x = tx + tw * (i / 40);
+    c.globalAlpha = (Math.floor(i / 4) % 2 === 0) ? 0.5 : 0.22;
+    c.beginPath(); c.moveTo(x, 0.24 * H); c.lineTo(x, 0.72 * H); c.stroke();
+  }
+  c.restore();
+  const clips = [
+    { a: 0.000, w: 0.200, c: B.mute, n: 'WSTEP' }, { a: 0.215, w: 0.260, c: B.cyan, n: 'SCENA A' },
+    { a: 0.495, w: 0.220, c: B.vio, n: 'B-ROLL' }, { a: 0.745, w: 0.255, c: B.pink, n: 'WYJSCIE' },
+  ];
+  clips.forEach(function (cl, i) {
+    const k = spring(lt - 0.15 - i * 0.28, 0.7, 19); if (k <= 0.01) return;
+    const beatPop = 1 + 0.06 * beatEnv(lt - i * 0.28, 3);
+    const x = tx + tw * (cl.a + 0.008 + (i === 2 ? 0.035 * spring(lt - 2.6, 0.5, 26) : 0));
+    const w = tw * cl.w * W, y = (0.40 - 0.045 * beatPop) * H, h = 0.20 * H;
+    c.save(); c.globalAlpha = clamp(k * 1.15);
+    c.shadowColor = cl.c; c.shadowBlur = 16 * u * beatEnv(lt - i * 0.28, 2.5);
+    c.fillStyle = grad(c, x, y, w, h, cl.c + '38', cl.c + '12'); rrect(c, x, y, w, h, 1.1 * u); c.fill();
+    c.shadowBlur = 0; c.strokeStyle = cl.c; c.lineWidth = 2; c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.75)';
+    for (let f = 0; f < Math.floor(w / (2.6 * u)); f++) c.fillRect(x + 0.8 * u + f * 2.6 * u, y + h - 0.55 * u, 1.3 * u, 0.35 * u);
+    accentBar(c, x + 0.6 * u, y + 0.6 * u, w - 1.2 * u, 0.4 * u, lt - 0.4 - i * 0.28, cl.c, B.white);
+    c.restore();
+  });
+  const sy = 0.735 * H, sh = 0.10 * H;                                   // plotna filmowa
+  c.save(); c.fillStyle = 'rgba(255,255,255,0.05)'; rrect(c, tx, sy, tw, sh, 0.5 * u); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.stroke();
+  c.fillStyle = 'rgba(255,255,255,0.22)';
+  for (let i = 0; i < 26; i++) c.fillRect(tx + 0.4 * u + i * (tw - 0.8 * u) / 26, sy + 0.6 * u, 0.7 * u, 0.3 * H);
+  for (let i = 0; i < 12; i++) {
+    const k = clamp(spring(lt - 0.5 - i * 0.10, 0.8, 20)); if (k <= 0.01) continue;
+    const fx = tx + 0.6 * u + i * (tw - 1.2 * u) / 12, fw = (tw - 1.2 * u) / 12 - 0.8 * u;
+    c.globalAlpha = k; c.fillStyle = grad(c, fx, 0, fw, 0, PAL[i % 2][0] + '55', PAL[(i + 1) % 2][1] + '22');
+    rrect(c, fx, sy + 1.2 * u, fw, sh - 2.4 * u, 0.35 * u); c.fill();
+    c.globalAlpha = k * 0.5; c.fillStyle = B.white;
+    for (let j = 0; j < 3; j++) {
+      const bh = (sh - 2.4 * u) * (0.15 + 0.2 * rnd(i * 5 + j, 13));
+      c.fillRect(fx + fw * (0.12 + 0.3 * j), sy + sh - 1.2 * u - bh, fw * 0.12, bh);
+    }
+  }
+  c.restore();
+  const xk = clamp(spring(lt - 2.6, 0.5, 26));                            // znacznik przecincia
+  if (xk > 0.01) {
+    const x = tx + tw * 0.50;
+    c.save(); c.globalAlpha = xk * (0.6 + 0.4 * Math.abs(Math.sin(2 * Math.PI * t * 2)));
+    c.strokeStyle = B.vio; c.lineWidth = 2; c.setLineDash([1.2 * u, 0.8 * u]); c.lineDashOffset = -t * 80;
+    c.beginPath(); c.moveTo(x, 0.24 * H); c.lineTo(x, 0.86 * H); c.stroke(); c.setLineDash([]);
+    c.fillStyle = B.vio; c.beginPath(); c.arc(x, 0.30 * H, 0.7 * u, 0, 7); c.fill(); c.restore();
+  }
+  TEXTS.slice(14, 20).forEach(function (s) { textOf(s, t, c, W, H); });
+}
+
+/* ============================================ 11. SCENA 4 - DZWIEK */
+function scene4(t, c, W, H, u) {
+  const lt = local(t), cx = 0.50 * W, my = 0.545 * H;
+  c.save(); c.translate(cx, my);                                        // lustrzana fala
+  for (let pass = 0; pass < 2; pass++) {
+    c.beginPath(); const n = 150, W2 = 0.86 * W;
+    for (let i = 0; i <= n; i++) {
+      const x = -W2 / 2 + W2 * (i / n);
+      const a = (0.18 + 0.82 * Math.abs(Math.sin(i * 0.31 + t * 3.1) * Math.sin(i * 0.11 + t * 1.7)))
+        * (0.35 + 0.65 * beatEnv(lt, 1.1)) * 0.30 * H;
+      const y = pass ? a : -a;
+      if (i === 0) c.moveTo(x, y); else c.lineTo(x, y);
+    }
+    c.strokeStyle = pass ? B.vio : B.cyan; c.lineWidth = pass ? 1.6 : 2.4;
+    c.globalAlpha = pass ? 0.75 : 0.95; c.stroke();
+  }
+  c.restore();
+  const bars = 26, bw = (0.86 * W) / bars, by0 = 0.845 * H;               // spektrum
+  for (let i = 0; i < bars; i++) {
+    const v = (0.12 + 0.88 * Math.abs(Math.sin(t * 2.4 + i * 0.38) * Math.cos(t * 1.1 + i * 0.12)))
+      * (0.4 + 0.6 * beatEnv(lt, 1.3));
+    const h = v * 0.16 * H, x = cx - 0.43 * W + i * bw;
+    c.save(); c.globalAlpha = 0.35 + 0.55 * v; c.fillStyle = grad(c, x, by0 - h, bw, h, B.pink, B.cyan);
+    rrect(c, x + bw * 0.18, by0 - h, bw * 0.64, h, bw * 0.3); c.fill(); c.restore();
+  }
+  const cues = [[0.6, B.cyan, 0.00], [1.1, B.vio, 0.24], [1.6, B.pink, 0.42], [2.1, B.amber, 0.60]];
+  cues.forEach(function (q, i) {                                          // znaczniki dzwiekow
+    const k = clamp(spring(lt - q[0], 0.6, 24)); if (k <= 0.01) return;
+    const x = 0.13 * W + q[2] * 0.72 * W, y = 0.30 * H + (1 - k) * 0.14 * H;
+    c.save(); c.globalAlpha = k;
+    c.strokeStyle = q[1]; c.lineWidth = 2; c.beginPath(); c.moveTo(x, y + 2.2 * u); c.lineTo(x, my); c.stroke();
+    c.fillStyle = q[1];
+    c.beginPath(); c.moveTo(x, y + 2.2 * u); c.lineTo(x - 0.7 * u, y + 4.2 * u); c.lineTo(x + 0.7 * u, y + 4.2 * u); c.closePath(); c.fill();
+    c.globalAlpha = k * (0.25 + 0.75 * Math.abs(Math.sin(2 * Math.PI * t * 2)));
+    c.beginPath(); c.arc(x, y, (0.6 + 0.5 * beatEnv(t, 1)) * u, 0, 7); c.fill(); c.restore();
+  });
+  const bp = (lt / BEAT) % 1;                                            // pierscienie uderzenia
+  if (bp < 0.55) {
+    c.save(); c.strokeStyle = B.pink; c.lineWidth = 2.5;
+    for (let i = 0; i < 3; i++) {
+      const q = (bp + i * 0.14) / 0.55; if (q >= 1) continue;
+      c.globalAlpha = (1 - q) * 0.42;
+      c.beginPath(); c.arc(0.5 * W, 0.60 * H, q * 0.30 * W, 0, 7); c.stroke();
+    }
+    c.restore();
+  }
+  const mx = 0.885 * W, myy = 0.38 * H, mh = 0.40 * H, mw = 2.2 * u;   // miernik LUFS
+  c.save(); c.fillStyle = 'rgba(255,255,255,0.08)'; rrect(c, mx, myy, mw, mh, mw / 2); c.fill();
+  const lvl = 0.62 + 0.10 * beatEnv(lt, 1.5);
+  c.fillStyle = grad(c, 0, myy + mh * (1 - lvl), 0, mh * lvl, B.lime, B.cyan);
+  rrect(c, mx, myy + mh * (1 - lvl), mw, mh * lvl, mw / 2); c.fill();
+  c.strokeStyle = B.amber; c.lineWidth = 2;
+  const ny = myy + mh * 0.32;
+  c.beginPath(); c.moveTo(mx - 0.8 * u, ny); c.lineTo(mx + mw + 0.8 * u, ny); c.stroke(); c.restore();
+  TEXTS.slice(20, 27).forEach(function (s) { textOf(s, t, c, W, H); });
+}
+
+/* ============================================ 12. SCENA 5 - WYDANIE */
+function scene5(t, c, W, H, u) {
+  const lt = local(t);
+  for (let i = 0; i < 10; i++) {                                          // klatki zbiegaja sie do paska
+    const k = clamp(spring(lt - 0.05 - i * 0.06, 0.75, 20)); if (k <= 0.01) continue;
+    const sx = 0.075 * W + i * (0.865 * W - 0.14 * W) / 9, sy = 0.235 * H, sw = 0.14 * W, sh = 0.10 * H;
+    const tx2 = 0.10 * W + i * (0.80 * W - 0.10 * W) / 9, ty = 0.235 * H, tw2 = 0.10 * W, th = 0.075 * H;
+    const e = ease(k);
+    const x = lerp(sx, tx2, e), y = lerp(sy, ty, e), w = lerp(sw, tw2, e), h = lerp(sh, th, e);
+    c.save(); c.globalAlpha = clamp(k * 1.2) * (1 - 0.55 * clamp((lt - 3.0) / 1.2));
+    c.fillStyle = grad(c, x, y, w, h, PAL[i % 2][0] + '44', PAL[(i + 1) % 2][1] + '18');
+    rrect(c, x, y, w, h, 0.5 * u); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1.2; c.stroke(); c.restore();
+  }
+  const pk = clamp((lt - 0.25) / 2.5), bx = 0.115 * W, bw = 0.77 * W, by = 0.475 * H, bh = 0.05 * H;
+  const endFade = 1 - clamp((lt - 2.85) / 0.35);          // plansza koncowa: robie miejsce logo
+  c.save(); c.globalAlpha = endFade; glass(c, bx, by, bw, bh, bh / 2, 'rgba(251,191,36,0.5)', 0.07);   // postep
+  c.fillStyle = grad(c, bx, 0, bw, 0, B.amber, B.pink);
+  rrect(c, bx + 2, by + 2, Math.max((bw - 4) * pk, 2), bh - 4, (bh - 4) / 2); c.fill();
+  for (let i = 1; i < 10; i++) { c.fillStyle = 'rgba(4,6,15,0.85)'; c.fillRect(bx + bw * (i / 10) - 0.15 * u, by + 2, 0.3 * u, bh - 4); }
+  label(c, Math.round(pk * 100) + '%', bx + bw + 1.4 * u, by + bh * 0.80, 3.0 * u, B.white, 'left', 800); c.restore();
+  for (let i = 0; i < 5; i++) {                                  // log renderowania: kadr pelniejszy
+    const k = clamp(spring(lt - 1.1 - i * 0.22, 0.7, 20)); if (k <= 0.01) continue;
+    const ly = 0.575 * H + i * 0.036 * H, fade = endFade;
+    const lw = (0.28 + 0.42 * rnd(i, 31)) * W * (0.6 + 0.4 * Math.abs(Math.sin(2 * Math.PI * (t * 0.6 + i))));
+    c.save(); c.globalAlpha = 0.34 * k * fade;
+    c.fillStyle = i % 2 ? B.vio : B.cyan;
+    rrect(c, 0.115 * W, ly, lw, 0.014 * H, 0.007 * H); c.fill();
+    c.fillStyle = B.mute; c.globalAlpha = 0.42 * k * fade;
+    rrect(c, 0.895 * W - 0.022 * W * rnd(i, 32), ly, 0.022 * W, 0.014 * H, 0.007 * H); c.fill();
+    c.restore();
+  }
+  const checks = [B.cyan, B.vio, B.lime];                                 // checklisty
+  checks.forEach(function (col, i) {
+    const k = clamp(spring(lt - 0.9 - i * 0.35, 0.6, 22)) * endFade; if (k <= 0.01) return;
+    const cx = (0.235 + i * 0.265) * W;
+    c.save(); c.globalAlpha = k; c.strokeStyle = col; c.lineWidth = 3; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(cx - 2.0 * u, 0.395 * H); c.lineTo(cx - 0.6 * u, 0.375 * H); c.lineTo(cx + 1.6 * u, 0.415 * H); c.stroke();
+    c.shadowColor = col; c.shadowBlur = 12 * u; c.stroke(); c.restore();
+  });
+  const lk = clamp(spring(lt - 3.0, 0.7, 18));                             // logo + czastek
+  if (lk > 0.01) {
+    const ls = 7.4 * u, lx = 0.5 * W - ls / 2, ly = 0.44 * H;
+    c.save();
+    for (let i = 0; i < 90; i++) {
+      const kk = clamp((lt - 3.0 - rnd(i, 21) * 0.5) / 0.9), ang = rnd(i, 22) * 6.283, rad = (1 - ease(kk)) * 0.42 * W;
+      c.globalAlpha = kk * (0.35 + 0.65 * rnd(i, 23)); c.fillStyle = rnd(i, 24) > 0.5 ? B.cyan : B.vio;
+      c.fillRect(lx + ls / 2 + Math.cos(ang) * rad, ly + ls / 2 + Math.sin(ang) * rad, 0.45 * u, 0.45 * u);
+    }
+    c.globalAlpha = lk; c.shadowColor = B.cyan; c.shadowBlur = 30 * u;
+    c.fillStyle = grad(c, lx, ly, ls, ls, B.cyan, B.vio); rrect(c, lx, ly, ls, ls, 1.6 * u); c.fill();
+    c.shadowBlur = 0; c.font = B.font(3.1 * u, 800); c.fillStyle = '#061024';
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('AE', lx + ls / 2, ly + ls / 2 + 0.1 * u);
+    c.restore();
+    accentBar(c, 0.42 * W, 0.545 * H, 0.16 * W, 0.34 * u, lt - 3.4, B.vio, B.cyan);
+  }
+  TEXTS.slice(26).forEach(function (s) { textOf(s, t, c, W, H); });
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+/* ============================================ 13. PREZENTACJA: GLITCH, RGB SPLIT, ROZBLYSK */
+function present(t, W, H, u, dpr) {
+  const cut = cutAmt(t), fi = Math.floor(t * FPS), s = sceneAt(t);
+  const split = (s === 1 || s === 3 ? 2.2 : 1.0) + cut * 26;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  ctx.fillStyle = '#04060f'; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(off, 0, 0, W, H);
+  if (split > 0.4) {                                         // rozdzielenie kanalow RGB
+    const chans = [['#ff0040', -1], ['#00e5ff', 1]];
+    for (let i = 0; i < 2; i++) {
+      sc.setTransform(1, 0, 0, 1, 0, 0);
+      sc.globalCompositeOperation = 'source-over';
+      sc.clearRect(0, 0, off.width, off.height);
+      sc.drawImage(off, 0, 0);
+      sc.globalCompositeOperation = 'multiply'; sc.fillStyle = chans[i][0];
+      sc.fillRect(0, 0, off.width, off.height);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.40;
+      ctx.drawImage(scr, 0, chans[i][1] * split, W, H); ctx.restore();
+    }
+  }
+  if (cut > 0.05) {                                          // slice glitch: pasy przesuniete
+    const bands = 9;
+    for (let i = 0; i < bands; i++) {
+      const y0 = (i / bands) * H, bh = H / bands + 1;
+      const dx = (rnd(i + fi, 32) - 0.5) * 0.22 * W * cut;
+      ctx.drawImage(off, 0, y0, off.width, bh * (off.height / H), dx, y0, W, bh);
+      if (rnd(i + fi, 33) > 0.72) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.16 * cut;
+        ctx.fillStyle = i % 2 ? B.cyan : B.pink; ctx.fillRect(0, y0, W, bh * 0.5); ctx.restore();
+      }
+    }
+  }
+  if (cut > 0.02) {                                          // rozblysk na cieciu
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.pow(cut, 2.2) * 0.50;
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, B.cyan); g.addColorStop(0.5, B.white); g.addColorStop(1, B.vio);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore();
+  }
+  ctx.save(); ctx.globalAlpha = 0.05; ctx.fillStyle = '#000';                  // linie skanowania
+  for (let y = 0; y < H; y += 4 * u) ctx.fillRect(0, y, W, 1.6 * u);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = 0.14; ctx.fillStyle = '#dfe9ff';             // ziarno
+  for (let i = 0; i < 240; i++) ctx.fillRect(rnd(i, fi % 97) * W, rnd(i, (fi + 7) % 89) * H, 2, 2);
+  ctx.restore();
+  const vg = ctx.createRadialGradient(W / 2, H / 2, 0.35 * H, W / 2, H / 2, 0.85 * H);   // winieta
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+}
+
+/* ============================================ 14. KONTRAKT STRONY */
+function draw(t) {
+  t = ((t % DUR) + DUR) % DUR;
+  const W = innerWidth, H = innerHeight, u = uOf(), dpr = window.devicePixelRatio || 1;
+  if (off.width !== Math.round(W * dpr)) { off.width = scr.width = Math.round(W * dpr); off.height = scr.height = Math.round(H * dpr); }
+  o.setTransform(dpr, 0, 0, dpr, 0, 0);
+  background(t, o, W, H, u);
+  const s = sceneAt(t);
+  if (s === 0) scene1(t, o, W, H, u); else if (s === 1) scene2(t, o, W, H, u);
+  else if (s === 2) scene3(t, o, W, H, u); else if (s === 3) scene4(t, o, W, H, u);
+  else scene5(t, o, W, H, u);
+  hud(t, o, W, H, u);
+  present(t, W, H, u, dpr);
+}
+window.seek = draw;
+const EV = [];
+CUT.forEach(function (tc) { EV.push({ t: tc - 0.06, type: 'whoosh' }); EV.push({ t: tc + 0.04, type: 'hit' }); });
+[[0.32], [0.55], [0.80], [1.05], [1.30], [2.45], [5.60], [6.10], [6.60], [7.10], [10.60], [11.10], [11.60], [12.70],
+ [13.20], [15.60], [16.10], [16.60], [17.10], [18.00], [18.90], [20.70], [21.20], [21.70], [22.20], [23.00], [23.60], [24.20]]
+  .forEach(function (e) { EV.push({ t: e[0], type: e[0] < 5 ? 'click' : e[0] < 10 ? 'click' : e[0] < 15 ? 'hit' : e[0] < 20 ? 'whoosh' : 'chime' }); });
+window.EV = EV.sort(function (a, b) { return a.t - b.t; });
+window.TEXTS = function (t) {
+  t = ((t % DUR) + DUR) % DUR; const W = innerWidth, H = innerHeight;
+  return TEXTS.filter(function (s) { return t >= s.tIn && t <= s.tOut; })
+    .map(function (s) { const b = boxOf(s, W, H); return { id: s.id, text: s.text, x0: b.x0, x1: b.x1, y0: b.y0, y1: b.y1 }; });
+};
+function fit() {
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr); return dpr;
+}
+window.__ready = document.fonts.ready.then(fit);
+if (!window.__CAPTURE__) {
+  addEventListener('resize', fit); fit();
+  const t0 = performance.now();
+  (function loop() { draw((performance.now() - t0) / 1000); requestAnimationFrame(loop); })();
+} else { fit(); }
+</script>
+</body>
+</html>

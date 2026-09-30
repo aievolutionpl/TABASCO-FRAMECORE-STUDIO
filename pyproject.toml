@@ -1,0 +1,27 @@
+[project]
+name = "vstudio"
+version = "1.0.0"
+description = "Deterministyczne studio filmowe sterowane z CLI: brief, obraz, montaż, dźwięk, wydanie."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "AI Evolution Polska" }]
+keywords = ["film", "wideo", "motion", "ai", "deterministic", "ffmpeg", "playwright", "cli"]
+dependencies = [
+    "numpy>=2.0",
+    "Pillow>=10",
+    "playwright>=1.40",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://github.com/aievolutionpl/vstudio"
+Repository = "https://github.com/aievolutionpl/vstudio"
+Issues = "https://github.com/aievolutionpl/vstudio/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["browser: wymaga playwright + chromium (pomijane, gdy brak)"]

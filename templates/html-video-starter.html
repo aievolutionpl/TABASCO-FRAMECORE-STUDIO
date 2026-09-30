@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML video starter</title>
+<!--
+  Starter for a code-rendered video. Record with:
+    python scripts/html_to_video.py <this file> -o out.mp4 --size 1920x1080 --fps 60 --subframes 6
+    python scripts/html_to_video.py <this file> --sizes 1920x1080,1080x1920,1080x1080 -o out   (all aspects)
+    python scripts/html_to_video.py <this file> --still 3 -o frame.png                          (check one frame)
+
+  Rules this file follows (Skills/remotion-video-creator/references/motion-rules.md):
+    1. The picture is a pure function of time: draw(t). No CSS transitions, no timers, no state between frames.
+    2. One shape that never cuts: it morphs between states (size, radius, colour) while content swaps.
+    3. Closed-form springs with a tiny overshoot; a value that changes target several times is the sum of one spring per change.
+    4. Everything lands on the beat grid.
+    5. The last frame equals the first, so the film loops.
+    6. Layout is relative to the viewport, so one file exports to 16:9, 9:16 and 1:1.
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0d10; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ---------- 1. Brand config: replace from Agents/<BRAND>/CONFIG.md, never invent colours ----------
+const BRAND = {
+  bg: '#0b0d10', ink: '#f4f1ea', mute: '#8b8f98', accent: '#ff6a00',
+  font: '600 {px}px Inter, "Segoe UI", system-ui, sans-serif',
+};
+const BPM = 80;   // slower tempo so every label stays on screen long enough to be read (see vstudio readcheck)
+const BEAT = 60 / BPM;
+const STATES = [ // the ONE shape: [beat, width, height, radius, colour, label, camera zoom]  (1u = 1% of min(viewport w, h))
+  [0,  14, 14, 7,  '#ff6a00', '',                1.8],
+  [2,  46, 14, 7,  '#ff6a00', 'Book a table',    1.3],
+  [6,  62, 34, 3,  '#1b1f26', 'Friday, 7:30 pm', 1.0],
+  [10, 38, 12, 6,  '#ff6a00', 'Confirmed',       1.4],
+  [14, 14, 14, 7,  '#ff6a00', '',                1.8],   // identical to the first state: seamless loop
+];
+window.DURATION = 16 * BEAT;              // 4 bars of 4/4 = 12 s at 80 BPM
+
+// ---------- 2. Motion maths ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const mix = (a, b, k) => a + (b - a) * k;
+// Step response of a damped spring (0 -> 1). zeta ~0.8 gives a tiny overshoot; omega sets speed.
+// Handles under-, critically and over-damped cases; a naive underdamped-only formula returns NaN at zeta = 1.
+function spring(tau, zeta = 0.8, omega = 15) {
+  if (tau <= 0) return 0;
+  if (zeta < 1) {
+    const wd = omega * Math.sqrt(1 - zeta * zeta), e = Math.exp(-zeta * omega * tau);
+    return 1 - e * (Math.cos(wd * tau) + (zeta * omega / wd) * Math.sin(wd * tau));
+  }
+  if (zeta === 1) return 1 - Math.exp(-omega * tau) * (1 + omega * tau);
+  const q = Math.sqrt(zeta * zeta - 1), a = omega * (zeta - q), b = omega * (zeta + q);
+  return 1 - (b * Math.exp(-a * tau) - a * Math.exp(-b * tau)) / (b - a);
+}
+// keys: [[time, value], ...]. One spring per retarget, summed, so interrupted motion stays continuous.
+function track(t, keys, zeta, omega) {
+  let v = keys[0][1];
+  for (let i = 1; i < keys.length; i++) v += (keys[i][1] - keys[i - 1][1]) * spring(t - keys[i][0], zeta, omega);
+  return v;
+}
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function trackColor(t, field) {
+  const ch = [0, 1, 2].map(c => track(t, STATES.map(s => [s[0] * BEAT, hex(s[field])[c]]), 1, 18));
+  return `rgb(${ch.map(v => Math.round(clamp(v, 0, 255))).join(',')})`;
+}
+const field = i => STATES.map(s => [s[0] * BEAT, s[i]]);
+
+// ---------- 3. Drawing ----------
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+function fit() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr);
+  return dpr;
+}
+function roundRect(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.closePath();
+}
+// Text that enters AFTER its container starts morphing and leaves BEFORE the next morph, via a masked rise.
+function label(text, cx, cy, size, t, beatIn) {
+  if (!text) return;
+  const tIn = beatIn * BEAT + 0.18, tOut = (beatIn + 3.6) * BEAT;
+  const k = clamp(spring(t - tIn, 0.9, 16)) * (1 - clamp((t - tOut) / 0.12));
+  if (k <= 0.001) return;
+  ctx.save();
+  ctx.font = BRAND.font.replace('{px}', size);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width;
+  ctx.beginPath(); ctx.rect(cx - w / 2 - 4, cy - size * 0.7, w + 8, size * 1.4); ctx.clip();   // mask
+  ctx.fillStyle = BRAND.ink;
+  ctx.fillText(text, cx, cy + (1 - k) * size * 0.9);
+  ctx.restore();
+}
+
+function draw(t) {
+  t = ((t % window.DURATION) + window.DURATION) % window.DURATION;
+  const dpr = canvas.width / innerWidth;
+  const W = innerWidth, H = innerHeight, u = Math.min(W, H) / 100;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = BRAND.bg; ctx.fillRect(0, 0, W, H);
+
+  // the camera zooms so every state fills the frame
+  // slow periodic drift (4 beats per cycle, so it loops) keeps the frame alive between morphs: no dead time
+  const drift = 1 + 0.03 * Math.sin(2 * Math.PI * t / (4 * BEAT));
+  const zoom = track(t, field(6), 0.9, 12) * drift;
+  ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.translate(-W / 2, -H / 2);
+
+  const w = track(t, field(1), 0.8, 15) * u, h = track(t, field(2), 0.8, 15) * u, r = track(t, field(3), 0.8, 15) * u;
+  ctx.fillStyle = trackColor(t, 4);
+  roundRect(W / 2 - w / 2, H / 2 - h / 2, w, h, r); ctx.fill();
+
+  STATES.forEach((s, i) => { if (s[5]) label(s[5], W / 2, H / 2, 4.2 * u, t, s[0]); });
+}
+
+// ---------- 4. Hooks used by scripts/html_to_video.py and vstudio ----------
+window.seek = draw;                                   // deterministic: frame = f(t)
+// Cue events for sound design: `vstudio events <page>` exports these, `vstudio mix` places an SFX on each.
+window.EV = STATES.slice(1).map(s => ({ t: s[0] * BEAT, type: 'whoosh' })).concat(STATES.filter(s => s[5]).map(s => ({ t: s[0] * BEAT + 0.18, type: 'pop' })));
+// Every on-screen text with its pixel box, for `vstudio readcheck` (reading time, in-frame, hold-still).
+window.TEXTS = (t) => {
+  t = ((t % window.DURATION) + window.DURATION) % window.DURATION;
+  const W = innerWidth, H = innerHeight, u = Math.min(W, H) / 100;
+  const out = [];
+  STATES.forEach(s => {
+    if (!s[5]) return;
+    const tIn = s[0] * BEAT + 0.18, tOut = (s[0] + 3.6) * BEAT;
+    if (t >= tIn && t <= tOut) out.push({ id: 'label-' + s[0], text: s[5], x0: W / 2 - s[5].length * 1.3 * u, y0: H / 2 - 2.4 * u, x1: W / 2 + s[5].length * 1.3 * u, y1: H / 2 + 2.4 * u });
+  });
+  return out;
+};
+window.__ready = document.fonts.ready.then(fit);      // wait for fonts, then size the canvas
+if (!window.__CAPTURE__) {                            // live preview in a normal browser tab
+  addEventListener('resize', fit);
+  fit();
+  const t0 = performance.now();
+  (function loop() { draw((performance.now() - t0) / 1000); requestAnimationFrame(loop); })();
+} else {
+  fit();
+}
+</script>
+</body>
+</html>
