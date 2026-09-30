@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - motion 6: one hero, one simple world</title>
+<!--
+  Motion graphic 6/6 - "One hero, one simple world": jeden obiekt, prosty kadr, powolny ruch. Produkt, ktory zrobisz sam w jedno popoludnie.
+  1080x1350, GSAP 3.12.5, jedna os czasu 7 s, repeat: -1, ease sine.inOut (wolno i spokojnie). Na ekranie tylko flakon w jednolitym studiu.
+  Scena: miekkie szare studio (radialny gradient, swiatlo pod srodku), nieco ciemniejsza podloga w dolnej trzeciej czesci kadru.
+  Flakon z CSS: ciemne szklo z zaokraglonymi rogami, zlota nakretka, cienka zlota ramka z napisem NOIR (wersaliki z rozstrzelonym
+  trackingiem), miekki rozmyty cien pod spodem.
+  0-0.6 s: flakon wynurza sie z lekko nizszej pozycji. 0.5-5.9 s: powoli sie obraca (CSS 3D rotateY -55 -> 55 deg, perspective na
+  rodzicu), po szkle przesuwa sie bialy odblask, cien sie rozciaga, cala scena wolno najezdza (scale 1 -> 1.08).
+  6.3 s: flakon gasnie na petle; scena wraca do skali 1 zanim petla ruszy od nowa.
+  Glebia bryly: plaski panel + stos cienszych paneli za nim (translateZ), wiec przy obrocie widac grubosc szkla.
+
+  Kontrakt strony vstudio: window.DURATION / window.seek(t) / window.EV / window.TEXTS(t) / window.__ready / window.__CAPTURE__
+  Uwaga: GSAP jest ladowany z CDN (adres z promptu) - render wymaga dostepu do cdnjs.cloudflare.com.
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #C9C9CE; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1350px; margin: -675px 0 0 -540px;
+           overflow: hidden; background: #C9C9CE; transform-origin: 50% 50%; }
+  #scene { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; transform-origin: 50% 62%; }
+  .full { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; }
+
+  /* studio: radialny gradient (swiatlo pod srodku) + ciemniejsza podloga w dolnej trzeciej czesci kadru */
+  #studio { background: radial-gradient(ellipse 75% 60% at 50% 46%, #F4F4F6 0%, #DEDEE2 52%, #C9C9CE 100%); }
+  #floor { position: absolute; left: 0; top: 900px; width: 1080px; height: 450px; border-top: 2px solid rgba(255, 255, 255, .35); box-sizing: border-box;
+           background: linear-gradient(#C2C2C8 0%, #B5B5BB 40%, #A8A8AE 100%); box-shadow: 0 -24px 50px rgba(0, 0, 0, .05); }
+  #shadow { position: absolute; left: 270px; top: 978px; width: 540px; height: 84px; border-radius: 50%; filter: blur(12px);
+            background: radial-gradient(ellipse at 50% 50%, rgba(18, 18, 28, .62) 0%, rgba(18, 18, 28, .28) 48%, rgba(18, 18, 28, 0) 72%); }
+
+  /* perspektywa na rodzicu obracanego flakonu */
+  #persp { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; perspective: 1600px; perspective-origin: 50% 50%; }
+  #bottle { position: absolute; left: 390px; top: 366px; width: 300px; height: 560px; transform-style: preserve-3d; }   /* 1.3x w GSAP: dol na y~1010 */
+  .pl { position: absolute; }                                                  /* panel bryly */
+  .glass { left: 0; top: 130px; width: 300px; height: 430px; border-radius: 40px; background: linear-gradient(90deg, #07070B 0%, #1A1C26 30%, #0E0F16 58%, #05060A 100%); }
+  #front { overflow: hidden; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .07), inset 18px 0 34px rgba(255, 255, 255, .05); }
+  #hl { position: absolute; left: 0; top: -30px; width: 80px; height: 500px;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 100%); }
+  .neck { left: 100px; top: 92px; width: 100px; height: 52px; border-radius: 6px; background: linear-gradient(90deg, #0B0B11, #262936 42%, #08080D); }
+  .cap { left: 80px; top: 0; width: 140px; height: 100px; border-radius: 14px 14px 8px 8px;
+         background: linear-gradient(90deg, #8A6A1E 0%, #E8C66A 28%, #F7E5A6 48%, #C9A24B 70%, #7A5A17 100%); }
+  #label { left: 50px; top: 262px; width: 200px; height: 120px; box-sizing: border-box; border: 2px solid #C9A24B; background: rgba(8, 8, 12, .4);
+           display: flex; align-items: center; justify-content: center; }
+  #tNoir { padding-left: .5em; font-family: Didot, "Bodoni MT", "Playfair Display", Georgia, "Times New Roman", serif;
+           font-size: 40px; font-weight: 500; letter-spacing: .5em; color: #D8B45C; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="scene">
+    <div id="studio" class="full"></div>
+    <div id="floor"></div>
+    <div id="shadow"></div>
+    <div id="persp">
+      <div id="bottle">
+        <div id="front" class="pl glass"><div id="hl"></div></div>
+        <div id="neck" class="pl neck"></div>
+        <div id="cap" class="pl cap"></div>
+        <div id="label" class="pl"><div id="tNoir">NOIR</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function () {
+  var DUR = 7, CAPTURE = !!window.__CAPTURE__;
+  var stage = document.getElementById('stage');
+  function fit() { stage.style.transform = 'scale(' + Math.min(innerWidth / 1080, innerHeight / 1350) + ')'; }
+
+  /* glebia: stos paneli za przednim (szklo) i za nakretka, kazdy ciemniejszy i glebiej (translateZ) */
+  var bottle = document.getElementById('bottle'), front = document.getElementById('front'), cap = document.getElementById('cap');
+  var depth = [];
+  for (var k = 1; k <= 6; k++) {
+    var g = document.createElement('div'); g.className = 'pl glass'; g.style.filter = 'brightness(' + (1 - k * 0.09) + ')';
+    bottle.insertBefore(g, front); depth.push([g, -k * 7]);
+    var c = document.createElement('div'); c.className = 'pl cap'; c.style.filter = 'brightness(' + (1 - k * 0.1) + ')';
+    bottle.insertBefore(c, cap); depth.push([c, 14 - k * 7]);
+  }
+
+  gsap.config({ force3D: false });           /* transformacje 2D bez promocji warstw (3D tylko tam, gdzie jawnie uzyte z / rotationY) */
+  gsap.defaults({ ease: 'sine.inOut' });
+  var tl = gsap.timeline({ repeat: -1, paused: CAPTURE });
+
+  /* stany startowe w czasie 0 osi */
+  depth.forEach(function (d) { tl.set(d[0], { z: d[1] }, 0); });
+  tl.set('#front', { z: 0 }, 0).set('#neck', { z: -6 }, 0).set('#cap', { z: 14 }, 0).set('#label', { z: 2 }, 0)
+    .set('#bottle', { autoAlpha: 0, y: 40, rotationY: -55, scale: 1.3 }, 0)
+    .set('#shadow', { autoAlpha: 0, scaleX: 1 }, 0)
+    .set('#hl', { x: -110, skewX: -8 }, 0)
+    .set('#scene', { scale: 1 }, 0);
+
+  /* 1. 0-0.6 s: flakon wynurza sie z lekko nizszej pozycji */
+  tl.to('#bottle', { autoAlpha: 1, y: 0, duration: 0.6 }, 0)
+    .to('#shadow', { autoAlpha: 1, duration: 0.6 }, 0);
+
+  /* 2. 0.5-5.9 s: powolny obrot (CSS 3D), odblask po szkle, cien sie rozciaga, scena wolno najezdza */
+  tl.to('#bottle', { rotationY: 55, duration: 5.4 }, 0.5)
+    .to('#hl', { x: 330, duration: 5.4 }, 0.5)
+    .to('#shadow', { scaleX: 1.25, duration: 5.4 }, 0.5)
+    .to('#scene', { scale: 1.08, duration: 5.4 }, 0.5);
+
+  /* 3. 6.3 s: flakon gasnie na petle; scena wraca do skali 1 (pusta), zeby o 7 s kadr = kadr z 0 s */
+  tl.to('#bottle', { autoAlpha: 0, duration: 0.5 }, 6.3)
+    .to('#shadow', { autoAlpha: 0, duration: 0.5 }, 6.3)
+    .to('#scene', { scale: 1, duration: 0.7 }, 6.3);
+  tl.set({}, {}, DUR);                       /* os trwa dokladnie 7 s */
+
+  /* ---------- haki vstudio ---------- */
+  if (CAPTURE) { tl.totalTime(DUR - 0.001, false); tl.totalTime(0, false); }
+  window.DURATION = DUR;
+  window.seek = function (t) { tl.pause(); tl.totalTime(((t % DUR) + DUR) % DUR, false); };
+  window.EV = [{ t: 0.2, type: 'reveal' }, { t: 3.2, type: 'chime' }, { t: 6.3, type: 'whoosh' }];
+
+  function visibleBox(el) {                  /* tekst widoczny (opacity >= .5, visibility) - obrys po transformacji 3D */
+    var rg = document.createRange(); rg.selectNodeContents(el);
+    var r = rg.getBoundingClientRect(), o = 1;
+    if (getComputedStyle(el).visibility === 'hidden') return null;
+    for (var n = el; n && n !== document.body; n = n.parentElement) o *= parseFloat(getComputedStyle(n).opacity);
+    return (o < 0.5 || r.right <= r.left || r.bottom <= r.top) ? null : r;
+  }
+  window.TEXTS = function () {
+    var el = document.getElementById('tNoir'), b = visibleBox(el);
+    return b ? [{ id: 'noir', text: el.textContent.trim(), x0: b.left, y0: b.top, x1: b.right, y1: b.bottom }] : [];
+  };
+  window.__ready = document.fonts.ready.then(fit);
+  fit();
+  if (!CAPTURE) addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

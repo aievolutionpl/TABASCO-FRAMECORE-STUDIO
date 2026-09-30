@@ -100,6 +100,10 @@ cp examples/showreel/index.html output/Demo/moje-demo/src/index.html
 py -3 -I vstudio.py render --final -p moje-demo --audio output/Demo/moje-demo/audio/mix.m4a
 ```
 
+Obok jest sześć krótkich pętli 1080×1350 na GSAP — [`examples/motion-graphics/`](examples/motion-graphics/README.md)
+(ukryte cięcie, jedna ramka na wszystko, trzy kolory, cisza i uderzenie, części najpierw, jeden bohater). Każda to
+jeden plik HTML zgodny z kontraktem strony, więc renderuje się tym samym `vstudio render`.
+
 Warto zajrzeć do `examples/showreel/index.html` — plik ma ~440 linii i pokazuje wszystkie techniki,
 które warto znać: kinetyczna typografia na sprężynie, *slice glitch*, rozdzielenie kanałów RGB,
 rozbłysk na cięciu, deszcz kodu, siatka perspektywiczna, detektor klatek, oś czasu z klipami,
@@ -298,7 +302,9 @@ W praktyce `sound` wykonuje kroki 2–5 jednym poleceniem.
 
 - Zero telemetrii. Nic nie wychodzi poza Twoją maszynę poza instalacją zależności.
 - Zero materiałów stockowych i zero licencji do rozliczania — dźwięk jest generowany.
-- Render działa lokalnie w headless Chromium; strona filmowa nigdy nie łączy się z siecią.
+- Render działa lokalnie w headless Chromium; strona filmowa nigdy nie łączy się z siecią
+  (jedyny wyjątek: pętle w `examples/motion-graphics/` ładują GSAP z `cdnjs.cloudflare.com`, tak jak w promptach —
+  do pracy offline podmień `src` na lokalną kopię).
 
 ## Licencja
 

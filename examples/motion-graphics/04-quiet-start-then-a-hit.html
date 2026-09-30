@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - motion 4: quiet start, then a hit</title>
+<!--
+  Motion graphic 4/6 - "Quiet start, then a hit": chwila ciszy, potem mocne uderzenie. Spokoj sprawia, ze uderzenie "wchodzi".
+  1080x1350, tlo #050505, GSAP 3.12.5, jedna os czasu 7 s, repeat: -1.
+  0-2.3 s (cisza): zielona kropka pulsuje trzy razy, pod nia szary zegar 08:59:57 / 08:59:58 / 08:59:59, nic wiecej sie nie rusza.
+  2.3 s (uderzenie): kropka peka na zewnatrz, bialy blysk gasnie 0.4 s, cala scena trzesie sie 0.25 s, zegar znika,
+  ogromne "LIVE" wpada ze skali 1.8 do 1 (wysrodkowane flexboxem na calej szerokosci).
+  2.45-3.4 s: osiem ciemnych kart powiadomien wylatuje ze srodka w rozne miejsca wokol "LIVE", jedna co 0.12 s.
+  6.3 s: wszystko gasnie, kropka i zegar wracaja na petle. Trzesienie to stala sekwencja przesuniec (zero Math.random).
+
+  Kontrakt strony vstudio: window.DURATION / window.seek(t) / window.EV / window.TEXTS(t) / window.__ready / window.__CAPTURE__
+  Uwaga: GSAP jest ladowany z CDN (adres z promptu) - render wymaga dostepu do cdnjs.cloudflare.com.
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #050505; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1350px; margin: -675px 0 0 -540px;
+           overflow: hidden; background: #050505; transform-origin: 50% 50%;
+           font-family: Inter, "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif; }
+  #scene { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; background: #050505; transform-origin: 50% 50%; }
+  .full { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; }
+
+  /* cisza: kropka (srodek sceny 540,675) i zegar pod nia */
+  #dot { position: absolute; left: 518px; top: 653px; width: 44px; height: 44px; border-radius: 22px; background: #22D67A; box-shadow: 0 0 44px rgba(34, 214, 122, .45); }
+  #ring { position: absolute; left: 518px; top: 653px; width: 44px; height: 44px; box-sizing: border-box; border-radius: 22px; border: 4px solid #22D67A; }
+  .clk { position: absolute; left: 0; top: 752px; width: 1080px; text-align: center; font-size: 46px; font-weight: 600; color: #8A8F98;
+         letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+
+  /* uderzenie: LIVE wysrodkowane pelnoszerokim kontenerem flex (bez translate) */
+  #liveWrap { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; display: flex; align-items: center; justify-content: center; }
+  #live { font-size: 260px; font-weight: 900; line-height: 1; color: #fff; }
+  .note { position: absolute; width: 360px; height: 92px; box-sizing: border-box; border-radius: 24px; background: #14171D; border: 1.5px solid #262B35;
+          display: flex; align-items: center; padding: 0 26px; gap: 20px; }
+  .sq { flex: none; width: 34px; height: 34px; border-radius: 9px; }
+  .nl { font-size: 30px; font-weight: 600; color: #E8EAF0; white-space: nowrap; }
+  #flash { background: #fff; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="scene">
+    <div id="ring"></div>
+    <div id="dot"></div>
+    <div id="c1" class="clk">08:59:57</div>
+    <div id="c2" class="clk">08:59:58</div>
+    <div id="c3" class="clk">08:59:59</div>
+
+    <div id="hitLayer" class="full">
+      <div id="notes"></div>
+      <div id="liveWrap"><div id="live">LIVE</div></div>
+    </div>
+    <div id="flash" class="full"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function () {
+  var DUR = 7, CAPTURE = !!window.__CAPTURE__;
+  var stage = document.getElementById('stage');
+  function fit() { stage.style.transform = 'scale(' + Math.min(innerWidth / 1080, innerHeight / 1350) + ')'; }
+
+  /* osiem kart: [srodek x, srodek y, etykieta, kolor kwadracika] - stale pozycje wokol LIVE (zero losowosci) */
+  var GREEN = '#22D67A', BLUE = '#4F8CFF', AMBER = '#FFC53D', PINK = '#FF5C8A';
+  var NOTES = [[195, 250, 'New order', GREEN], [560, 300, 'New signup', BLUE], [870, 200, 'Payment received', AMBER], [260, 450, 'New review', PINK],
+               [820, 460, 'New order', GREEN], [250, 930, 'New signup', BLUE], [830, 940, 'Payment received', AMBER], [540, 1100, 'New review', PINK]];
+  var host = document.getElementById('notes');
+  NOTES.forEach(function (n, i) {
+    var d = document.createElement('div');
+    d.className = 'note'; d.id = 'note' + i;
+    d.style.left = (n[0] - 180) + 'px'; d.style.top = (n[1] - 46) + 'px';      /* srodek karty w (x, y): jawne left/top */
+    d.innerHTML = '<div class="sq" style="background:' + n[3] + '"></div><div class="nl">' + n[2] + '</div>';
+    host.appendChild(d);
+  });
+
+  gsap.config({ force3D: false });           /* transformacje 2D bez promocji warstw: raster klatki nie zalezy od historii seek */
+  var tl = gsap.timeline({ repeat: -1, paused: CAPTURE });
+
+  /* stany startowe w czasie 0 osi */
+  tl.set('#scene', { x: 0, y: 0, scale: 1 }, 0)
+    .set('#dot', { scale: 1, autoAlpha: 1 }, 0)
+    .set('#ring', { scale: 1, autoAlpha: 0 }, 0)
+    .set('#c1', { autoAlpha: 1 }, 0).set('#c2,#c3', { autoAlpha: 0 }, 0)
+    .set('#flash', { opacity: 0 }, 0)
+    .set('#hitLayer', { autoAlpha: 1 }, 0)
+    .set('#live', { autoAlpha: 0, scale: 1.8 }, 0);
+  NOTES.forEach(function (n, i) { tl.set('#note' + i, { x: 540 - n[0], y: 675 - n[1], scale: 0.25, autoAlpha: 0 }, 0); });
+
+  /* 1. 0-2.3 s cisza: trzy lagodne pulsy, zegar odlicza po jednym na puls; reszta stoi */
+  [0.05, 0.8, 1.55].forEach(function (s) {
+    tl.to('#dot', { scale: 1.35, duration: 0.35, ease: 'sine.inOut' }, s)
+      .to('#dot', { scale: 1, duration: 0.35, ease: 'sine.inOut' }, s + 0.35);
+  });
+  tl.set('#c1', { autoAlpha: 0 }, 0.8).set('#c2', { autoAlpha: 1 }, 0.8)
+    .set('#c2', { autoAlpha: 0 }, 1.55).set('#c3', { autoAlpha: 1 }, 1.55);
+
+  /* 2. 2.3 s uderzenie */
+  tl.set('#c3', { autoAlpha: 0 }, 2.3)                                                     /* zegar znika */
+    .to('#dot', { scale: 5, autoAlpha: 0, duration: 0.4, ease: 'power3.out' }, 2.3)        /* kropka peka na zewnatrz... */
+    .set('#ring', { autoAlpha: 0.9 }, 2.3)
+    .to('#ring', { scale: 16, autoAlpha: 0, duration: 0.8, ease: 'power3.out' }, 2.3)      /* ...i ring fali */
+    .set('#flash', { opacity: 0.9 }, 2.3)
+    .to('#flash', { opacity: 0, duration: 0.4, ease: 'power2.out' }, 2.3)                  /* bialy blysk gasnie 0.4 s */
+    .set('#live', { autoAlpha: 1 }, 2.3)
+    .to('#live', { scale: 1, duration: 0.28, ease: 'power4.out' }, 2.3);                   /* LIVE wpada ze skali 1.8 do 1 */
+  /* trzesienie calej sceny 0.25 s: stala sekwencja 7 krokow (x, y), zero Math.random */
+  [[-16, 9], [14, -11], [-11, -8], [9, 7], [-5, -4], [3, 2], [0, 0]].forEach(function (p, i) {
+    tl.to('#scene', { x: p[0], y: p[1], duration: 0.25 / 7, ease: 'none' }, 2.3 + i * 0.25 / 7);
+  });
+
+  /* 3. 2.45-3.4 s osiem kart wylatuje ze srodka, jedna co 0.12 s */
+  var noteTimes = [];
+  NOTES.forEach(function (n, i) {
+    var st = 2.45 + i * 0.12; noteTimes.push(st);
+    tl.set('#note' + i, { autoAlpha: 1 }, st)
+      .to('#note' + i, { x: 0, y: 0, scale: 1, duration: 0.4, ease: 'power3.out' }, st);
+  });
+  tl.to('#scene', { scale: 1.025, duration: 2.9, ease: 'sine.inOut' }, 3.4);              /* wolny najazd: nic nie zamarza */
+
+  /* 4. 6.3 s wszystko gasnie; kropka i zegar wracaja na petle */
+  tl.to('#hitLayer', { autoAlpha: 0, duration: 0.4, ease: 'power2.inOut' }, 6.3)
+    .to('#scene', { scale: 1, duration: 0.4, ease: 'sine.inOut' }, 6.3)
+    .set('#dot', { scale: 1 }, 6.4)
+    .to('#dot', { autoAlpha: 1, duration: 0.3, ease: 'power2.out' }, 6.7)
+    .to('#c1', { autoAlpha: 1, duration: 0.3, ease: 'power2.out' }, 6.7);
+  tl.set({}, {}, DUR);                       /* os trwa dokladnie 7 s */
+
+  /* ---------- haki vstudio ---------- */
+  if (CAPTURE) { tl.totalTime(DUR - 0.001, false); tl.totalTime(0, false); }
+  window.DURATION = DUR;
+  window.seek = function (t) { tl.pause(); tl.totalTime(((t % DUR) + DUR) % DUR, false); };
+  window.EV = [{ t: 0.05, type: 'tick' }, { t: 0.8, type: 'tick' }, { t: 1.55, type: 'tick' }, { t: 2.3, type: 'impact' }]
+    .concat(noteTimes.map(function (s) { return { t: s, type: 'pop' }; }))
+    .concat([{ t: 6.3, type: 'whoosh' }]);
+
+  var TXT = [['clock-57', '#c1'], ['clock-58', '#c2'], ['clock-59', '#c3'], ['live', '#live']]
+    .concat(NOTES.map(function (n, i) { return ['note-' + i, '#note' + i + ' .nl']; }));
+  function visibleBox(el) {                  /* tekst widoczny (opacity >= .5, visibility) i przyciety przez rodzicow z overflow */
+    var rg = document.createRange(); rg.selectNodeContents(el);
+    var r = rg.getBoundingClientRect(), o = 1;
+    if (getComputedStyle(el).visibility === 'hidden') return null;
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      var cs = getComputedStyle(n); o *= parseFloat(cs.opacity);
+      if (n !== el && cs.overflow !== 'visible') {
+        var c = n.getBoundingClientRect();
+        r = { left: Math.max(r.left, c.left), top: Math.max(r.top, c.top), right: Math.min(r.right, c.right), bottom: Math.min(r.bottom, c.bottom) };
+      }
+    }
+    return (o < 0.5 || r.right <= r.left || r.bottom <= r.top) ? null : r;
+  }
+  window.TEXTS = function () {
+    var out = [];
+    TXT.forEach(function (it) {
+      var el = document.querySelector(it[1]), b = visibleBox(el);
+      if (b) out.push({ id: it[0], text: el.textContent.trim(), x0: b.left, y0: b.top, x1: b.right, y1: b.bottom });
+    });
+    return out;
+  };
+  window.__ready = document.fonts.ready.then(fit);
+  fit();
+  if (!CAPTURE) addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

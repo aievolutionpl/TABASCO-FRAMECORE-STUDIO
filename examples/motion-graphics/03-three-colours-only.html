@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - motion 3: three colours only</title>
+<!--
+  Motion graphic 3/6 - "Three colours only": ten sam dashboard przed i po. Wybierz trzy kolory, reszte wyrzuc.
+  1080x1350, tlo biale, GSAP 3.12.5, jedna os czasu 7 s, repeat: -1.
+  0-2.6 s: 9 jaskrawych kolorow + czarna pigulka "Before: 9 colours".
+  2.6-3.3 s: granatowy pionowy pasek przechodzi z lewej do prawej; pod nim KAZDY element (tlo, karty, slupki, wycinki, ksztalty,
+  pigulka) przechodzi na jeden z trzech kolorow: granat #16204A, koral #FF6B4A, krem #F2E9DC. 3.0 s: "After: 3 colours" w korali.
+  3.4 s: maly bounce (scale 1.03 i z powrotem), potem przytrzymanie do 7 s i reset do 9 kolorow.
+  Po wycieraczce nie ma tu zadnego innego koloru: tlo = krem, karty = granat, pigulka = koral/granat.
+
+  Synchronizacja z paskiem bez callbackow: pozycja paska to ta sama krzywa power3.inOut, wiec zmiana koloru elementu i odslanianie
+  tla/kart to tweeny z wlasna funkcja easingu liczona z pozycji paska (krok 0/1 dla koloru, klamrowany ulamek dla odslaniania).
+
+  Kontrakt strony vstudio: window.DURATION / window.seek(t) / window.EV / window.TEXTS(t) / window.__ready / window.__CAPTURE__
+  Uwaga: GSAP jest ladowany z CDN (adres z promptu) - render wymaga dostepu do cdnjs.cloudflare.com.
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #fff; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1350px; margin: -675px 0 0 -540px;
+           overflow: hidden; background: #fff; transform-origin: 50% 50%;
+           font-family: Inter, "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif; }
+  #scene { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; background: #fff; transform-origin: 50% 50%; }
+  .full { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  #bgNew { background: #F2E9DC; clip-path: inset(0% 100% 0% 0%); }          /* nowe tlo odslaniane za paskiem */
+
+  .card { position: absolute; border-radius: 44px; background: #F1F2F5; overflow: hidden; }
+  .cardNew { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #16204A; clip-path: inset(0% 100% 0% 0%); }
+  #c1 { left: 60px;  top: 170px; width: 450px; height: 600px; }
+  #c2 { left: 570px; top: 170px; width: 450px; height: 600px; }
+  #c3 { left: 60px;  top: 830px; width: 960px; height: 440px; }
+
+  #bars { position: absolute; left: 44px; top: 60px; width: 362px; height: 480px; display: flex; align-items: flex-end; gap: 26px; }
+  .bar { flex: none; width: 71px; border-radius: 16px 16px 6px 6px; }
+  #donut { position: absolute; left: 0; top: 0; width: 450px; height: 600px; }
+  .sh { position: absolute; top: 155px; width: 130px; height: 130px; }
+
+  #pill { position: absolute; left: 60px; top: 50px; width: 440px; height: 72px; border-radius: 36px; background: #0A0A0A; }
+  .lb { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        font-size: 34px; font-weight: 700; letter-spacing: .01em; }
+  #lbBefore { color: #fff; }
+  #lbAfter { color: #16204A; }
+
+  #wipe { position: absolute; left: -160px; top: 0; width: 160px; height: 1350px; background: #16204A; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="scene">
+    <div id="bgNew" class="full"></div>
+
+    <div id="c1" class="card"><div class="cardNew"></div>
+      <div id="bars">
+        <div class="bar" style="height:180px"></div><div class="bar" style="height:300px"></div>
+        <div class="bar" style="height:240px"></div><div class="bar" style="height:420px"></div>
+      </div>
+    </div>
+
+    <div id="c2" class="card"><div class="cardNew"></div>
+      <!-- donut: 3 wycinki na okregu (pathLength=100, przerwy po 2), start u gory -->
+      <svg id="donut" viewBox="0 0 450 600">
+        <g transform="rotate(-90 225 300)" fill="none" stroke-width="72">
+          <circle id="d1" cx="225" cy="300" r="132" pathLength="100" stroke-dasharray="36 100" stroke-dashoffset="0"/>
+          <circle id="d2" cx="225" cy="300" r="132" pathLength="100" stroke-dasharray="30 100" stroke-dashoffset="-38"/>
+          <circle id="d3" cx="225" cy="300" r="132" pathLength="100" stroke-dasharray="28 100" stroke-dashoffset="-70"/>
+        </g>
+      </svg>
+    </div>
+
+    <div id="c3" class="card"><div class="cardNew"></div>
+      <div id="s1" class="sh" style="left:60px;border-radius:36px"></div>
+      <div id="s2" class="sh" style="left:237.5px;border-radius:65px"></div>
+      <div id="s3" class="sh" style="left:415px;border-radius:36px"></div>
+      <div id="s4" class="sh" style="left:592.5px;border-radius:65px"></div>
+      <div id="s5" class="sh" style="left:770px;border-radius:36px"></div>
+    </div>
+
+    <div id="pill"><div id="lbBefore" class="lb">Before: 9 colours</div><div id="lbAfter" class="lb">After: 3 colours</div></div>
+    <div id="wipe"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function () {
+  var DUR = 7, CAPTURE = !!window.__CAPTURE__;
+  var stage = document.getElementById('stage');
+  function fit() { stage.style.transform = 'scale(' + Math.min(innerWidth / 1080, innerHeight / 1350) + ')'; }
+
+  gsap.config({ force3D: false });           /* transformacje 2D bez promocji warstw: raster klatki nie zalezy od historii seek */
+  gsap.defaults({ ease: 'power3.inOut' });
+  var tl = gsap.timeline({ repeat: -1, paused: CAPTURE });
+
+  var NAVY = '#16204A', CORAL = '#FF6B4A', CREAM = '#F2E9DC';
+  var BRIGHT = { red: '#FF3B30', orange: '#FF9500', yellow: '#FFCC00', green: '#34C759', teal: '#00C7BE', sky: '#32ADE6',
+                 blue: '#0A63FF', purple: '#AF52DE', pink: '#FF2D92' };            /* dokladnie 9 kolorow "przed" */
+
+  /* ---- wycieraczka: pozycja paska to power3.inOut na odcinku 2.6-3.3 s; wszystko inne liczy sie z niej ---- */
+  var E = gsap.parseEase('power3.inOut'), BW = 160, W0 = 2.6, WD = 0.7;
+  function barCx(p) { return -BW / 2 + E(p) * (1080 + BW); }                       /* srodek paska dla postepu p */
+  function follow(a, b) { return function (p) { var f = (barCx(p) - a) / (b - a); return f < 0 ? 0 : f > 1 ? 1 : f; }; }
+  function step(x) { return function (p) { return barCx(p) >= x ? 1 : 0; }; }     /* zmiana koloru dokladnie pod srodkiem paska */
+
+  /* elementy: [selektor, wlasciwosc, kolor przed, kolor po, srodek x na scenie] */
+  var B = BRIGHT, ITEMS = [
+    ['#c1 .bar:nth-child(1)', 'backgroundColor', B.red,    CREAM, 60 + 44 + 35.5],
+    ['#c1 .bar:nth-child(2)', 'backgroundColor', B.orange, CREAM, 60 + 44 + 132.5],
+    ['#c1 .bar:nth-child(3)', 'backgroundColor', B.yellow, CREAM, 60 + 44 + 229.5],
+    ['#c1 .bar:nth-child(4)', 'backgroundColor', B.green,  CORAL, 60 + 44 + 326.5],
+    ['#d1', 'stroke', B.blue,   CORAL, 912],
+    ['#d2', 'stroke', B.purple, CREAM, 770],
+    ['#d3', 'stroke', B.pink,   CORAL, 685],
+    ['#s1', 'backgroundColor', B.teal,   CORAL, 60 + 125],
+    ['#s2', 'backgroundColor', B.pink,   CREAM, 60 + 302.5],
+    ['#s3', 'backgroundColor', B.sky,    CORAL, 60 + 480],
+    ['#s4', 'backgroundColor', B.orange, CREAM, 60 + 657.5],
+    ['#s5', 'backgroundColor', B.blue,   CORAL, 60 + 835]
+  ];
+  ITEMS.forEach(function (it) {
+    var from = {}, to = { duration: WD, ease: step(it[4]) };
+    from[it[1]] = it[2]; to[it[1]] = it[3];
+    tl.set(it[0], from, 0).to(it[0], to, W0);
+  });
+
+  /* stany startowe */
+  tl.set('#scene', { scale: 1 }, 0)
+    .set('#wipe', { left: -BW }, 0)
+    .set('#bgNew', { clipPath: 'inset(0% 100% 0% 0%)' }, 0)
+    .set('.cardNew', { clipPath: 'inset(0% 100% 0% 0%)' }, 0)
+    .set('#pill', { backgroundColor: '#0A0A0A' }, 0)
+    .set('#lbBefore', { autoAlpha: 1, color: '#ffffff' }, 0)
+    .set('#lbAfter', { autoAlpha: 0 }, 0);
+
+  /* 2.6-3.3 s: pasek + odslanianie tla i kart za jego srodkiem */
+  tl.to('#wipe', { left: 1080, duration: WD, ease: 'power3.inOut' }, W0);
+  tl.to('#bgNew', { clipPath: 'inset(0% 0% 0% 0%)', duration: WD, ease: follow(0, 1080) }, W0);
+  [['#c1', 60, 510], ['#c2', 570, 1020], ['#c3', 60, 1020]].forEach(function (c) {
+    tl.to(c[0] + ' .cardNew', { clipPath: 'inset(0% 0% 0% 0%)', duration: WD, ease: follow(c[1], c[2]) }, W0);
+  });
+  /* pigula: w chwili, gdy srodek paska mija jej srodek (x=280), czern -> granat (tekst krem); o 3.0 s zmiana tekstu i kolor koral.
+     Jednorazowe tl.set zamiast zachodzacych tweenow tej samej wlasciwosci (inaczej wynik zalezy od kolejnosci seek). */
+  var tPill = (function () {
+    var lo = 0, hi = 1;
+    for (var i = 0; i < 40; i++) { var m = (lo + hi) / 2; if (barCx(m) >= 280) hi = m; else lo = m; }
+    return W0 + WD * hi;
+  })();
+  tl.set('#pill', { backgroundColor: NAVY }, tPill)
+    .set('#lbBefore', { color: CREAM }, tPill)
+    .set('#lbBefore', { autoAlpha: 0 }, 3.0)
+    .set('#lbAfter', { autoAlpha: 1 }, 3.0)
+    .to('#pill', { backgroundColor: CORAL, duration: 0.12 }, 3.0);
+
+  /* 3.4 s: maly bounce calosci; potem wolny najazd w czasie przytrzymania (nic nie zamarza) */
+  tl.to('#scene', { scale: 1.03, duration: 0.15, ease: 'power2.out' }, 3.4)
+    .to('#scene', { scale: 1, duration: 0.3, ease: 'power2.inOut' }, 3.55)
+    .to('#scene', { scale: 1.02, duration: 3.15, ease: 'sine.inOut' }, 3.85);
+  tl.set({}, {}, DUR);                       /* os trwa dokladnie 7 s; o 7 s petla resetuje sie do 9 kolorow */
+
+  /* ---------- haki vstudio ---------- */
+  if (CAPTURE) { tl.totalTime(DUR - 0.001, false); tl.totalTime(0, false); }
+  window.DURATION = DUR;
+  window.seek = function (t) { tl.pause(); tl.totalTime(((t % DUR) + DUR) % DUR, false); };
+  window.EV = [{ t: 2.6, type: 'whoosh' }, { t: 3.0, type: 'pop' }, { t: 3.4, type: 'hit' }];
+
+  var TXT = [['label-before', '#lbBefore'], ['label-after', '#lbAfter']];
+  function visibleBox(el) {                  /* tekst widoczny (opacity >= .5, visibility) i przyciety przez rodzicow z overflow */
+    var rg = document.createRange(); rg.selectNodeContents(el);
+    var r = rg.getBoundingClientRect(), o = 1;
+    if (getComputedStyle(el).visibility === 'hidden') return null;
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      var cs = getComputedStyle(n); o *= parseFloat(cs.opacity);
+      if (n !== el && cs.overflow !== 'visible') {
+        var c = n.getBoundingClientRect();
+        r = { left: Math.max(r.left, c.left), top: Math.max(r.top, c.top), right: Math.min(r.right, c.right), bottom: Math.min(r.bottom, c.bottom) };
+      }
+    }
+    return (o < 0.5 || r.right <= r.left || r.bottom <= r.top) ? null : r;
+  }
+  window.TEXTS = function () {
+    var out = [];
+    TXT.forEach(function (it) {
+      var el = document.querySelector(it[1]), b = visibleBox(el);
+      if (b) out.push({ id: it[0], text: el.textContent.trim(), x0: b.left, y0: b.top, x1: b.right, y1: b.bottom });
+    });
+    return out;
+  };
+  window.__ready = document.fonts.ready.then(fit);
+  fit();
+  if (!CAPTURE) addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
