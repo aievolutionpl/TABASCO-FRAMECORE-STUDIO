@@ -14,6 +14,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from . import vendor
 from .common import (ENGINES, GATES, OUTPUT, ROOT, SCRIPTS, STUDIO, append_log, die, ffprobe, find_chrome, grab_frame, image_sheet, load_project,
                      log, npx, run, save_project, sha256, slugify, today)
 
@@ -233,7 +234,8 @@ def render_stills(pdir: Path, proj: dict, times: list[float]) -> list[Path]:
     if eng == "html":
         for t in times:
             o = sd / f"t_{t:06.2f}.png"
-            run([sys.executable, SCRIPTS / "html_to_video.py", pdir / "src" / "index.html", "--still", t, "--size", f"{w}x{h}", "--fps", fps, "-o", o])
+            run([sys.executable, SCRIPTS / "html_to_video.py", pdir / "src" / "index.html", "--still", t, "--size", f"{w}x{h}", "--fps", fps, "-o", o],
+                env=vendor.env())
             outs.append(o)
     elif eng == "hyperframes":
         raw = sd / "_raw"
@@ -289,7 +291,7 @@ def render(pdir: Path, proj: dict, final: bool, tag: str | None, subframes: int 
             cmd += ["--crf", 24, "--preset", "veryfast"]
         if audio:
             cmd += ["--audio", audio]
-        run(cmd, capture=False)
+        run(cmd, capture=False, env=vendor.env())
     elif eng == "hyperframes":
         cp = npx(["hyperframes", "render", "src", "-q", "delivery" if final else "draft", "-f", str(fps), "-o", str(out.resolve()), "--quiet"], cwd=pdir)
         if cp.returncode != 0 or not out.exists():

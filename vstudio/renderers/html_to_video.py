@@ -81,8 +81,9 @@ def parse_size(value: str) -> tuple[int, int]:
         raise argparse.ArgumentTypeError("size must look like 1920x1080")
 
 
-def launch_browser(pw, preferred: str | None):
+def launch_browser(pw, preferred: str | None, extra_args: list[str] | None = None):
     """Playwright's bundled headless shell is often missing; fall back to Chrome, Edge, any local Chromium."""
+    chromium_args = CHROMIUM_ARGS + list(extra_args or [])
     attempts: list[dict] = []
     if preferred:
         attempts.append({"executable_path": preferred} if os.path.exists(preferred) else {"channel": preferred})
@@ -94,10 +95,37 @@ def launch_browser(pw, preferred: str | None):
     last = None
     for kwargs in attempts:
         try:
-            return pw.chromium.launch(args=CHROMIUM_ARGS, **kwargs)
+            return pw.chromium.launch(args=chromium_args, **kwargs)
         except Exception as exc:  # noqa: BLE001 - try the next candidate
             last = exc
     raise SystemExit(f"No usable Chromium found. Last error: {last}")
+
+
+def install_vendor_routes(target) -> None:
+    """VSTUDIO_VENDOR_INDEX (plik index.json z `vstudio vendor`): żądania do zewnętrznych URL-i z indeksu dostają lokalną kopię.
+
+    Dzięki temu strona z GSAP z CDN renderuje się offline, a jej HTML zostaje bez zmian (u innych dalej ładuje z CDN).
+    """
+    import json
+    import mimetypes
+    import re
+
+    index = os.environ.get("VSTUDIO_VENDOR_INDEX")
+    if not index or not os.path.exists(index):
+        return
+    urls = json.loads(Path(index).read_text(encoding="utf-8"))
+    base = Path(index).parent
+
+    def handler(route):
+        name = urls.get(route.request.url)
+        f = base / name if name else None
+        if f is not None and f.is_file():
+            ctype = "application/javascript" if f.suffix in (".js", ".mjs") else (mimetypes.guess_type(f.name)[0] or "application/octet-stream")
+            route.fulfill(body=f.read_bytes(), content_type=ctype, headers={"access-control-allow-origin": "*"})
+        else:
+            route.continue_()
+
+    target.route(re.compile(r"^https?://(?!127\.0\.0\.1|localhost)"), handler)
 
 
 def serve_directory(directory: Path) -> tuple[http.server.ThreadingHTTPServer, int]:
@@ -236,6 +264,7 @@ def main() -> int:
             pg.on("pageerror", lambda e: log(f"[page error] {e}"))
             pg.on("console", lambda m: log(f"[console.{m.type}] {m.text}") if m.type in ("error", "warning") else None)
             pg.add_init_script("window.__CAPTURE__ = true;")
+            install_vendor_routes(ctx)
             if use_clock:
                 pg.clock.install(time=0)
                 pg.clock.pause_at(1)  # frozen before any page script runs; we advance it manually

@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "starter",
+      "title": "Starter: jeden kształt, który się nie tnie",
+      "summary": "Minimalna scena na sprężynach: jeden kształt zmienia rozmiar, promień i kolor, a napisy wjeżdżają z maską. Punkt wyjścia do własnego filmu.",
+      "use_for": "Własny film od zera, zgodny z regułami ruchu vstudio",
+      "technique": "Morph jednego kształtu, sprężyny, pętla bez szwu",
+      "file": "templates/html-video-starter.html",
+      "size": [1920, 1080], "fps": 30, "duration": 12.0, "poster_t": 3.2, "loop": true, "tags": ["canvas", "spring", "starter"]
+    },
+    {
+      "id": "showreel",
+      "title": "Showreel: pięć wizualizacji w 25 s",
+      "summary": "Pełna, działająca scena: kinetyczna typografia, analiza klatek, montaż, dźwięk i plansza końcowa z przejściami slice glitch i RGB split.",
+      "use_for": "Wzorzec zaawansowanych technik canvas i kontraktu strony",
+      "technique": "Canvas 2D, przejścia, HUD, cząsteczki",
+      "file": "examples/showreel/index.html",
+      "size": [1920, 1080], "fps": 30, "duration": 25.0, "poster_t": 7.5, "loop": false, "tags": ["canvas", "advanced", "showreel"]
+    },
+    {
+      "id": "hide-the-cut",
+      "title": "Ukryj cięcie",
+      "summary": "Jeden obiekt niesie całą animację: kropka, ikona, telefon, ekran zamówienia i z powrotem do kropki. Zero cięć i cross-fade.",
+      "use_for": "Demo produktu, które płynie od pomysłu do aplikacji jednym ruchem",
+      "technique": "Morph jednego elementu (rozmiar i promień w px), treść w rosnącym elemencie",
+      "file": "examples/motion-graphics/01-hide-the-cut.html",
+      "size": [1080, 1350], "fps": 30, "duration": 7.0, "poster_t": 3.9, "loop": true, "tags": ["gsap", "product", "morph"]
+    },
+    {
+      "id": "one-frame-for-everything",
+      "title": "Jedna ramka na wszystko",
+      "summary": "Telefon stoi w miejscu, a w środku wjeżdża sześć ekranów: czat, wykres, mapa, płatność, kalendarz, sukces.",
+      "use_for": "Przeglądy narzędzi i funkcji: wszystko w jednym urządzeniu",
+      "technique": "Stała ramka urządzenia, ekrany przez xPercent, przycinanie zaokrąglonym ekranem",
+      "file": "examples/motion-graphics/02-one-frame-for-everything.html",
+      "size": [1080, 1350], "fps": 30, "duration": 7.0, "poster_t": 1.9, "loop": true, "tags": ["gsap", "product", "ui"]
+    },
+    {
+      "id": "three-colours-only",
+      "title": "Tylko trzy kolory",
+      "summary": "Ten sam dashboard przed i po: dziewięć jaskrawych kolorów, potem pasek przemalowuje wszystko na granat, koral i krem.",
+      "use_for": "Wykresy, dashboardy, slajdy, miniatury, pokazanie wpływu palety",
+      "technique": "Wycieraczka sterująca przemalowaniem (easing liczony z pozycji paska)",
+      "file": "examples/motion-graphics/03-three-colours-only.html",
+      "size": [1080, 1350], "fps": 30, "duration": 7.0, "poster_t": 4.5, "loop": false, "tags": ["gsap", "data", "palette"]
+    },
+    {
+      "id": "quiet-start-then-a-hit",
+      "title": "Cisza, potem uderzenie",
+      "summary": "Zielona kropka odlicza 08:59:57, 58, 59, po czym błysk, wstrząs, ogromne LIVE i osiem kart powiadomień.",
+      "use_for": "Zapowiedzi premier, duże liczby, odsłony",
+      "technique": "Kontrast ciszy i uderzenia, stała sekwencja wstrząsu, karty lecące ze środka",
+      "file": "examples/motion-graphics/04-quiet-start-then-a-hit.html",
+      "size": [1080, 1350], "fps": 30, "duration": 7.0, "poster_t": 4.4, "loop": true, "tags": ["gsap", "launch", "impact"]
+    },
+    {
+      "id": "pieces-first-whole-last",
+      "title": "Części najpierw, całość na końcu",
+      "summary": "Burger budowany warstwa po warstwie z odbiciem, etykieta nazywa każdą część, a całość i plakietka pojawiają się dopiero na końcu.",
+      "use_for": "Odsłony logo, listy funkcji, „tak to jest zbudowane”",
+      "technique": "Stos elementów CSS, bounce, squash-and-bounce, plakietka „stempel”",
+      "file": "examples/motion-graphics/05-pieces-first-whole-last.html",
+      "size": [1080, 1350], "fps": 30, "duration": 7.0, "poster_t": 4.6, "loop": true, "tags": ["gsap", "build", "css-art"]
+    },
+    {
+      "id": "one-hero-one-world",
+      "title": "Jeden bohater, jeden prosty świat",
+      "summary": "Flakon NOIR obraca się powoli w szarym studiu (CSS 3D), po szkle sunie odblask, cień się rozciąga, kadr wolno najeżdża.",
+      "use_for": "Ujęcie produktu, które zrobisz sam w jedno popołudnie",
+      "technique": "CSS 3D z perspektywą na rodzicu, stos paneli dla grubości bryły",
+      "file": "examples/motion-graphics/06-one-hero-one-world.html",
+      "size": [1080, 1350], "fps": 30, "duration": 7.0, "poster_t": 3.2, "loop": true, "tags": ["gsap", "product", "3d"]
+    }
+  ]
+}
