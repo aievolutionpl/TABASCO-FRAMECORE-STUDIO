@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import common, ops, registry  # noqa: F401  (ops wypełnia rejestr)
+from .director import REMEDIES as DIRECTOR_REMEDIES
 from .supervisor import REMEDIES
 
 DOC_PATH = common.STUDIO / "docs" / "CAPABILITIES.md"
@@ -59,6 +60,9 @@ def render() -> str:
             out += [_params_table(c)]
     out += ["## Kody znalezisk nadzorcy", "", "| Kod | Znaczenie | Jak naprawić (wskazówka dla agenta) |", "| --- | --- | --- |"]
     for code, (title, fix) in REMEDIES.items():
+        out.append(f"| `{code}` | {title} | {fix} |")
+    out += ["", "## Kody znalezisk reżysera", "", "| Kod | Znaczenie | Jak naprawić (wskazówka dla agenta) |", "| --- | --- | --- |"]
+    for code, (title, fix) in DIRECTOR_REMEDIES.items():
         out.append(f"| `{code}` | {title} | {fix} |")
     out.append("")
     return "\n".join(out)

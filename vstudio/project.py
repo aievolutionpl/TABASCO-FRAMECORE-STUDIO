@@ -354,6 +354,10 @@ def deliver(pdir: Path, proj: dict, video: Path | None, strict: bool, poster_at:
         warnings.append("critic has not scored this film (run compare and the video-critic subagent for anything that will be published)")
     elif proj["critic_score"] < 8:
         warnings.append(f"critic score {proj['critic_score']}/10 is below the 8/10 shipping bar")
+    from . import assets as _assets, director as _director
+
+    if _director.state(pdir)["state"] != "approved":
+        warnings.append("director has not signed off this version of the scene (director_review, then director_signoff): do not send it to the user yet")
     if strict and warnings:
         die("deliver blocked (--strict): " + "; ".join(warnings))
     fd = pdir / "final"
@@ -381,7 +385,10 @@ def deliver(pdir: Path, proj: dict, video: Path | None, strict: bool, poster_at:
            f"- Critic score: {proj.get('critic_score', 'not scored')}", "", "## Gates", ""]
     man += [f"- {g}: {proj['gates'].get(g)}" for g in GATES]
     man += ["", "## Warnings", ""] + ([f"- {w}" for w in warnings] or ["- none"])
-    man += ["", "## Credits (third-party assets in this film)", "", "- Sound: procedural (vstudio) unless listed here", "- Fonts: ", "- Music: ", "- Images / footage: ", "",
+    credits = _assets.credits(pdir)
+    man += ["", "## Credits (third-party assets in this film)", "", "- Sound: procedural (vstudio) unless listed here", "- Fonts: ", "- Music: ",
+            "- Images / footage: " + ("" if credits else "none recorded")] + credits + [""]
+    man += ["",
             "## Before publishing", "", "- Never publish without explicit user approval.",
             "- Home Fires Jersey: log to Notion (`Skills/hfj-notion-logger/SKILL.md`, database `3282c19fdc61800f80dbe10c1deefd46`)." if "home-fires" in proj["brand"] else "- Brand-specific logging, if any, per `Agents/<BRAND>/CONFIG.md`.",
             "- The user is responsible for the rights to any third-party material used.", ""]

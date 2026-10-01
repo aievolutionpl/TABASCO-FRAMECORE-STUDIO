@@ -13,6 +13,7 @@ obrazy, a dashboard pokaże jako miniatury.
 """
 from __future__ import annotations
 
+import contextvars
 import time
 from dataclasses import dataclass, field
 from typing import Callable
@@ -27,6 +28,8 @@ CATEGORIES = [
     ("knowledge", "Wiedza dla agenta"),
     ("inspect", "Podgląd klatek i osi czasu"),
     ("supervise", "Nadzór jakości"),
+    ("direct", "Reżyser: styl, plan i przegląd przed wysyłką"),
+    ("assets", "Assety: ikony, grafiki, zdjęcia"),
     ("render", "Render, dźwięk, wydanie"),
     ("agent", "Zadania dla agenta"),
     ("system", "Środowisko i aktywność"),
@@ -64,6 +67,12 @@ class Capability:
 
 
 REGISTRY: dict[str, Capability] = {}
+_SOURCE: contextvars.ContextVar[str] = contextvars.ContextVar("vstudio_call_source", default="api")
+
+
+def current_source() -> str:
+    """Skąd przyszło wywołanie (mcp, dashboard, cli, api). Handler może to odczytać; wywołujący nie może tego podrobić argumentem."""
+    return _SOURCE.get()
 
 
 def capability(name: str, title: str, summary: str, category: str, *, params: dict | None = None, required: tuple = (),
@@ -138,6 +147,14 @@ def call(name: str, args: dict | None = None, *, source: str = "api") -> dict:
     if cap is None:
         raise CapabilityError(f"nieznana operacja '{name}'. Dostępne: {', '.join(sorted(REGISTRY))}")
     args = validate(cap, args or {})
+    token = _SOURCE.set(source)
+    try:
+        return _call(cap, name, args, source)
+    finally:
+        _SOURCE.reset(token)
+
+
+def _call(cap: Capability, name: str, args: dict, source: str) -> dict:
     t0 = time.time()
     project = args.get("project") if isinstance(args.get("project"), str) else None
     try:

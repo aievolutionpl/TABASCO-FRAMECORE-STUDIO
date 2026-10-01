@@ -59,27 +59,76 @@ Pitfalls (each one produces a finding):
 """
 
 WORKFLOW = """\
-# Work loop (follow it; the supervisor is your eyes)
+# Work loop (follow it; the supervisor and the director are your eyes)
 
 1. `studio_status` first. If the studio is not onboarded, ask the user for brand, palette, font, tone and default format, then `profile_set`.
 2. `task_next` returns what the user asked for in the dashboard. `task_update` -> in_progress.
-3. Choose a start: `templates_list` then `project_create` (from a template, or blank). Read the brief; `knowledge_get topic=brand|motion|visual|gsap|contract`.
-4. Edit the scene: `scene_read`, then `scene_write` / `scene_patch` with `check: "quick"`.
-5. LOOK at the film: `frames_view` with times at the opening, the main beat, the fastest transition and the end. Judge hierarchy, spacing, cut-off text, stray shapes.
-6. `check_run` (standard). Fix errors first, then warnings, then re-run; read `delta` to see what you resolved and what is new. Repeat until `verdict: pass`.
+3. DIRECT before you build: `project_create` (from the closest template or blank), then `director_plan` (goal, platform, tone). It picks a main style plus two
+   accents with different layouts and returns a beat sheet with a visible change every 2-3 s. Read `knowledge_get topic=direction`, and `style_get` for each style used.
+4. Build beat by beat: `scene_read`, then `scene_write` / `scene_patch` with `check: "quick"`. Fetch icons and stickers with `assets_search` / `assets_add` /
+   `assets_generate` instead of leaving beats text-only.
+5. LOOK at the film: `frames_view` at the opening, each beat, the fastest transition and the end. Judge hierarchy, spacing, cut-off text, stray shapes.
+6. `check_run` (standard): technical correctness. Fix errors first, then warnings, then re-run; read `delta`. Repeat until `verdict: pass`.
    If a warning is intentional (e.g. a prompt demands a static hold), say so in `task_update` notes and keep it.
-7. `render_start` (draft) then `job_wait`; `gate_set` approve stills/brief/visual_rules when genuinely done; `render_start` final; `deliver_start`.
-8. `task_update` -> done with a short note: what was made, which warnings remain and why.
+7. `director_review`: pacing, hook, variety, motion, text rendering. LOOK at the filmstrip and the rhythm chart it returns. Fix findings, re-run.
+   Best: hand this step to the `vstudio-director` agent (fresh eyes, no edit tools). When the checklist honestly holds: `director_signoff` (approve true, notes of what you saw,
+   accept: {CODE: reason} for warnings kept on purpose). Any later edit to the scene invalidates the sign-off.
+8. Only now `render_start` (draft, then final once brief, visual_rules and stills are approved) and `deliver_start`: final render and delivery refuse to start without the
+   director's sign-off for the current scene. Tell the user the film is ready only after that.
+9. `task_update` -> done with a short note: what was made, which styles, which warnings remain and why.
 
-Never report success without a `pass` verdict or an explicit note. After 6 rounds without progress, stop and ask the user. Never overwrite a scene without `scene_write` (it keeps history; `scene_restore` undoes).
+Never report success without `pass` from the supervisor, an approved director sign-off and a note about warnings kept on purpose. After 6 rounds without progress, stop and
+ask the user. Never overwrite a scene without `scene_write` (it keeps history; `scene_restore` undoes).
+"""
+
+DIRECTION = """\
+# The director's craft (read before building; director_review measures it)
+
+A film that is technically correct can still be boring. You are the director: decide what the viewer sees every 2-3 seconds.
+
+1. Hook, 0-1.5 s. Frame 1 is the thumbnail. Something moves or a bold line is on screen by 1 s: the promise in at most 6 words. Never open on a logo or a fade from black.
+2. Rhythm. A visibly NEW situation every 2-3 s on reels/tiktok/shorts (3.5 s on feed/linkedin, 5 s for calm explainers). "New" means layout, background, subject or camera
+   changes, not a word swap. Let the CTA hold still for 1.5-2.5 s. WEAK_HOOK, SLOW_PACE and BEAT_MISSING measure this.
+3. Variety inside a system. Constant: palette, font, tone, logo position. Variable per beat: layout, background treatment (dark / light / gradient / photo), motion
+   language, transition, sound. `director_plan` picks a main style and two accents with different layouts. At least 2 looks in 7 s, 3 from 12 s, 4 from 20 s (MONOTONE_STYLE).
+4. Motion with weight. Ease everything: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops. Constant speed only for long drifts
+   (LINEAR_MOTION). Stagger groups by 0.05-0.1 s (NO_STAGGER). Overlap the end of one move with the start of the next. Put a slow push-in or drift under static holds.
+   One hero motion per beat.
+5. Text. At most 6 words per beat and 2 sizes; the key word in the accent colour. Fully visible, never clipped (TEXT_CLIPPED), never hidden behind another layer (TEXT_HIDDEN),
+   never colliding (TEXT_OVERLAP). Polish letters must come from the chosen font (GLYPH_MISSING): load latin-ext. Stay inside platform safe zones. Reading time is at least chars/15 + 1.5 s.
+6. Assets. Pair every text-only beat with an icon, sticker or small image. One stroke weight and corner style across the film. Colour icons through CSS `color` so the
+   brand palette applies. Prefer built-in icons and generated graphics (no licence questions); downloaded files get credits in DELIVERY.md automatically.
+7. Sound. Every transition has a cue in EV: hit for cuts, whoosh for moves, pop for stickers, chime for success.
+8. Restraint. If a beat has two ideas, split it. If an element does not help the message, remove it.
+
+Review ritual: `director_review`, then LOOK at the filmstrip and the rhythm chart (green lines = new situations, red areas = gaps). Check each checklist item honestly.
+A film you would scroll past is not approved.
+"""
+
+ASSETS = """\
+# Assets: icons, generated graphics and downloaded images
+
+- Where: files live in `src/assets/` and the scene references them as `assets/<file>`. Preview, supervisor and render all serve `src/` as the root. `ASSETS.json` records source,
+  licence, author and hash of every file; delivery turns it into credits.
+- Order of preference: (1) built-in icons (`assets_search source=builtin`, 64 line icons, English and Polish keywords), (2) generated graphics (`assets_generate`: blob, mesh,
+  dots, grid, rings, waves, rays, confetti, grain, starburst, squiggle, arrow; deterministic from a seed, in brand colours), (3) Iconify icons and Openverse photos
+  (`assets_search source=iconify|openverse`, needs internet; only permissive licences are returned), (4) a plain https URL (licence unknown: tell the user to check the rights).
+- Inline SVG (`assets_snippet mode=inline`) inherits CSS `color`, so one icon can follow the palette and animate like any element. Use `<img>` for photos.
+- Images must be decoded before frame 0: `window.__ready = Promise.all([document.fonts.ready, ...[...document.images].map(i => i.decode())])`. A broken image is ASSET_BROKEN.
+- Downloads are safe by construction: https only, public hosts only, size and time limits, content sniffing, SVG sanitised (no scripts, no external references), rasters re-encoded.
+- Use icons at 6-12% of the frame width, in groups of 3-6 with a stagger; never decorate for its own sake.
 """
 
 
 def findings_text() -> str:
+    from .director import REMEDIES as DIRECTOR
     from .supervisor import REMEDIES
 
-    rows = ["# Finding codes and how to fix them", ""]
+    rows = ["# Finding codes and how to fix them", "", "## Supervisor (technical correctness)", ""]
     for code, (title, fix) in REMEDIES.items():
+        rows.append(f"- **{code}** ({title}): {fix}")
+    rows += ["", "## Director (what the viewer sees)", ""]
+    for code, (title, fix) in DIRECTOR.items():
         rows.append(f"- **{code}** ({title}): {fix}")
     return "\n".join(rows) + "\n"
 
@@ -101,8 +150,17 @@ def brand_text() -> str:
             "Use these values; do not invent colours or fonts.\n")
 
 
+def _styles_text() -> str:
+    from . import styles
+
+    return styles.library_text()
+
+
 TOPICS = {
     "contract": ("Page contract: hooks the scene must expose", lambda: CONTRACT),
+    "direction": ("The director's craft: hook, rhythm, variety, motion, text, assets", lambda: DIRECTION),
+    "styles": ("Style library, transitions and beat layouts", _styles_text),
+    "assets": ("Icons, generated graphics and downloaded images", lambda: ASSETS),
     "gsap": ("Deterministic GSAP recipe and pitfalls", lambda: GSAP),
     "workflow": ("The work loop with the supervisor", lambda: WORKFLOW),
     "findings": ("Finding codes and fixes", findings_text),

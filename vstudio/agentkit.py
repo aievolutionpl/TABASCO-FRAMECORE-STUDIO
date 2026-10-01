@@ -27,6 +27,7 @@ def connect_info() -> dict:
     mcp_json = {"mcpServers": {"vstudio": {"command": cmd[0], "args": cmd[1:]}}}
     skill_project = ROOT / ".claude" / "skills" / "vstudio" / "SKILL.md"
     skill_user = Path.home() / ".claude" / "skills" / "vstudio" / "SKILL.md"
+    agent_project = ROOT / ".claude" / "agents" / "vstudio-director.md"
     mcp_file = ROOT / ".mcp.json"
     configured = False
     if mcp_file.exists():
@@ -38,6 +39,7 @@ def connect_info() -> dict:
             "mcp_json_path": str(mcp_file), "mcp_configured": configured,
             "skill": {"project_path": str(skill_project), "user_path": str(skill_user),
                       "installed_project": skill_project.exists(), "installed_user": skill_user.exists()},
+            "director_agent": {"project_path": str(agent_project), "installed": agent_project.exists()},
             "agent": activity.agent_status()}
 
 
@@ -80,7 +82,13 @@ def skill_text() -> str:
     return skillgen.render()
 
 
-def install(skill: bool = True, mcp_config: bool = True, scope: str = "project") -> dict:
+def agent_text() -> str:
+    from . import skillgen
+
+    return skillgen.render_agent()
+
+
+def install(skill: bool = True, mcp_config: bool = True, scope: str = "project", director: bool = True) -> dict:
     if scope not in ("project", "user"):
         raise StudioError("scope: project albo user")
     done: dict = {}
@@ -89,6 +97,11 @@ def install(skill: bool = True, mcp_config: bool = True, scope: str = "project")
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(skill_text(), encoding="utf-8")
         done["skill"] = str(dest)
+    if director:
+        dest = (ROOT if scope == "project" else Path.home()) / ".claude" / "agents" / "vstudio-director.md"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(agent_text(), encoding="utf-8")
+        done["director_agent"] = str(dest)
     if mcp_config:
         f = ROOT / ".mcp.json"
         data = {}
@@ -101,5 +114,5 @@ def install(skill: bool = True, mcp_config: bool = True, scope: str = "project")
         f.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
         done["mcp_config"] = str(f)
     if not done:
-        raise StudioError("nic do zainstalowania: włącz skill i/lub mcp_config")
+        raise StudioError("nic do zainstalowania: włącz skill, director i/lub mcp_config")
     return {"installed": done, "note": "Uruchom ponownie agenta (albo zatwierdź serwer vstudio w jego ustawieniach MCP), żeby połączenie zadziałało."}
