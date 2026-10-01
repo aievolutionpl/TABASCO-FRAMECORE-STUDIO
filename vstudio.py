@@ -129,9 +129,15 @@ def _studio_commands(a) -> int:
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_text(text, encoding="utf-8")
             print(dest)
+            agent = Path(__file__).resolve().parent / "agents" / "vstudio-director.md"
+            agent.parent.mkdir(parents=True, exist_ok=True)
+            agent.write_text(agentkit.agent_text(), encoding="utf-8")
+            print(agent)
         else:
             print(text)
         return 0
+    if a.cmd in ("director", "styles", "assets"):
+        return _director_commands(a, registry)
     if a.cmd == "vendor":
         from vstudio import vendor
         if a.vendor_cmd == "list":
@@ -157,6 +163,70 @@ def _studio_commands(a) -> int:
             print("Agent: python vstudio.py skill --install  (skill + wpis MCP), potem uruchom agenta w tym katalogu")
         return 0
     return 1
+
+
+def _pid(value: str | None) -> str:
+    pdir, _ = resolve_project(value)
+    return pdir.relative_to(OUTPUT).as_posix()
+
+
+def _director_commands(a, registry) -> int:
+    """Reżyser, style i assety z linii poleceń: te same operacje, które ma agent i dashboard."""
+    call = lambda op, args: registry.call(op, args, source="cli")  # noqa: E731
+    if a.cmd == "styles":
+        if a.style_id:
+            res = call("style_get", {"id": a.style_id})
+            emit(res["style"], a.json, res["text"])
+        else:
+            res = call("styles_list", {k: v for k, v in (("platform", a.platform), ("query", a.query)) if v})
+            emit(res["styles"], a.json, "\n".join(f"{s['id']:<20}{s['name']:<26}energia {s['energy']}  {s['tagline']}" for s in res["styles"]))
+        return 0
+    if a.cmd == "assets":
+        if a.assets_cmd == "search":
+            res = call("assets_search", {"query": a.query, "source": a.source, "limit": a.limit})
+            emit(res, a.json, "\n".join(f"{r['id']:<34}{r['name'][:28]:<30}{r.get('license') or ''}" for r in res["results"]) or "(brak wyników)")
+        elif a.assets_cmd == "add":
+            res = call("assets_add", {k: v for k, v in (("project", _pid(a.project)), ("ref", a.ref), ("name", a.name), ("color", a.color)) if v})
+            emit(res, a.json, f"{res['rel']}\n{res['snippet']['html'][:300]}")
+        elif a.assets_cmd == "generate":
+            res = call("assets_generate", {"project": _pid(a.project), "kind": a.kind, "seed": a.seed, **({"name": a.name} if a.name else {})})
+            emit(res, a.json, f"{res['rel']}\n{res['snippet']['html'][:200]}")
+        else:
+            res = call("assets_list", {"project": _pid(a.project)})
+            emit(res, a.json, "\n".join(f"{r['rel']:<34}{r['origin']:<10}{r.get('license') or ''}" for r in res["assets"]) or "(brak assetów)")
+        return 0
+    pid = _pid(getattr(a, "project", None))
+    if a.director_cmd == "plan":
+        args = {"project": pid, "goal": a.goal, "tone": a.tone or "", "cta": a.cta or "", "loop": a.loop, "write_storyboard": a.write_storyboard,
+                **{k: v for k, v in (("platform", a.platform), ("pace", a.pace), ("prefer", a.prefer), ("avoid", a.avoid)) if v}}
+        pl = call("director_plan", args)["plan"]
+        rows = [f"styl główny: {pl['styles']['main']['name']}  | akcenty: " + ", ".join(x["name"] for x in pl["styles"]["accents"]) + f"  | tempo: {pl['pace']} ({pl['platform']})"]
+        rows += [f"  {b['t0']:>5.1f}-{b['t1']:<5.1f} {b['role']:<8} {b['style']:<18} {b['layout']:<18} {b['transition_in'] or '-'}" for b in pl["beats"]]
+        emit(pl, a.json, "\n".join(rows))
+        return 0
+    if a.director_cmd == "review":
+        res = call("director_review", {"project": pid, "depth": a.depth, **{k: v for k, v in (("platform", a.platform), ("pace", a.pace)) if v}})
+        res.pop("images", None)
+        if a.json:
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+        else:
+            c = res["counts"]
+            print(f"{res['project']}  przegląd {res['round']}  werdykt: {res['verdict']}  wynik {res['score']}/100  ({c['error']} błędów, {c['warn']} ostrzeżeń, {c['info']} info)  | zatwierdzenie: {res['state']['state']}")
+            for f in res["findings"]:
+                at = f"  {f['t']:>5.2f}s" if f["t"] is not None else "         "
+                print(f"  {f['severity']:<5}{at}  {f['code']:<17} {f['detail']}")
+            for act in res["next_actions"]:
+                print("  ->", act)
+        return 0 if res["verdict"] != "blocked" else 3
+    if a.director_cmd == "signoff":
+        accept = dict(x.split("=", 1) for x in (a.accept or []) if "=" in x)
+        res = call("director_signoff", {"project": pid, "approve": not a.reject, "notes": a.notes, "accept": accept,
+                                        "checklist": {k: True for k in __import__("vstudio.director", fromlist=["CHECKLIST"]).CHECKLIST} if a.all_checked else {}})
+        emit(res, a.json, f"zatwierdzenie: {res['state']}")
+        return 0
+    res = call("director_latest", {"project": pid})
+    emit(res, a.json, f"zatwierdzenie: {res['state']['state']}" + (f"  | ostatni przegląd: {res['state']['review']['verdict']} ({res['state']['review']['score']}/100)" if res["state"]["review"] else ""))
+    return 0
 
 
 # ------------------------------------------------------------------ cli
@@ -268,7 +338,7 @@ def build_parser() -> argparse.ArgumentParser:
     a_t.add_argument("--write-docs", action="store_true", help="zapisz docs/CAPABILITIES.md")
     a_s = sub.add_parser("skill", help="skill dla agenta (generowany z rejestru)")
     a_s.add_argument("--write", action="store_true", help="zapisz skills/vstudio/SKILL.md w repo")
-    a_s.add_argument("--install", action="store_true", help="zainstaluj skill i wpis MCP (.mcp.json)")
+    a_s.add_argument("--install", action="store_true", help="zainstaluj skill, agenta-recenzenta vstudio-director i wpis MCP (.mcp.json)")
     a_s.add_argument("--scope", choices=["project", "user"], default="project")
     a_v = sub.add_parser("vendor", help="lokalne kopie bibliotek z CDN (np. GSAP) do pracy offline")
     v_sub = a_v.add_subparsers(dest="vendor_cmd", required=True)
@@ -279,6 +349,55 @@ def build_parser() -> argparse.ArgumentParser:
     vr = v_sub.add_parser("remove")
     vr.add_argument("url")
     sub.add_parser("onboard", help="stan studia i co zrobić dalej (środowisko, marka, agent, pierwszy film)")
+
+    a_dr = sub.add_parser("director", help="reżyser: plan stylu i bitów, przegląd rytmu/tekstu/ruchu, zatwierdzenie przed wysyłką")
+    dr = a_dr.add_subparsers(dest="director_cmd", required=True)
+    d_plan = dr.add_parser("plan", help="styl główny + akcenty i storyboard z bitami co 2-3 s")
+    d_plan.add_argument("--project", "-p")
+    d_plan.add_argument("--goal", required=True, help="o czym jest film i do czego ma skłonić")
+    d_plan.add_argument("--tone")
+    d_plan.add_argument("--platform", choices=["reels", "tiktok", "shorts", "story", "feed", "linkedin", "web", "presentation"])
+    d_plan.add_argument("--pace", choices=["fast", "standard", "calm"])
+    d_plan.add_argument("--cta")
+    d_plan.add_argument("--prefer", action="append", help="id stylu do preferowania (można powtarzać)")
+    d_plan.add_argument("--avoid", action="append", help="id stylu do wykluczenia (można powtarzać)")
+    d_plan.add_argument("--loop", action="store_true")
+    d_plan.add_argument("--write-storyboard", action="store_true", help="zapisz też STORYBOARD.md")
+    d_rev = dr.add_parser("review", help="przegląd reżysera (kod wyjścia 3, gdy są błędy)")
+    d_rev.add_argument("--project", "-p")
+    d_rev.add_argument("--depth", choices=["quick", "standard", "deep"], default="standard")
+    d_rev.add_argument("--platform", choices=["reels", "tiktok", "shorts", "story", "feed", "linkedin", "web", "presentation"])
+    d_rev.add_argument("--pace", choices=["fast", "standard", "calm"])
+    d_so = dr.add_parser("signoff", help="zatwierdź albo odrzuć aktualną wersję sceny po obejrzeniu klatek")
+    d_so.add_argument("--project", "-p")
+    d_so.add_argument("--notes", required=True, help="co zobaczyłeś na klatkach (min. 12 znaków)")
+    d_so.add_argument("--reject", action="store_true")
+    d_so.add_argument("--all-checked", action="store_true", help="potwierdzam całą checklistę (tylko po obejrzeniu klatek)")
+    d_so.add_argument("--accept", action="append", help="KOD=powód: świadomie zostawione ostrzeżenie (można powtarzać)")
+    d_st = dr.add_parser("status", help="stan zatwierdzenia i ostatni przegląd")
+    d_st.add_argument("--project", "-p")
+    a_sty = sub.add_parser("styles", help="biblioteka stylów reżysera")
+    a_sty.add_argument("style_id", nargs="?")
+    a_sty.add_argument("--platform")
+    a_sty.add_argument("--query")
+    a_as = sub.add_parser("assets", help="ikony, generowane grafiki i obrazy z internetu do filmu")
+    asub = a_as.add_subparsers(dest="assets_cmd", required=True)
+    as_s = asub.add_parser("search")
+    as_s.add_argument("query")
+    as_s.add_argument("--source", choices=["builtin", "iconify", "openverse"], default="builtin")
+    as_s.add_argument("--limit", type=int, default=12)
+    as_a = asub.add_parser("add")
+    as_a.add_argument("ref", help="builtin:<id> | iconify:<zestaw>:<nazwa> | openverse:<id> | adres https")
+    as_a.add_argument("--project", "-p")
+    as_a.add_argument("--name")
+    as_a.add_argument("--color")
+    as_g = asub.add_parser("generate")
+    as_g.add_argument("kind")
+    as_g.add_argument("--project", "-p")
+    as_g.add_argument("--seed", type=int, default=1)
+    as_g.add_argument("--name")
+    as_l = asub.add_parser("list")
+    as_l.add_argument("--project", "-p")
 
     a_q = sub.add_parser("qa", help="audyt pliku przez scripts/video_qa.py")
     a_q.add_argument("video")
@@ -308,7 +427,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "doctor":
         from vstudio.doctor import report
         return 0 if report(json_out=a.json) else 2
-    if a.cmd in ("mcp", "dashboard", "check", "tools", "skill", "vendor", "onboard"):
+    if a.cmd in ("mcp", "dashboard", "check", "tools", "skill", "vendor", "onboard", "director", "styles", "assets"):
         from vstudio.common import StudioError  # noqa: PLC0415
         from vstudio.registry import CapabilityError  # noqa: PLC0415
         try:

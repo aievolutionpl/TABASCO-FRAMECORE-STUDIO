@@ -504,8 +504,13 @@ def timeline(pdir: Path, pr: dict, step: float = 0.1) -> dict:
 
 
 def explain(code: str) -> dict:
+    from . import director
+
+    hit = director.explain(code)
+    if hit:
+        return hit
     if code not in REMEDIES:
-        raise StudioError(f"nieznany kod '{code}'. Znane: {', '.join(sorted(REMEDIES))}")
+        raise StudioError(f"nieznany kod '{code}'. Znane: {', '.join(sorted({*REMEDIES, *director.REMEDIES}))}")
     title, fix = REMEDIES[code]
     return {"code": code, "title": title, "fix": fix}
 

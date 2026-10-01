@@ -18,7 +18,7 @@
     return `<a class="card hover tcard" href="#/p/${esc(p.id)}" style="text-decoration:none;color:inherit">
       <div class="thumb" data-thumb="${esc(p.id)}"></div>
       <div class="body"><div class="row"><h3 style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.slug)}</h3><span class="chip ${kind}">${c ? esc(label) + ' · ' + c.score : esc(label)}</span></div>
-      <div class="row wrap"><span class="chip">${p.size[0]}×${p.size[1]}</span><span class="chip">${p.duration} s</span><span class="chip">${esc(p.brand)}</span></div>
+      <div class="row wrap"><span class="chip">${p.size[0]}×${p.size[1]}</span><span class="chip">${p.duration} s</span><span class="chip">${esc(p.brand)}</span>${p.director && p.director.state === 'approved' ? '<span class="chip ok" title="Reżyser zatwierdził tę wersję">🎬 zatwierdzone</span>' : p.director && p.director.state === 'rejected' ? '<span class="chip err" title="Reżyser odrzucił tę wersję">🎬 odrzucone</span>' : ''}</div>
       <div class="pbar" title="Bramki jakości ${p.gates_done}/${p.gates_total}"><i style="width:${pct}%"></i></div></div></a>`;
   };
   V.mountThumbs = root => $$('[data-thumb]', root).forEach(el => { const p = V.project(el.dataset.thumb); if (p) V.thumb(el, V.srcOf(p.id), p.size[0], p.size[1], Math.min(p.duration * 0.45, p.duration - 0.1)); });

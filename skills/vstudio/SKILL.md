@@ -16,19 +16,26 @@ Zacznij od `studio_status`: mówi, czy środowisko działa, czy jest profil mark
 
 ## Pętla pracy
 
-# Work loop (follow it; the supervisor is your eyes)
+# Work loop (follow it; the supervisor and the director are your eyes)
 
 1. `studio_status` first. If the studio is not onboarded, ask the user for brand, palette, font, tone and default format, then `profile_set`.
 2. `task_next` returns what the user asked for in the dashboard. `task_update` -> in_progress.
-3. Choose a start: `templates_list` then `project_create` (from a template, or blank). Read the brief; `knowledge_get topic=brand|motion|visual|gsap|contract`.
-4. Edit the scene: `scene_read`, then `scene_write` / `scene_patch` with `check: "quick"`.
-5. LOOK at the film: `frames_view` with times at the opening, the main beat, the fastest transition and the end. Judge hierarchy, spacing, cut-off text, stray shapes.
-6. `check_run` (standard). Fix errors first, then warnings, then re-run; read `delta` to see what you resolved and what is new. Repeat until `verdict: pass`.
+3. DIRECT before you build: `project_create` (from the closest template or blank), then `director_plan` (goal, platform, tone). It picks a main style plus two
+   accents with different layouts and returns a beat sheet with a visible change every 2-3 s. Read `knowledge_get topic=direction`, and `style_get` for each style used.
+4. Build beat by beat: `scene_read`, then `scene_write` / `scene_patch` with `check: "quick"`. Fetch icons and stickers with `assets_search` / `assets_add` /
+   `assets_generate` instead of leaving beats text-only.
+5. LOOK at the film: `frames_view` at the opening, each beat, the fastest transition and the end. Judge hierarchy, spacing, cut-off text, stray shapes.
+6. `check_run` (standard): technical correctness. Fix errors first, then warnings, then re-run; read `delta`. Repeat until `verdict: pass`.
    If a warning is intentional (e.g. a prompt demands a static hold), say so in `task_update` notes and keep it.
-7. `render_start` (draft) then `job_wait`; `gate_set` approve stills/brief/visual_rules when genuinely done; `render_start` final; `deliver_start`.
-8. `task_update` -> done with a short note: what was made, which warnings remain and why.
+7. `director_review`: pacing, hook, variety, motion, text rendering. LOOK at the filmstrip and the rhythm chart it returns. Fix findings, re-run.
+   Best: hand this step to the `vstudio-director` agent (fresh eyes, no edit tools). When the checklist honestly holds: `director_signoff` (approve true, notes of what you saw,
+   accept: {CODE: reason} for warnings kept on purpose). Any later edit to the scene invalidates the sign-off.
+8. Only now `render_start` (draft, then final once brief, visual_rules and stills are approved) and `deliver_start`: final render and delivery refuse to start without the
+   director's sign-off for the current scene. Tell the user the film is ready only after that.
+9. `task_update` -> done with a short note: what was made, which styles, which warnings remain and why.
 
-Never report success without a `pass` verdict or an explicit note. After 6 rounds without progress, stop and ask the user. Never overwrite a scene without `scene_write` (it keeps history; `scene_restore` undoes).
+Never report success without `pass` from the supervisor, an approved director sign-off and a note about warnings kept on purpose. After 6 rounds without progress, stop and
+ask the user. Never overwrite a scene without `scene_write` (it keeps history; `scene_restore` undoes).
 
 ## Zasady sceny
 
@@ -88,10 +95,10 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | --- | --- | --- |
 | `studio_status` | - | Jedno wywołanie: środowisko, profil marki, agent, projekty, zadania i co zrobić dalej. |
 | `profile_get` | - | Nazwa, paleta, font, ton, odbiorcy i domyślny format użytkownika. |
-| `profile_set` | `name`?, `palette`?, `font`?, `tone`?, `audience`?, `default_format`?, `fps`?, `auto_supervise`? | Ustawia profil marki (częściowo). Uzupełnienie nazwy kończy onboarding. (zmienia pliki) |
+| `profile_set` | `name`?, `palette`?, `font`?, `tone`?, `audience`?, `default_format`?, `fps`?, `auto_supervise`?, `require_director`? | Ustawia profil marki (częściowo). Uzupełnienie nazwy kończy onboarding. (zmienia pliki) |
 | `agent_connect_info` | - | Polecenie MCP, fragment .mcp.json, ścieżki skilla i stan połączenia agenta. |
 | `agent_selftest` | - | Uruchamia serwer MCP i robi handshake jak prawdziwy klient: dowód, że agent się połączy. |
-| `agent_install` | `skill`?, `mcp_config`?, `scope`? | Zapisuje skill (SKILL.md) i wpis vstudio w .mcp.json. (zmienia pliki) |
+| `agent_install` | `skill`?, `director`?, `mcp_config`?, `scope`? | Zapisuje skill (SKILL.md), subagenta `vstudio-director` (recenzent przed wysyłką) i wpis vstudio w .mcp.json. (zmienia pliki) |
 
 ### Biblioteka szablonów
 
@@ -143,13 +150,35 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | `check_history` | `project` | Wynik i werdykt każdej rundy: widać, czy praca idzie do przodu. |
 | `check_explain` | `code` | Co znaczy kod (np. NONDETERMINISTIC) i jak to naprawić. |
 
+### Reżyser: styl, plan i przegląd przed wysyłką
+
+| Narzędzie | Parametry | Do czego |
+| --- | --- | --- |
+| `styles_list` | `platform`?, `energy_min`?, `query`? | 14 stylów (kinetyczna typografia, szkło, neo-brutalizm, luksus, retro, naklejki, dane, 3D...) z tonem, energią, platformami, plus przejścia i układy bitów. |
+| `style_get` | `id` | Pełny opis jednego stylu: paleta, typografia, język ruchu, przejścia, zasady kompozycji i gotowa receptura CSS/GSAP. |
+| `director_plan` | `project`, `goal`, `tone`?, `platform`?, `pace`?, `prefer`?, `avoid`?, `cta`?, `loop`?, `write_storyboard`? | Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: bity co 2-3 s (hak, rozwinięcie, dowód, CTA) ze stylem, układem, przejściem, dźwiękiem i hasłami do assetów. (zmienia pliki) |
+| `director_review` | `project`, `depth`?, `platform`?, `pace`? | Mierzy film oczami widza: rytm (nowa sytuacja co 2-3 s), hak, różnorodność looków, ruch (przyspieszenia, stagger), widoczność i fonty tekstu (polskie znaki), obrazy, migotanie. Zwraca werdykt, znaleziska, taśmę klatek i wykres rytmu. (zmienia pliki) (obrazy) |
+| `director_signoff` | `project`, `approve`, `notes`, `checklist`?, `accept`? | Świadome zatwierdzenie (albo odrzucenie) aktualnej wersji sceny po obejrzeniu klatek: checklista, notatka, zaakceptowane ostrzeżenia z powodem. Zmiana sceny unieważnia decyzję. (zmienia pliki) |
+| `director_latest` | `project` | Ostatni raport reżysera bez uruchamiania nowego, stan zatwierdzenia (czy aktualny), zapisany plan i historia rund. |
+
+### Assety: ikony, grafiki, zdjęcia
+
+| Narzędzie | Parametry | Do czego |
+| --- | --- | --- |
+| `assets_search` | `query`, `source`?, `limit`? | Ikony i obrazy: wbudowane ikony SVG (offline), Iconify (ikony, licencja sprawdzana w API) albo Openverse (zdjęcia CC0/PD/CC-BY). Zwraca ref do assets_add. |
+| `assets_add` | `project`, `ref`, `name`?, `color`? | Zapisuje ikonę lub obraz w src/assets/ (SVG oczyszczany, obraz zmniejszany i kodowany ponownie) ze śladem licencji i zwraca gotowy kod do sceny. (zmienia pliki) |
+| `assets_generate` | `project`, `kind`, `seed`?, `colors`?, `name`?, `width`?, `height`? | Deterministyczna grafika SVG z ziarna w kolorach marki: blob, mesh (zorza), dots, grid, rings, waves, rays, confetti, grain, starburst, squiggle, arrow. (zmienia pliki) |
+| `assets_list` | `project` | Pliki w src/assets/ z pochodzeniem i licencją oraz lista generatorów i liczba wbudowanych ikon. |
+| `assets_snippet` | `project`, `file`, `mode`? | HTML do wklejenia w scenę: SVG inline (przemalowywalny przez `color`) albo <img> z relatywną ścieżką. |
+| `assets_remove` | `project`, `file` | Usuwa plik z src/assets/ razem z wpisem w śladzie licencji. (zmienia pliki) |
+
 ### Render, dźwięk, wydanie
 
 | Narzędzie | Parametry | Do czego |
 | --- | --- | --- |
-| `render_start` | `project`, `final`?, `audio`?, `force`? | Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait. (job) |
+| `render_start` | `project`, `final`?, `audio`?, `force`?, `skip_review`? | Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait. (job) |
 | `sound_start` | `project` | Buduje cue sheet z EV, miksuje do -14 LUFS i podkłada pod najnowszy render (job). (job) |
-| `deliver_start` | `project`, `strict`? | QA pliku, plakat, paczka wydania i DELIVERY.md (job). (job) |
+| `deliver_start` | `project`, `strict`?, `skip_review`? | QA pliku, plakat, paczka wydania i DELIVERY.md (job). (job) |
 | `jobs_list` | `project`? | Ostatnie joby (render, dźwięk, wydanie) z postępem. |
 | `job_get` | `job` | Status, postęp, wynik i ogon logu. |
 | `job_wait` | `job`, `timeout`? | Blokuje do zakończenia joba albo do `timeout` s (maks. 600) i zwraca jego stan. |
@@ -174,6 +203,36 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | `vendor_add` | `url`, `file`? | Zapisuje lokalną kopię URL-a (skrót: gsap); `file` = lokalny plik zamiast pobierania. (zmienia pliki) |
 | `vendor_remove` | `url` | Usuwa lokalną kopię. (zmienia pliki) |
 | `capabilities_list` | - | Pełna lista operacji studia: kategoria, parametry, czy zmienia pliki, czy to job. |
+
+## Reżyser: film ma być ładny, dynamiczny i sprawdzony zanim trafi do użytkownika
+
+Nadzorca (`check_run`) odpowiada za poprawność techniczną. **Reżyser** odpowiada za to, co widzi widz: plan stylu i storyboard
+(`director_plan`), przegląd rytmu, haka, różnorodności, ruchu, widoczności tekstu i fontów (`director_review`) oraz zatwierdzenie
+(`director_signoff`). Finalny render i wydanie **nie wystartują** bez zatwierdzenia aktualnej wersji sceny. Najlepiej oddaj przegląd
+subagentowi `vstudio-director` (świeże oczy, bez narzędzi do edycji). Assety (ikony, grafiki, obrazy) bierz z `assets_search` / `assets_add` /
+`assets_generate`. Zasady rzemiosła: `knowledge_get topic=direction`, style: `topic=styles`, assety: `topic=assets`.
+
+# The director's craft (read before building; director_review measures it)
+
+A film that is technically correct can still be boring. You are the director: decide what the viewer sees every 2-3 seconds.
+
+1. Hook, 0-1.5 s. Frame 1 is the thumbnail. Something moves or a bold line is on screen by 1 s: the promise in at most 6 words. Never open on a logo or a fade from black.
+2. Rhythm. A visibly NEW situation every 2-3 s on reels/tiktok/shorts (3.5 s on feed/linkedin, 5 s for calm explainers). "New" means layout, background, subject or camera
+   changes, not a word swap. Let the CTA hold still for 1.5-2.5 s. WEAK_HOOK, SLOW_PACE and BEAT_MISSING measure this.
+3. Variety inside a system. Constant: palette, font, tone, logo position. Variable per beat: layout, background treatment (dark / light / gradient / photo), motion
+   language, transition, sound. `director_plan` picks a main style and two accents with different layouts. At least 2 looks in 7 s, 3 from 12 s, 4 from 20 s (MONOTONE_STYLE).
+4. Motion with weight. Ease everything: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops. Constant speed only for long drifts
+   (LINEAR_MOTION). Stagger groups by 0.05-0.1 s (NO_STAGGER). Overlap the end of one move with the start of the next. Put a slow push-in or drift under static holds.
+   One hero motion per beat.
+5. Text. At most 6 words per beat and 2 sizes; the key word in the accent colour. Fully visible, never clipped (TEXT_CLIPPED), never hidden behind another layer (TEXT_HIDDEN),
+   never colliding (TEXT_OVERLAP). Polish letters must come from the chosen font (GLYPH_MISSING): load latin-ext. Stay inside platform safe zones. Reading time is at least chars/15 + 1.5 s.
+6. Assets. Pair every text-only beat with an icon, sticker or small image. One stroke weight and corner style across the film. Colour icons through CSS `color` so the
+   brand palette applies. Prefer built-in icons and generated graphics (no licence questions); downloaded files get credits in DELIVERY.md automatically.
+7. Sound. Every transition has a cue in EV: hit for cuts, whoosh for moves, pop for stickers, chime for success.
+8. Restraint. If a beat has two ideas, split it. If an element does not help the message, remove it.
+
+Review ritual: `director_review`, then LOOK at the filmstrip and the rhythm chart (green lines = new situations, red areas = gaps). Check each checklist item honestly.
+A film you would scroll past is not approved.
 
 ## Kody znalezisk nadzorcy
 
@@ -201,10 +260,33 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 - `SEEK_FAILED`: Fix the error thrown by seek(t); the film cannot be sampled or rendered until it works for every t in [0, DURATION].
 - `ENGINE_UNSUPPORTED`: Deep checks need the html engine (window.seek contract). Use still/render for this engine.
 
+## Kody znalezisk reżysera
+
+- `SLOW_PACE`: Nothing visibly new happens for too long. Add a beat inside the gap: swap the layout, change the background treatment, bring in a new element with a different transition (knowledge_get topic=styles lists them). Aim for a visible change every 2-3 s on social; a calm hold is fine only when the brief asks for it (then accept the warning with a reason).
+- `MONOTONE_STYLE`: The whole film shares one look. Keep brand colours and font, but change the TREATMENT between beats: layout, background (dark / light / gradient), motion language, transition. Run director_plan to pick a main style plus two accents with different layouts.
+- `WEAK_HOOK`: Nothing grabs attention in the first 1.5 s. Open with motion or a bold line in frame 1, put the key promise on screen by 1 s, and save the logo or product reveal for the end.
+- `NO_HOOK_TEXT`: Most viewers watch muted: state the point in words (max 6) by 1 s, or open on a striking visual that carries it on its own.
+- `FLASH_RISK`: The frame flashes light and dark more than 3 times per second, which can harm photosensitive viewers and reads as a glitch. Reduce to at most 2 flashes per second and lower the contrast of each flash.
+- `LINEAR_MOTION`: Most moves run at constant speed, which looks mechanical. Use eases: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops. Keep ease none for long drifts only.
+- `NO_STAGGER`: Several elements enter on the same frame. Offset them by 0.05-0.1 s (stagger) so the eye can follow the order.
+- `TEXT_CLIPPED`: The text is cut off by a container (overflow hidden) or by the frame. Enlarge the container, reduce the font size or shorten the copy. Check long Polish words.
+- `TEXT_TRUNCATED`: text-overflow: ellipsis is cutting the copy. Remove it, shorten the text or widen the box.
+- `TEXT_HIDDEN`: The DOM says the text is shown, but the pixels do not change when it is hidden: it is covered by another element, has the same colour as its background, or is clipped away. Raise its z-index, change its colour or remove the cover.
+- `TEXT_OVERLAP`: Two different texts overlap. Move them apart, stagger their timing so one leaves before the other lands, or reduce their size.
+- `TEXT_WALL`: More than about 28 words are on screen at once. Social video is read in under 2 s per beat: keep to 6 words per beat or split the beat in two.
+- `TEXTS_INCOMPLETE`: Some visible texts are not reported by window.TEXTS(t), so reading time, framing and contrast are not checked for them. Make TEXTS read the DOM (every visible text node with its Range rect and opacity).
+- `GLYPH_MISSING`: Some characters are not drawn by the chosen font (they fall back to another font or show as boxes). For Polish load the font with the latin-ext subset or pick a font that covers ąćęłńóśźż, then run director_review again.
+- `FONT_FALLBACK`: The first font in the stack is not loaded, so the page falls back to another font and renders differently than designed (and differently on other machines). Bundle the font next to the scene with @font-face (src: url(assets/font.woff2)) or choose a system font stack.
+- `ASSET_BROKEN`: An <img> failed to load (wrong path, 404 or unsupported file). Add images with assets_add and use the returned snippet; files live in src/assets/ and are referenced as assets/<file>.
+- `NO_VISUAL_ASSETS`: The film has no icons, illustrations or images. Add 3-6 icons or stickers where text carries the message (assets_search, then assets_add) to make beats more visual.
+- `BEAT_MISSING`: The storyboard (director_plan) puts a new beat here, but nothing visibly changes in the film. Build the beat or update the plan.
+- `PLAN_STALE`: The saved plan has a different duration than the film. Run director_plan again.
+
 ## Zasady pracy
 
 - Patrz na klatki (`frames_view`), nie zgaduj z kodu: początek, główny moment, najszybsze przejście, koniec.
-- Nie twierdź, że film jest gotowy bez werdyktu `pass` albo jawnej notatki o świadomie zostawionym ostrzeżeniu.
+- Nie twierdź, że film jest gotowy bez werdyktu `pass`, zatwierdzenia reżysera (`director_signoff`) i jawnej notatki o świadomie zostawionych ostrzeżeniach.
+- Nie zostawiaj bitów samego tekstu: dodaj ikonę, naklejkę albo grafikę (`assets_search`, `assets_generate`). Zmieniaj wygląd co 2-3 s, marka zostaje stała.
 - Nie wymyślaj kolorów ani fontów: bierz z `knowledge_get topic=brand`.
 - Edytuj sceny przez `scene_write` / `scene_patch` (zachowują historię, `scene_restore` cofa). Nie nadpisuj `src/index.html` inaczej.
 - Po 6 rundach bez postępu zatrzymaj się i zapytaj użytkownika. Nic nie publikuj bez jego wyraźnej zgody.

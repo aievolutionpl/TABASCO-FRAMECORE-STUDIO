@@ -2,7 +2,7 @@
 
 > Plik generowany z rejestru możliwości (`vstudio/registry.py`, operacje w `vstudio/ops.py`). Nie edytuj ręcznie: `python vstudio.py tools --write-docs`.
 
-Studio ma **43 operacji** w 10 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
+Studio ma **55 operacji** w 12 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
 
 | Powierzchnia | Jak | Dla kogo |
 | --- | --- | --- |
@@ -61,6 +61,7 @@ Ustawia profil marki (częściowo). Uzupełnienie nazwy kończy onboarding.
 | `default_format` | string (9:16 \| 4:5 \| 1:1 \| 16:9) | nie |  |
 | `fps` | integer | nie |  |
 | `auto_supervise` | boolean | nie | run a quick supervisor check in the background whenever a scene changes on disk (dashboard) |
+| `require_director` | boolean | nie | final render and delivery need the director's sign-off for the current scene (default true) |
 
 ### `agent_connect_info`: Jak podłączyć agenta
 
@@ -78,17 +79,18 @@ Uruchamia serwer MCP i robi handshake jak prawdziwy klient: dowód, że agent si
 
 _brak parametrów_
 
-### `agent_install`: Zainstaluj skill i konfigurację MCP
+### `agent_install`: Zainstaluj skill, agenta-recenzenta i konfigurację MCP
 
-Zapisuje skill (SKILL.md) i wpis vstudio w .mcp.json.
+Zapisuje skill (SKILL.md), subagenta `vstudio-director` (recenzent przed wysyłką) i wpis vstudio w .mcp.json.
 
-**Zwraca:** installed{skill, mcp_config}
+**Zwraca:** installed{skill, director_agent, mcp_config}
 
 **Cechy:** zmienia pliki
 
 | Parametr | Typ | Wymagany | Opis |
 | --- | --- | --- | --- |
 | `skill` | boolean | nie | Domyślnie: `True`. |
+| `director` | boolean | nie | install the vstudio-director reviewer subagent Domyślnie: `True`. |
 | `mcp_config` | boolean | nie | Domyślnie: `True`. |
 | `scope` | string (project \| user) | nie | Domyślnie: `project`. |
 
@@ -274,7 +276,7 @@ Zasady: kontrakt strony, deterministyczny GSAP, pętla pracy, kody znalezisk, ru
 
 | Parametr | Typ | Wymagany | Opis |
 | --- | --- | --- | --- |
-| `topic` | string (contract \| gsap \| workflow \| findings \| motion \| visual \| brand) | tak |  |
+| `topic` | string (contract \| direction \| styles \| assets \| gsap \| workflow \| findings \| motion \| visual \| brand) | tak |  |
 
 ## Podgląd klatek i osi czasu
 
@@ -365,13 +367,197 @@ Co znaczy kod (np. NONDETERMINISTIC) i jak to naprawić.
 | --- | --- | --- | --- |
 | `code` | string | tak |  |
 
+## Reżyser: styl, plan i przegląd przed wysyłką
+
+### `styles_list`: Biblioteka stylów
+
+14 stylów (kinetyczna typografia, szkło, neo-brutalizm, luksus, retro, naklejki, dane, 3D...) z tonem, energią, platformami, plus przejścia i układy bitów.
+
+**Kiedy:** Before building a film: pick styles by goal and tone; mix a main style with two accents.
+
+**Zwraca:** styles[], transitions[], layouts{}
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `platform` | string (reels \| tiktok \| shorts \| story \| feed \| linkedin \| web \| presentation) | nie |  |
+| `energy_min` | integer | nie |  |
+| `query` | string | nie | word from the name, tone or goal (English or Polish) |
+
+### `style_get`: Opis stylu
+
+Pełny opis jednego stylu: paleta, typografia, język ruchu, przejścia, zasady kompozycji i gotowa receptura CSS/GSAP.
+
+**Kiedy:** After director_plan: read the recipe of every style used in the storyboard before writing the scene.
+
+**Zwraca:** style, text
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `id` | string (kinetic-type \| glass-ui \| neo-brutal \| swiss-minimal \| dark-luxe \| retro-synth \| sticker-pop \| gradient-mesh \| isometric-3d \| data-story \| paper-cut \| cinematic-captions \| terminal-code \| pastel-soft) | tak |  |
+
+### `director_plan`: Plan reżyserski
+
+Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: bity co 2-3 s (hak, rozwinięcie, dowód, CTA) ze stylem, układem, przejściem, dźwiękiem i hasłami do assetów.
+
+**Kiedy:** BEFORE building the scene: the plan is what director_review later checks the film against.
+
+**Zwraca:** styles{main, accents, why}, beats[], contract, brand
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `goal` | string | tak | what the film is about and what the viewer should do |
+| `tone` | string | nie | e.g. premium, playful, techy (adds to the brand tone) |
+| `platform` | string (reels \| tiktok \| shorts \| story \| feed \| linkedin \| web \| presentation) | nie | reels, tiktok, shorts, story (fast), feed, linkedin (standard), web, presentation (calm). Default: from the project format. |
+| `pace` | string (fast \| standard \| calm) | nie |  |
+| `prefer` | array | nie | style ids to favour |
+| `avoid` | array | nie | style ids to exclude |
+| `cta` | string | nie | the call to action line |
+| `loop` | boolean | nie | Domyślnie: `False`. |
+| `write_storyboard` | boolean | nie | also write STORYBOARD.md (the previous one is kept as STORYBOARD.previous.md) Domyślnie: `False`. |
+
+### `director_review`: Przegląd reżysera
+
+Mierzy film oczami widza: rytm (nowa sytuacja co 2-3 s), hak, różnorodność looków, ruch (przyspieszenia, stagger), widoczność i fonty tekstu (polskie znaki), obrazy, migotanie. Zwraca werdykt, znaleziska, taśmę klatek i wykres rytmu.
+
+**Kiedy:** Before telling the user a film is ready, and before the final render: LOOK at the returned images, fix findings, re-run, then director_signoff.
+
+**Zwraca:** verdict, score, findings[], metrics, state, checklist, images (filmstrip, rhythm chart, evidence)
+
+**Cechy:** zmienia pliki, obrazy
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `depth` | string (quick \| standard \| deep) | nie | Domyślnie: `standard`. |
+| `platform` | string (reels \| tiktok \| shorts \| story \| feed \| linkedin \| web \| presentation) | nie | reels, tiktok, shorts, story (fast), feed, linkedin (standard), web, presentation (calm). Default: from the project format. |
+| `pace` | string (fast \| standard \| calm) | nie |  |
+
+### `director_signoff`: Zatwierdzenie reżysera
+
+Świadome zatwierdzenie (albo odrzucenie) aktualnej wersji sceny po obejrzeniu klatek: checklista, notatka, zaakceptowane ostrzeżenia z powodem. Zmiana sceny unieważnia decyzję.
+
+**Kiedy:** After director_review, once you have looked at the frames. Final render and delivery refuse to start without an approved sign-off for the current scene.
+
+**Zwraca:** state, record
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `approve` | boolean | tak |  |
+| `notes` | string | tak | 1-2 sentences: what you saw in the frames (min 12 characters) |
+| `checklist` | object | nie | {"hook": true, "text": true, "rhythm": true, "style": true, "motion": true, "assets": true}; all must be true to approve |
+| `accept` | object | nie | {CODE: reason} for warnings kept on purpose (errors cannot be accepted) |
+
+### `director_latest`: Ostatni przegląd reżysera
+
+Ostatni raport reżysera bez uruchamiania nowego, stan zatwierdzenia (czy aktualny), zapisany plan i historia rund.
+
+**Zwraca:** review|null, state, plan|null, history[]
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+
+## Assety: ikony, grafiki, zdjęcia
+
+### `assets_search`: Szukaj assetów
+
+Ikony i obrazy: wbudowane ikony SVG (offline), Iconify (ikony, licencja sprawdzana w API) albo Openverse (zdjęcia CC0/PD/CC-BY). Zwraca ref do assets_add.
+
+**Kiedy:** Where a beat is only text: find an icon or sticker for it. Start with builtin (offline); use iconify/openverse when you need more (needs internet).
+
+**Zwraca:** results[] {id (ref), name, license, attribution, preview}
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `query` | string | tak | English or Polish word, e.g. cart, koszyk, rocket |
+| `source` | string (builtin \| iconify \| openverse) | nie | Domyślnie: `builtin`. |
+| `limit` | integer | nie | Domyślnie: `12`. |
+
+### `assets_add`: Dodaj asset do projektu
+
+Zapisuje ikonę lub obraz w src/assets/ (SVG oczyszczany, obraz zmniejszany i kodowany ponownie) ze śladem licencji i zwraca gotowy kod do sceny.
+
+**Kiedy:** After assets_search. Paste snippet.html into the scene; images load from assets/<file>. Downloads are checked (https only, public hosts, size and type limits).
+
+**Zwraca:** file, rel, license, snippet{html, note}
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `ref` | string | tak | builtin:<id> | iconify:<set>:<name> | openverse:<id> (from assets_search) | https URL |
+| `name` | string | nie | file name without extension |
+| `color` | string | nie | #RRGGBB or currentColor (default; recolour by CSS `color`) |
+
+### `assets_generate`: Wygeneruj grafikę
+
+Deterministyczna grafika SVG z ziarna w kolorach marki: blob, mesh (zorza), dots, grid, rings, waves, rays, confetti, grain, starburst, squiggle, arrow.
+
+**Kiedy:** For backgrounds, textures, stickers and doodles that match the brand: no licence questions, no network.
+
+**Zwraca:** file, rel, snippet
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `kind` | string (blob \| mesh \| dots \| grid \| rings \| waves \| rays \| confetti \| grain \| starburst \| squiggle \| arrow) | tak |  |
+| `seed` | integer | nie | Domyślnie: `1`. |
+| `colors` | array | nie | #RRGGBB list; default: brand accent, accent2, ink, bg (mesh uses the last as background) |
+| `name` | string | nie |  |
+| `width` | integer | nie |  |
+| `height` | integer | nie |  |
+
+### `assets_list`: Assety projektu
+
+Pliki w src/assets/ z pochodzeniem i licencją oraz lista generatorów i liczba wbudowanych ikon.
+
+**Zwraca:** assets[], generators[], builtin_icons
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+
+### `assets_snippet`: Kod assetu do sceny
+
+HTML do wklejenia w scenę: SVG inline (przemalowywalny przez `color`) albo <img> z relatywną ścieżką.
+
+**Zwraca:** mode, html, note
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `file` | string | tak |  |
+| `mode` | string (auto \| inline \| img) | nie | Domyślnie: `auto`. |
+
+### `assets_remove`: Usuń asset
+
+Usuwa plik z src/assets/ razem z wpisem w śladzie licencji.
+
+**Zwraca:** removed
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `file` | string | tak |  |
+
 ## Render, dźwięk, wydanie
 
 ### `render_start`: Render
 
 Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait.
 
-**Kiedy:** Render a draft after the supervisor says pass; final only after brief, visual_rules and stills are approved.
+**Kiedy:** Render a draft after the supervisor says pass; final only after brief, visual_rules and stills are approved AND the director signed off this version of the scene.
 
 **Zwraca:** job, warnings[]
 
@@ -383,6 +569,7 @@ Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca 
 | `final` | boolean | nie | Domyślnie: `False`. |
 | `audio` | string | nie | path to a mixed audio file |
 | `force` | boolean | nie | skip the gate check for a final render Domyślnie: `False`. |
+| `skip_review` | boolean | nie | skip the director sign-off requirement (only when the user explicitly asks) Domyślnie: `False`. |
 
 ### `sound_start`: Dźwięk
 
@@ -400,7 +587,9 @@ Buduje cue sheet z EV, miksuje do -14 LUFS i podkłada pod najnowszy render (job
 
 QA pliku, plakat, paczka wydania i DELIVERY.md (job).
 
-**Zwraca:** job
+**Kiedy:** Only after director_signoff approved the current scene: delivery refuses to start otherwise.
+
+**Zwraca:** job, warnings[]
 
 **Cechy:** job
 
@@ -408,6 +597,7 @@ QA pliku, plakat, paczka wydania i DELIVERY.md (job).
 | --- | --- | --- | --- |
 | `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
 | `strict` | boolean | nie | Domyślnie: `False`. |
+| `skip_review` | boolean | nie | skip the director sign-off requirement (only when the user explicitly asks) Domyślnie: `False`. |
 
 ### `jobs_list`: Joby
 
@@ -595,3 +785,27 @@ _brak parametrów_
 | `TEXTS_FAILED` | window.TEXTS rzuca wyjątek | Fix the error thrown by window.TEXTS(t) (usually a selector that no longer exists or a read of an element before it is created). Reading time, framing and contrast cannot be checked until it works for every t. |
 | `SEEK_FAILED` | window.seek rzuca wyjątek | Fix the error thrown by seek(t); the film cannot be sampled or rendered until it works for every t in [0, DURATION]. |
 | `ENGINE_UNSUPPORTED` | Silnik bez głębokich kontroli | Deep checks need the html engine (window.seek contract). Use still/render for this engine. |
+
+## Kody znalezisk reżysera
+
+| Kod | Znaczenie | Jak naprawić (wskazówka dla agenta) |
+| --- | --- | --- |
+| `SLOW_PACE` | Za długo bez zmiany wizualnej | Nothing visibly new happens for too long. Add a beat inside the gap: swap the layout, change the background treatment, bring in a new element with a different transition (knowledge_get topic=styles lists them). Aim for a visible change every 2-3 s on social; a calm hold is fine only when the brief asks for it (then accept the warning with a reason). |
+| `MONOTONE_STYLE` | Film wygląda tak samo od początku do końca | The whole film shares one look. Keep brand colours and font, but change the TREATMENT between beats: layout, background (dark / light / gradient), motion language, transition. Run director_plan to pick a main style plus two accents with different layouts. |
+| `WEAK_HOOK` | Słaby początek (hak) | Nothing grabs attention in the first 1.5 s. Open with motion or a bold line in frame 1, put the key promise on screen by 1 s, and save the logo or product reveal for the end. |
+| `NO_HOOK_TEXT` | Brak tekstu w pierwszej sekundzie | Most viewers watch muted: state the point in words (max 6) by 1 s, or open on a striking visual that carries it on its own. |
+| `FLASH_RISK` | Migotanie kadru | The frame flashes light and dark more than 3 times per second, which can harm photosensitive viewers and reads as a glitch. Reduce to at most 2 flashes per second and lower the contrast of each flash. |
+| `LINEAR_MOTION` | Ruch bez przyspieszeń | Most moves run at constant speed, which looks mechanical. Use eases: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops. Keep ease none for long drifts only. |
+| `NO_STAGGER` | Elementy pojawiają się naraz | Several elements enter on the same frame. Offset them by 0.05-0.1 s (stagger) so the eye can follow the order. |
+| `TEXT_CLIPPED` | Tekst przycięty | The text is cut off by a container (overflow hidden) or by the frame. Enlarge the container, reduce the font size or shorten the copy. Check long Polish words. |
+| `TEXT_TRUNCATED` | Tekst skrócony wielokropkiem | text-overflow: ellipsis is cutting the copy. Remove it, shorten the text or widen the box. |
+| `TEXT_HIDDEN` | Tekst nie jest widoczny na ekranie | The DOM says the text is shown, but the pixels do not change when it is hidden: it is covered by another element, has the same colour as its background, or is clipped away. Raise its z-index, change its colour or remove the cover. |
+| `TEXT_OVERLAP` | Teksty nakładają się | Two different texts overlap. Move them apart, stagger their timing so one leaves before the other lands, or reduce their size. |
+| `TEXT_WALL` | Za dużo tekstu naraz | More than about 28 words are on screen at once. Social video is read in under 2 s per beat: keep to 6 words per beat or split the beat in two. |
+| `TEXTS_INCOMPLETE` | TEXTS(t) pomija widoczne napisy | Some visible texts are not reported by window.TEXTS(t), so reading time, framing and contrast are not checked for them. Make TEXTS read the DOM (every visible text node with its Range rect and opacity). |
+| `GLYPH_MISSING` | Brak glifów w foncie | Some characters are not drawn by the chosen font (they fall back to another font or show as boxes). For Polish load the font with the latin-ext subset or pick a font that covers ąćęłńóśźż, then run director_review again. |
+| `FONT_FALLBACK` | Font nie jest dostępny | The first font in the stack is not loaded, so the page falls back to another font and renders differently than designed (and differently on other machines). Bundle the font next to the scene with @font-face (src: url(assets/font.woff2)) or choose a system font stack. |
+| `ASSET_BROKEN` | Obraz się nie załadował | An <img> failed to load (wrong path, 404 or unsupported file). Add images with assets_add and use the returned snippet; files live in src/assets/ and are referenced as assets/<file>. |
+| `NO_VISUAL_ASSETS` | Brak ikon i obrazków | The film has no icons, illustrations or images. Add 3-6 icons or stickers where text carries the message (assets_search, then assets_add) to make beats more visual. |
+| `BEAT_MISSING` | Plan zakłada zmianę, której nie widać | The storyboard (director_plan) puts a new beat here, but nothing visibly changes in the film. Build the beat or update the plan. |
+| `PLAN_STALE` | Plan nie pasuje do filmu | The saved plan has a different duration than the film. Run director_plan again. |

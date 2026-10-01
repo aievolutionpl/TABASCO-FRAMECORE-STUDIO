@@ -20,9 +20,11 @@ from .common import StudioError
 SUPPORTED = ["2025-06-18", "2025-03-26", "2024-11-05"]
 MAX_TEXT = 60_000
 MAX_IMAGE_BYTES = 4_000_000
-INSTRUCTIONS = ("vstudio: deterministic code-rendered video studio with a quality supervisor. Start with `studio_status`. "
-                "Work loop: task_next -> project_create/scene_patch (with check) -> frames_view (LOOK at the film) -> check_run until verdict `pass` -> "
-                "render_start + job_wait -> deliver_start. Read resource vstudio://skill or call knowledge_get for the rules.")
+INSTRUCTIONS = ("vstudio: deterministic code-rendered video studio with a quality supervisor and a director. Start with `studio_status`. "
+                "Work loop: task_next -> project_create -> director_plan (styles + beats every 2-3 s) -> scene_patch (with check) + assets_search/assets_add -> "
+                "frames_view (LOOK at the film) -> check_run until verdict `pass` -> director_review (LOOK at filmstrip and rhythm chart) -> director_signoff -> "
+                "render_start + job_wait -> deliver_start. Final render and delivery refuse to start without the director's sign-off. "
+                "Read resource vstudio://skill or call knowledge_get for the rules.")
 
 PROMPTS = {
     "make-video": {
@@ -38,6 +40,21 @@ PROMPTS = {
         "arguments": [{"name": "project", "description": "Id projektu (marka/slug)", "required": True}],
         "text": lambda a: (f"Projekt {a.get('project', '')}: uruchom check_latest, popraw błędy potem ostrzeżenia (scene_patch z check), patrz na klatki "
                            "(frames_view) i powtarzaj check_run, aż werdykt to pass albo zostaną tylko świadome ostrzeżenia (opisz je w task_update)."),
+    },
+    "direct-video": {
+        "description": "Zrób film jak reżyser: plan stylu i bitów, scena z assetami, nadzór, przegląd i zatwierdzenie przed renderem.",
+        "arguments": [{"name": "idea", "description": "O czym ma być film, dla kogo i do czego ma skłonić", "required": True},
+                      {"name": "platform", "description": "reels, tiktok, shorts, story, feed, linkedin, web", "required": False}],
+        "text": lambda a: ("Zrób film jak reżyser w vstudio.\n\nPomysł: {idea}\nPlatforma: {platform}\n\nStudio_status, knowledge_get (direction, styles, assets, brand, gsap, contract), "
+                           "project_create, director_plan (styl główny + dwa akcenty, bity co 2-3 s), scena bit po bicie z ikonami i grafikami (assets_search, assets_add, assets_generate), "
+                           "frames_view, check_run aż do pass, director_review i obejrzenie taśmy klatek oraz wykresu rytmu, poprawki, director_signoff. "
+                           "Dopiero potem render_start i deliver_start. Użytkownikowi powiedz, że film jest gotowy dopiero po zatwierdzeniu.").format(idea=a.get("idea", ""), platform=a.get("platform") or "dobierz do formatu"),
+    },
+    "review-video": {
+        "description": "Przejrzyj film jak surowy reżyser: rytm, hak, tekst, ruch, styl, assety; zatwierdź albo odeślij z poprawkami.",
+        "arguments": [{"name": "project", "description": "Id projektu (marka/slug)", "required": True}],
+        "text": lambda a: (f"Projekt {a.get('project', '')}: director_latest, check_run, director_review, obejrzyj taśmę klatek i wykres rytmu, frames_view w chwilach haka, środkach bitów "
+                           "i na końcu, oceń checklistę uczciwie i zakończ director_signoff (zatwierdzenie z konkretnymi obserwacjami albo odrzucenie z listą poprawek). Nie edytuj sceny."),
     },
     "onboard": {
         "description": "Przeprowadź onboarding: środowisko, marka, połączenie, pierwszy film.",

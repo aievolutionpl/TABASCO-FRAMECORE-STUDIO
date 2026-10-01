@@ -21,6 +21,7 @@ DEFAULT_PROFILE = {
     "onboarded": False, "name": "", "palette": {"bg": "#0B0E24", "ink": "#F4F6FF", "accent": "#FF6B4A", "accent2": "#4F8CFF"},
     "font": "Inter", "tone": "konkretny, spokojny, bez przesady", "audience": "", "default_format": "4:5", "fps": 30,
     "auto_supervise": True,          # dashboard sprawdza scenę w tle, gdy zmieni się na dysku (agent, edytor)
+    "require_director": True,         # finalny render i wydanie wymagają zatwierdzenia reżysera dla aktualnej wersji sceny
 }
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)?$")
 
@@ -82,7 +83,7 @@ def _profile_set(patch: dict) -> dict:
             if v not in FORMATS:
                 raise StudioError(f"default_format: jedno z {list(FORMATS)}")
             p[k] = v
-        elif k == "auto_supervise":
+        elif k in ("auto_supervise", "require_director"):
             p[k] = bool(v)
         elif k == "fps":
             if not isinstance(v, int) or not 12 <= v <= 120:
@@ -125,7 +126,7 @@ def _gates_done(pr: dict) -> tuple[int, int]:
 
 
 def summarize(pdir: Path, pr: dict, detail: bool = False) -> dict:
-    from . import supervisor
+    from . import director, supervisor
 
     done, total = _gates_done(pr)
     src = pdir / "src" / "index.html"
@@ -134,6 +135,8 @@ def summarize(pdir: Path, pr: dict, detail: bool = False) -> dict:
            "duration": pr["duration"], "gates_done": done, "gates_total": total, "next": proj.next_step(pr),
            "updated": src.stat().st_mtime if src.exists() else None,
            "check": {"verdict": rep["verdict"], "score": rep["score"], "round": rep["round"], "counts": rep["counts"]} if rep else None}
+    ds = director.state(pdir)
+    out["director"] = {"state": ds["state"], "verdict": ds["review"]["verdict"] if ds["review"] else None, "score": ds["review"]["score"] if ds["review"] else None}
     if detail:
         renders = []
         for f in sorted((pdir / "renders").glob("*.mp4"), key=lambda x: x.stat().st_mtime, reverse=True):

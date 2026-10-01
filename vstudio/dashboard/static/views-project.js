@@ -2,7 +2,7 @@
 'use strict';
 (() => {
   const { esc, $, $$ } = V;
-  const TABS = [['nadzor', 'Nadzór', 'shield'], ['zrodlo', 'Źródło', 'code'], ['render', 'Render', 'film'], ['potok', 'Potok', 'list'], ['agent', 'Agent', 'bot']];
+  const TABS = [['nadzor', 'Nadzór', 'shield'], ['rezyser', 'Reżyser', 'eye'], ['zrodlo', 'Źródło', 'code'], ['render', 'Render', 'film'], ['potok', 'Potok', 'list'], ['agent', 'Agent', 'bot']];
   const GATES = [['brief', 'Brief'], ['reference_spec', 'Studium referencji'], ['visual_rules', 'Zasady wizualne'], ['stills', 'Klatki kontrolne'], ['draft', 'Render roboczy'], ['sound', 'Dźwięk'], ['critic', 'Krytyk (≥ 8/10)'], ['final', 'Render finalny']];
   const EVCOL = { whoosh: '#6cb6ff', hit: '#ff6b81', impact: '#ff6b81', pop: '#ffc857', click: '#ffc857', chime: '#3ddc97', tick: '#8c94a9', reveal: '#c77dff', type: '#5ee1ff' };
 
@@ -194,12 +194,13 @@
       const [jl, det] = await Promise.all([V.api('jobs_list', { project: pid }), V.api('project_get', { project: pid })]); if (!alive || tab !== 'render') return;
       S.jobs = jl.jobs; S.detail = det.project; const R = det.project.renders;
       body.innerHTML = `<div class="grid c2" style="gap:10px"><button class="btn primary" id="rDraft">${V.icon('film')} Render roboczy</button><button class="btn" id="rFinal">Render finalny</button><button class="btn" id="rSound">Dźwięk (−14 LUFS)</button><button class="btn" id="rDeliver">Wydanie (QA + paczka)</button></div>
-        <div class="dim" style="font-size:12.5px;margin:8px 0 14px">Render finalny wymaga zatwierdzonych bramek: brief, zasady wizualne, klatki (zakładka Potok). Wymaga FFmpeg.</div>
+        <div class="dim" style="font-size:12.5px;margin:8px 0 6px">Render finalny wymaga zatwierdzonych bramek (brief, zasady wizualne, klatki: zakładka Potok) oraz zatwierdzenia reżysera dla tej wersji sceny (zakładka Reżyser). Wymaga FFmpeg.</div>
+        <label class="dim" style="font-size:12.5px;display:flex;gap:6px;align-items:center;margin-bottom:12px"><input type="checkbox" id="skipRev" style="accent-color:#7c8cff"> pomiń zatwierdzenie reżysera (na moją odpowiedzialność)</label>
         <div class="col" id="jobs">${S.jobs.slice(0, 5).map(jobRow).join('')}</div>
         <h3 style="margin:18px 0 10px">Rendery (${R.length})</h3>
         ${R.length ? `<video controls preload="metadata" style="width:100%;border-radius:12px;background:#000;max-height:360px" src="${V.fileUrl(pid, R[0].file)}"></video>
           <div class="col" style="margin-top:10px">${R.map(r => `<a class="row muted" href="${V.fileUrl(pid, r.file)}" target="_blank" style="text-decoration:none"><span>${r.final ? '🎞' : '▫'}</span><span class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(r.file.split('/').pop())}</span><span>${r.mb} MB</span></a>`).join('')}</div>` : '<div class="card empty" style="padding:24px">Jeszcze nie ma renderów.</div>'}`;
-      const start = (id, name, args) => $(id, body).onclick = e => V.busy(e.currentTarget, async () => { const r = await V.api(name, { project: pid, ...args }); (r.warnings || []).forEach(w => V.toast(w, '', 6500)); V.toast('Job uruchomiony', 'ok'); renderRender(); });
+      const start = (id, name, args) => $(id, body).onclick = e => V.busy(e.currentTarget, async () => { const gated = (name === 'render_start' && args.final) || name === 'deliver_start'; const r = await V.api(name, { project: pid, ...args, ...(gated && $('#skipRev', body).checked ? { skip_review: true } : {}) }); (r.warnings || []).forEach(w => V.toast(w, '', 6500)); V.toast('Job uruchomiony', 'ok'); renderRender(); });
       start('#rDraft', 'render_start', {}); start('#rFinal', 'render_start', { final: true }); start('#rSound', 'sound_start', {}); start('#rDeliver', 'deliver_start', {});
       wireCancel(body);
     };
@@ -233,8 +234,10 @@
       $('#askBtn', body).onclick = e => V.busy(e.currentTarget, async () => { const prompt = $('#ask', body).value.trim(); if (!prompt) { V.toast('Napisz, o co prosisz', 'err'); return; } await V.api('task_create', { prompt, project: pid }); V.toast('Zadanie dodane', 'ok'); renderAgent(); V.refreshStatus(); });
     };
 
+    const director = V.directorPanel({ pid, host, W, H, DUR, isActive: () => alive && tab === 'rezyser', askAgent,
+      seek: (t, o) => { setPlay(false); seek(t, o); } });
     const setTab = () => { $$('#tabs button', host).forEach(b => b.classList.toggle('on', b.dataset.tab === tab)); history.replaceState(null, '', `#/p/${pid}/${tab}`);
-      ({ nadzor: renderCheck, zrodlo: renderSource, render: renderRender, potok: renderPipe, agent: renderAgent })[tab](); };
+      ({ nadzor: renderCheck, rezyser: director.render, zrodlo: renderSource, render: renderRender, potok: renderPipe, agent: renderAgent })[tab](); };
     $$('#tabs button', host).forEach(b => b.onclick = () => { tab = b.dataset.tab; setTab(); });
 
     // dane początkowe

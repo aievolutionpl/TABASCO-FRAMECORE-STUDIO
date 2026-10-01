@@ -2,8 +2,8 @@
 
 # vstudio
 
-**Deterministyczne studio filmowe sterowane z CLI.**
-Brief → zasady obrazu → klatki kontrolne → render roboczy → dźwięk → render finalny → wydanie.
+**Deterministyczne studio filmowe: z CLI, przez agenta i z dashboardu.**
+Brief → plan reżyserski → scena z assetami → nadzór → przegląd reżysera → render → dźwięk → wydanie.
 
 [![Python](https://img.shields.io/badge/python-3.11%2B-22d3ee?style=flat-square)](https://www.python.org/)
 [![Playwright](https://img.shields.io/badge/render-Playwright%20%2B%20Chromium-a855f7?style=flat-square)](https://playwright.dev/)
@@ -12,7 +12,7 @@ Brief → zasady obrazu → klatki kontrolne → render roboczy → dźwięk →
 [![PL](https://img.shields.io/badge/docs-Polski-fbbf24?style=flat-square)](#)
 
 **Film to strona HTML, w której obraz jest czystą funkcją czasu.**
-Dźwięk powstaje proceduralnie — zero licencji, zero materiałów stockowych, zero telemetrii.
+Dźwięk powstaje proceduralnie, ikony i grafiki są własne albo mają ślad licencji, zero telemetrii.
 
 </div>
 
@@ -26,6 +26,8 @@ Dźwięk powstaje proceduralnie — zero licencji, zero materiałów stockowych,
 - [Przykładowa scena](#przykładowa-scena)
 - [Szybki start](#szybki-start)
 - [Studio: agent, nadzór jakości i dashboard](#studio-agent-nadzór-jakości-i-dashboard)
+- [Reżyser: plan, przegląd i zatwierdzenie przed wysyłką](#reżyser-plan-przegląd-i-zatwierdzenie-przed-wysyłką)
+- [Assety: ikony, grafiki i obrazy](#assety-ikony-grafiki-i-obrazy)
 - [Pipeline i bramki jakości](#pipeline-i-bramki-jakości)
 - [Kontrakt strony filmowej](#kontrakt-strony-filmowej)
 - [Zasady, które decydują o jakości](#zasady-które-decydują-o-jakości)
@@ -43,7 +45,7 @@ Dźwięk powstaje proceduralnie — zero licencji, zero materiałów stockowych,
 `vstudio` to mały, uczciwy warsztat do roboty z filmem. Nie jest generatorem „tekst na obrazek”, tylko
 pełnym, powtarzalnym procesem: **piszesz scenę jak kod, system pilnuje rytmu, kadru i głośności**.
 
-Trzy rzeczy odróżniają to od typowych narzędzi:
+Cztery rzeczy odróżniają to od typowych narzędzi:
 
 1. **Determinizm.** Klatka o czasie `t` jest zawsze tą samą klatką. Zero `Math.random`, zero timerów
    w rysowaniu. Dzięki temu można porównywać render ze studium referencji i wyłapywać regresje.
@@ -53,6 +55,10 @@ Trzy rzeczy odróżniają to od typowych narzędzi:
 3. **Bramki zamiast subiektywności.** Projekt przechodzi przez osiem bramek jakości (`brief`,
    `stills`, `draft`, `sound`, `final`…). Dopóki bramka nie jest zatwierdzona, `status` przypomina,
    co jest następne. To robi film powtarzalnym, a nie „raz mi się udało”.
+4. **Reżyser, który nie wypuszcza byle czego.** Zanim film trafi do użytkownika, przechodzi przegląd: czy co 2-3 s
+   dzieje się coś nowego, czy tekst naprawdę się renderuje (też polskie znaki), czy ruch ma przyspieszenia, czy film nie wygląda
+   tak samo od początku do końca. Finalny render i wydanie startują dopiero po zatwierdzeniu
+   ([opis](#reżyser-plan-przegląd-i-zatwierdzenie-przed-wysyłką)).
 
 ## Showreel
 
@@ -85,6 +91,8 @@ Plakat: [`assets/poster.jpg`](assets/poster.jpg) · Kontakt: [`assets/contact_sh
 | **Dźwięk** | `cues` → `mix` → `mux`, albo `sound` jednym poleceniem; `sfx` — efekty proceduralne |
 | **Wydanie** | `qa` (audyt pliku) i `deliver` (QA + plakat + paczka) |
 | **Studio** | `dashboard`, `mcp`, `check`, `tools`, `skill`, `vendor`, `onboard`: agent, nadzór jakości i interfejs ([opis](#studio-agent-nadzór-jakości-i-dashboard)) |
+| **Reżyser** | `director plan / review / signoff / status`, `styles`: 14 stylów, storyboard co 2-3 s, przegląd rytmu, haka, tekstu i ruchu, zatwierdzenie przed wysyłką ([opis](#reżyser-plan-przegląd-i-zatwierdzenie-przed-wysyłką)) |
+| **Assety** | `assets search / add / generate / list`: 64 ikony offline, 12 generatorów grafik, Iconify i Openverse z kontrolą licencji ([opis](#assety-ikony-grafiki-i-obrazy)) |
 | **Silniki** | `html` (domyślny, zero zależności poza przeglądarką), `remotion`, `hyperframes` |
 
 ## Przykładowa scena
@@ -155,15 +163,16 @@ więc niczego nie trzeba robić dwa razy:
 
 ```
 agent (MCP)  ─┐
-dashboard    ─┼─►  rejestr możliwości (43 operacji) ─► projekt na dysku
+dashboard    ─┼─►  rejestr możliwości (55 operacji) ─► projekt na dysku
 CLI          ─┘             │
                             ├─► nadzorca jakości: sprawdza każdą zmianę sceny i mówi, co poprawić
+                            ├─► reżyser: plan, przegląd i zatwierdzenie przed wysyłką do użytkownika
                             └─► log aktywności: dashboard pokazuje na żywo, co robi agent
 ```
 
 ```bash
 python vstudio.py dashboard            # interfejs w przeglądarce (onboarding przy pierwszym uruchomieniu)
-python vstudio.py skill --install      # skill dla agenta + wpis vstudio w .mcp.json
+python vstudio.py skill --install      # skill + agent-recenzent vstudio-director + wpis vstudio w .mcp.json
 python vstudio.py check -p moj-film    # nadzór z terminala (werdykt, znaleziska, delta względem poprzedniej rundy)
 ```
 
@@ -190,12 +199,12 @@ aktualny nawet wtedy, gdy agent o nim nie pamięta. Pełna lista kodów i napraw
 
 `python vstudio.py mcp` uruchamia serwer MCP (stdio). Agent dostaje:
 
-- **43 narzędzi** w 10 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
-  (agent naprawdę *widzi* film), nadzór, render, zadania, diagnostyka,
+- **55 narzędzi** w 12 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
+  (agent naprawdę *widzi* film), nadzór, **reżyser**, **assety**, render, zadania, diagnostyka,
 - **zasoby**: skill, wiedza (kontrakt strony, deterministyczny GSAP, pętla pracy), brief i ostatni raport każdego projektu,
-- **prompty**: `make-video`, `fix-findings`, `onboard`.
+- **prompty**: `make-video`, `direct-video` (jak reżyser: plan, assety, przegląd, zatwierdzenie), `review-video`, `fix-findings`, `onboard`.
 
-Połączenie: dashboard → Agent → *Zainstaluj* (zapisuje `SKILL.md` i wpis w `.mcp.json`), albo ręcznie
+Połączenie: dashboard → Agent → *Zainstaluj* (zapisuje `SKILL.md`, subagenta `vstudio-director` i wpis w `.mcp.json`), albo ręcznie
 `claude mcp add vstudio -- python vstudio.py mcp`. Przycisk *Testuj połączenie* robi prawdziwy handshake. Użytkownik zleca pracę
 z dashboardu („Poproś agenta”), agent podejmuje ją przez `task_next`, a cała jego aktywność widać na żywo.
 
@@ -205,7 +214,7 @@ z dashboardu („Poproś agenta”), agent podejmuje ją przez `task_next`, a ca
 | --- | --- |
 | **Start** | co dalej (środowisko, marka, zadania), projekty z podglądem, „poproś agenta” |
 | **Biblioteka** | 8 szablonów z żywym podglądem (najedź, żeby odtworzyć), nowy projekt jednym kliknięciem |
-| **Warsztat projektu** | podgląd sterowany `seek` (to, co widzisz, to się wyrenderuje), klatka po klatce, oś czasu z dźwiękiem, tekstami i znaleziskami; zakładki: Nadzór, Źródło (edytor z historią i **paleta sceny**: zmiana koloru w całej scenie albo zastosowanie kolorów marki jednym kliknięciem), Render (jobs z postępem i anulowaniem), Potok (bramki), Agent |
+| **Warsztat projektu** | podgląd sterowany `seek` (to, co widzisz, to się wyrenderuje), klatka po klatce, oś czasu z dźwiękiem, tekstami i znaleziskami; zakładki: Nadzór, **Reżyser** (plan stylu i bitów, wykres rytmu, znaleziska, zatwierdzenie, assety), Źródło (edytor z historią i **paleta sceny**: zmiana koloru w całej scenie albo zastosowanie kolorów marki jednym kliknięciem), Render (jobs z postępem i anulowaniem), Potok (bramki), Agent |
 | **Agent** | instalacja i test połączenia, tablica zadań, aktywność na żywo |
 | **Mapa możliwości** | wszystkie operacje z parametrami i przyciskiem „Wypróbuj” |
 | **Onboarding** | środowisko, marka (paleta, font, ton, format), agent, pierwszy film |
@@ -213,7 +222,8 @@ z dashboardu („Poproś agenta”), agent podejmuje ją przez `task_next`, a ca
 Dashboard słucha tylko na `localhost` (zmienia pliki projektów), odrzuca obcy `Host`/`Origin`, wymaga tokenu sesji dla każdej zmiany
 i nie wychodzi poza katalog projektu. Podglądy scen (a to kod, który może napisać agent) działają w piaskownicy
 (`Content-Security-Policy: sandbox allow-scripts`, nieprzezroczysty origin), więc scena nie ma dostępu do tokenu ani do API;
-panel steruje nią wyłącznie przez `postMessage` (`seek`, `info`). Skróty: spacja odtwarza, ←/→ krok o klatkę (z Shift o sekundę), L pętla.
+panel steruje nią wyłącznie przez `postMessage` (`seek`, `info`). SVG i HTML otwierane wprost z `/files/` dostają ten sam
+rygor (`sandbox`), więc plik z `src/assets/` nie przejmie origin dashboardu. Skróty: spacja odtwarza, ←/→ krok o klatkę (z Shift o sekundę), L pętla.
 
 Joby (render, dźwięk, wydanie): w projekcie działa naraz jeden, bo dotykają tych samych plików. Stan jest w `output/.studio/jobs/`
 i jest wspólny dla agenta (MCP) i dashboardu, więc dashboard może anulować job uruchomiony przez agenta. Anulowanie zabija całe drzewo
@@ -228,9 +238,116 @@ lokalną kopię, a podgląd, nadzorca i render podmieniają żądanie do CDN na 
 
 Każda operacja jest zarejestrowana **raz** w [`vstudio/registry.py`](vstudio/registry.py) (nazwa, schemat parametrów, „kiedy użyć”,
 czy zmienia pliki, czy jest jobem). Z tego jednego opisu powstają narzędzia MCP, API dashboardu,
-[`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) i tabela w skillu [`skills/vstudio/SKILL.md`](skills/vstudio/SKILL.md); test pilnuje,
-żeby pliki nie rozjechały się z kodem. Nowa operacja to jedna funkcja z dekoratorem `@capability` w `vstudio/ops.py`, potem
-`python vstudio.py tools --write-docs` i `python vstudio.py skill --write`.
+[`docs/CAPABILITIES.md`](docs/CAPABILITIES.md), tabela w skillu [`skills/vstudio/SKILL.md`](skills/vstudio/SKILL.md) i agent-recenzent
+[`agents/vstudio-director.md`](agents/vstudio-director.md); test pilnuje, żeby pliki nie rozjechały się z kodem. Nowa operacja to jedna funkcja z dekoratorem `@capability` w `vstudio/ops.py`, potem
+`python vstudio.py tools --write-docs` i `python vstudio.py skill --write` (zapisuje skill i agenta).
+
+## Reżyser: plan, przegląd i zatwierdzenie przed wysyłką
+
+Nadzorca odpowiada na pytanie „czy film jest poprawny technicznie?”. **Reżyser** na pytanie „czy ktoś zatrzyma się na nim w feedzie?”:
+planuje styl i rytm przed budową, mierzy to, co widzi widz, i **nie wypuszcza filmu bez zatwierdzenia**. Działa tak samo dla
+agenta (MCP), w dashboardzie (zakładka *Reżyser*) i z terminala.
+
+```
+director plan ─► scena + assety ─► check (nadzorca) ─► director review ─► director signoff ─► render finalny, wydanie
+styl główny +     ikony, grafiki,   poprawność          rytm, hak, tekst,   decyzja po obejrzeniu  (bez zatwierdzenia
+bity co 2-3 s     napisy            techniczna          ruch, fonty         klatek (checklista)     nie wystartują)
+```
+
+```bash
+python vstudio.py director plan   -p moj-film --goal "Premiera aplikacji do treningów" --platform reels --tone "zabawny"
+python vstudio.py director review -p moj-film              # kod wyjścia 3, gdy są błędy
+python vstudio.py director signoff -p moj-film --notes "Obejrzałem taśmę: hak w 0.3 s, zmiany co 2 s" --all-checked
+python vstudio.py styles                                   # biblioteka stylów (styles sticker-pop: opis i receptura)
+```
+
+### Plan: styl główny, dwa akcenty, bity co 2-3 s
+
+Film nie może być cały w jednym „systemie”. **Stała jest marka** (paleta, font, ton, logo), a **zmienia się traktowanie**: układ, tło,
+język ruchu, przejście, dźwięk. `director plan` dobiera styl główny i dwa akcenty o *różnych układach* (zawsze deterministycznie, z uzasadnieniem
+wyboru), a potem układa storyboard: hak, rozwinięcie, dowód, CTA. Każdy bit ma czas, styl, układ, przejście (z dźwiękiem), regułę tekstu
+(maks. 6 słów) i hasła do assetów. Dwa sąsiednie bity nigdy nie mają tego samego stylu ani układu. Plan trafia do `director/plan.json`
+(opcjonalnie do `STORYBOARD.md`, poprzedni plik jest zachowany), a przegląd sprawdza potem, czy film się go trzyma (`BEAT_MISSING`).
+
+| Styl | Do czego | Energia |
+| --- | --- | --- |
+| `kinetic-type` Kinetyczna typografia | ogłoszenia, promocje, premiery | 5 |
+| `sticker-pop` Naklejki i emoji | sklep, jedzenie, UGC | 5 |
+| `neo-brutal` Neo-brutalizm | młodzieżowe premiery, wydarzenia | 4 |
+| `retro-synth` Retro synthwave | muzyka, gry, rozrywka | 4 |
+| `glass-ui` Szkło i interfejs | aplikacje, SaaS, demo | 3 |
+| `gradient-mesh` Płynny gradient | marka, produkt, spokojny nowoczesny ton | 3 |
+| `isometric-3d` Obiekt 3D | sprzęt, gadżety, premiery produktu | 3 |
+| `data-story` Opowieść z danych | raporty, B2B, dowody | 3 |
+| `paper-cut` Papierowy collage | rzemiosło, jedzenie, rodzina | 3 |
+| `terminal-code` Terminal i kod | narzędzia dla developerów, AI | 3 |
+| `swiss-minimal` Szwajcarski minimalizm | edukacja, firma, raporty | 2 |
+| `dark-luxe` Ciemny luksus | perfumy, biżuteria, premium | 2 |
+| `cinematic-captions` Kinowe napisy | historie, opinie, podróże | 2 |
+| `pastel-soft` Miękki pastel | uroda, zdrowie, dzieci | 2 |
+
+Każdy styl ma paletę, typografię (z uwagą o `latin-ext` dla polskich znaków), język ruchu, przejścia, zasady kompozycji i **gotową recepturę
+CSS/GSAP** (`style_get`). Do tego 12 przejść (każde deterministyczne w GSAP) i 10 układów bitów (`styles_list`).
+
+### Przegląd: co mierzy
+
+| Obszar | Kody | Jak |
+| --- | --- | --- |
+| **Rytm** | `SLOW_PACE`, `BEAT_MISSING` | nowa sytuacja wizualna (zmiana ≥ 12% kadru w siatce 8×8 względem chwili sprzed 0,5 s) co najwyżej co 2,5 s (reels, tiktok, shorts, story), 3,5 s (feed, linkedin), 5 s (www, prezentacja); końcowy odcinek może trwać o 1 s dłużej (CTA) |
+| **Hak** | `WEAK_HOOK`, `NO_HOOK_TEXT` | w pierwszych 1,5 s zmienia się ≥ 8% kadru; tekst albo obraz do 1,2 s |
+| **Różnorodność** | `MONOTONE_STYLE` | film dzielony na plasterki po 1 s, grupowane w „looki” (układ kolorów 3×3): wymagane 2 looki od 4,5 s, 3 od 12 s, 4 od 20 s |
+| **Ruch** | `LINEAR_MOTION`, `NO_STAGGER` | położenia elementów z DOM w pełnej liczbie klatek (bez zrzutów): ruchy o stałej prędkości, ≥ 6 elementów wchodzących w tej samej klatce; ruch dziecka liczony względem rodzica |
+| **Tekst** | `TEXT_CLIPPED`, `TEXT_TRUNCATED`, `TEXT_HIDDEN`, `TEXT_OVERLAP`, `TEXT_WALL`, `TEXTS_INCOMPLETE` | geometria z DOM **oraz weryfikacja pikseli**: tekst robiony na chwilę przezroczystym, a jeśli obraz się nie zmienia, napisu nie widać (zasłonięty, w kolorze tła, przycięty) |
+| **Fonty** | `GLYPH_MISSING`, `FONT_FALLBACK` | czy każdy znak (w tym ąćęłńóśźż) jest rysowany wybranym fontem, a nie zamiennikiem lub pustym kwadratem |
+| **Obrazy** | `ASSET_BROKEN`, `NO_VISUAL_ASSETS` | obraz, który się nie załadował; film bez żadnej ikony i grafiki |
+| **Bezpieczeństwo** | `FLASH_RISK` | ≥ 6 skoków jasności w 1 s (próg trzech błysków na sekundę, WCAG 2.3.1) |
+
+Raport zawiera werdykt, wynik, delta względem poprzedniej rundy, **taśmę klatek** i **wykres rytmu** (krzywa zmiany kadru, nowe sytuacje, luki,
+bity z planu, „looki”). Przegląd ma budżet czasu: ciężka scena dostaje rzadsze próbkowanie, a raport mówi o tym wprost (`thinned`,
+`motion_skipped`), zamiast przekroczyć limit czasu klienta MCP.
+
+### Zatwierdzenie: bramka przed wysyłką
+
+Przegląd mierzy to, co mierzalne. **Czy jest ładnie, rozstrzyga recenzent** (agent albo człowiek), więc `director signoff` wymaga:
+notatki, co zobaczył na klatkach, potwierdzenia sześciu pozycji checklisty (hak, tekst, rytm, styl, ruch, assety) i decyzji o każdym ostrzeżeniu
+(naprawić albo świadomie zaakceptować **z powodem**; błędów nie da się zaakceptować). Zatwierdzenie jest powiązane z odciskiem całej
+sceny, więc **każda zmiana je unieważnia**. Zapisuje też, kto zdecydował, na podstawie źródła wywołania (agent przez MCP, człowiek w dashboardzie, CLI), a nie
+argumentu, którego nie da się podrobić. `render_start --final` i `deliver_start` odmawiają startu bez zatwierdzenia (wyłącznik: profil
+`require_director`; pominięcie na wyraźną prośbę użytkownika: `skip_review`). CLI `deliver` dopisuje w tym przypadku ostrzeżenie do `DELIVERY.md`.
+
+To bramka procesu, nie dowód, że recenzent patrzył: dlatego checklista, notatka z konkretami i ślad w logu aktywności.
+
+### Agent-recenzent
+
+`skill --install` zapisuje subagenta Claude Code [`vstudio-director`](agents/vstudio-director.md): surowy recenzent z własnym kontekstem i
+**bez narzędzi do edycji sceny** (niezależność oceny). Procedura: plan, `check_run`, `director_review`, obejrzenie taśmy i klatek w kluczowych
+chwilach, decyzja według checklisty, `director_signoff`, odpowiedź z werdyktem i listą poprawek. Agent budujący film wywołuje go przed
+powiedzeniem użytkownikowi, że film jest gotowy.
+
+## Assety: ikony, grafiki i obrazy
+
+Beat złożony z samego tekstu to najczęstszy powód, dla którego film wygląda jak slajd. Assety lądują w `src/assets/` projektu (strona widzi je jako
+`assets/<plik>`), a ślad pochodzenia (źródło, licencja, autor, hash) w `src/assets/ASSETS.json`. `deliver` składa z niego sekcję *Credits*.
+
+| Źródło | Co | Sieć | Licencja |
+| --- | --- | --- | --- |
+| `builtin:<id>` | 64 ikony liniowe SVG, wyszukiwanie po polsku i angielsku („koszyk”, „rakieta”) | nie | własne |
+| `assets generate` | 12 generatorów z ziarna: `blob`, `mesh` (zorza), `dots`, `grid`, `rings`, `waves`, `rays`, `confetti`, `grain`, `starburst`, `squiggle`, `arrow`; kolory marki | nie | własne |
+| `iconify:<zestaw>:<nazwa>` | ikony z Iconify | tak | sprawdzana w API (MIT, ISC, Apache, CC0, CC-BY, OFL...), CC-BY z autorem w creditsach |
+| `openverse:<id>` | zdjęcia z Openverse | tak | tylko CC0, domena publiczna i CC-BY (bez NC/ND/SA) |
+| adres `https://` | dowolny obraz | tak | nieznana: do sprawdzenia przez użytkownika |
+
+SVG wstawiany inline dziedziczy `color`, więc jedna ikona maluje się paletą marki i animuje jak każdy element. Pobieranie jest bezpieczne z założenia:
+tylko `https` na porcie 443, odrzucane adresy nieglobalne (localhost, sieci prywatne, `169.254.169.254`), każde przekierowanie sprawdzane od nowa, połączenie
+z zweryfikowanym adresem IP (bez proxy), limity rozmiaru i czasu, typ pliku ustalany po zawartości, SVG przez czarną i białą listę (bez skryptów, stylów, `foreignObject`
+i odwołań na zewnątrz), obraz rastrowy zmniejszany i kodowany ponownie bez metadanych.
+
+```bash
+python vstudio.py assets search koszyk                    # wbudowane
+python vstudio.py assets add builtin:cart -p moj-film --color "#FF6B4A"
+python vstudio.py assets generate mesh -p moj-film --seed 7
+python vstudio.py assets search rocket --source iconify   # wymaga internetu
+```
 
 ## Pipeline i bramki jakości
 
@@ -248,6 +365,9 @@ py -3 -I vstudio.py status -p moj-film        # co zrobione, co dalej
 py -3 -I vstudio.py gate approve stills -p moj-film
 py -3 -I vstudio.py gate score critic --score 8 -p moj-film
 ```
+
+Osiem bramek to potok z CLI. W studio (agent i dashboard) dochodzi do tego **zatwierdzenie reżysera** dla aktualnej wersji sceny: bez niego
+finalny render i wydanie nie wystartują ([opis](#zatwierdzenie-bramka-przed-wysyłką)).
 
 Co sprawdza warstwa `qa` na pliku końcowym:
 
@@ -353,6 +473,9 @@ vstudio tools     mapa wszystkich możliwości (--write-docs generuje docs/CAPAB
 vstudio skill     skill dla agenta (--write, --install)
 vstudio vendor    lokalne kopie bibliotek z CDN: add | list | remove
 vstudio onboard   stan studia i co zrobić dalej
+vstudio director  reżyser: plan | review | signoff | status (zatwierdzenie przed wysyłką)
+vstudio styles    biblioteka stylów reżysera (z id: pełny opis i receptura)
+vstudio assets    ikony, grafiki i obrazy: search | add | generate | list
 ```
 
 Każda komenda przyjmuje `--json`, więc da się je zagnieżdzić w skryptach i CI.
@@ -362,14 +485,17 @@ Każda komenda przyjmuje `--json`, więc da się je zagnieżdzić w skryptach i 
 ```
 output/<brand>/<slug>/
 ├── src/index.html        # film (kontrakt strony); src/.history/ = wersje sceny (cofanie)
+├── src/assets/           # ikony, grafiki, obrazy + ASSETS.json (źródło, licencja, autor, hash)
 ├── project.json          # parametry + stan bramek
-├── brief.md              # cel, grupa docelowa, przekaz
-├── visual_rules.md       # paleta, typografia, kompozycja
+├── BRIEF.md              # cel, grupa docelowa, przekaz
+├── VISUAL_RULES.md       # paleta, typografia, kompozycja
+├── STORYBOARD.md         # bity z planu reżyserskiego (jeśli zapisany)
 ├── stills/               # klatki kontrolne + sheet.jpg
 ├── supervisor/           # rundy nadzoru: round-NNN.json, taśma filmowa, klatki-dowody
+├── director/             # plan.json, rundy przeglądu (review-NNN.json, taśma, rhythm.png), signoff.json
 ├── audio/                # cues.json, mix.m4a
 ├── renders/              # draft / final (.mp4 + .qa.json)
-└── final/                # plakat, contact sheet, qa.json, DELIVERY.md
+└── final/                # plakat, contact sheet, qa.json, DELIVERY.md (z creditsami assetów)
 ```
 
 ## Wymagania
@@ -397,9 +523,11 @@ W praktyce `sound` wykonuje kroki 2–5 jednym poleceniem.
 ## Prywatność
 
 - Zero telemetrii. Nic nie wychodzi poza Twoją maszynę poza instalacją zależności.
-- Dashboard i serwer MCP nie łączą się z siecią; dashboard słucha wyłącznie na `localhost`. Stan użytkownika (profil marki, zadania, joby,
-  lokalne kopie bibliotek) leży w `output/.studio/`, poza repozytorium.
-- Zero materiałów stockowych i zero licencji do rozliczania — dźwięk jest generowany.
+- Dashboard i serwer MCP same z siebie nie łączą się z siecią; dashboard słucha wyłącznie na `localhost`. Sieć jest używana tylko na
+  wyraźne polecenie: `vendor add` (kopia biblioteki z CDN) oraz `assets search/add` ze źródeł `iconify`, `openverse` i adresu `https` (z zabezpieczeniami opisanymi
+  wyżej). Stan użytkownika (profil marki, zadania, joby, lokalne kopie bibliotek) leży w `output/.studio/`, poza repozytorium.
+- Dźwięk jest generowany, a ikony i grafiki są własne albo mają zapisany ślad licencji (`ASSETS.json` i *Credits* w `DELIVERY.md`). Za prawa do materiałów
+  z adresu `https` odpowiada użytkownik.
 - Render działa lokalnie w headless Chromium; strona filmowa nigdy nie łączy się z siecią
   (jedyny wyjątek: pętle w `examples/motion-graphics/` ładują GSAP z `cdnjs.cloudflare.com`, tak jak w promptach —
   do pracy offline podmień `src` na lokalną kopię).

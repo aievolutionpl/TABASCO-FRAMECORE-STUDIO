@@ -8,7 +8,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from . import activity, agentkit, doctor as doctor_mod, jobs, knowledge, supervisor, vendor, workspace
+from . import activity, agentkit, assets as assets_mod, director, doctor as doctor_mod, jobs, knowledge, styles, supervisor, vendor, workspace
 from .common import StudioError
 from .registry import REGISTRY, capability, describe
 
@@ -58,6 +58,8 @@ def studio_status() -> dict:
             nxt.append(f"{p['id']}: nadzór {c['verdict']} (wynik {c['score']}); popraw i uruchom check_run")
         elif not c:
             nxt.append(f"{p['id']}: jeszcze nie sprawdzony (check_run)")
+        elif p["director"]["state"] != "approved":
+            nxt.append(f"{p['id']}: brak zatwierdzenia reżysera ({p['director']['state']}): director_review, obejrzyj klatki, director_signoff")
     return {"ready": not failing, "onboarded": prof["onboarded"], "brand": prof["name"] or None,
             "doctor": {"ok": not failing, "failing": [{"check": c["check"], "detail": c["detail"]} for c in failing]},
             "agent": agent, "projects": len(projects), "open_tasks": len(tasks), "vendor": len(vendor.listing()), "next": nxt}
@@ -73,7 +75,8 @@ def profile_get() -> dict:
             params={"name": {"type": "string"}, "palette": {"type": "object", "description": "bg, ink, accent, accent2 as #RRGGBB"},
                     "font": {"type": "string"}, "tone": {"type": "string"}, "audience": {"type": "string"},
                     "default_format": {"type": "string", "enum": list(workspace.FORMATS)}, "fps": {"type": "integer", "minimum": 12, "maximum": 120},
-                    "auto_supervise": {"type": "boolean", "description": "run a quick supervisor check in the background whenever a scene changes on disk (dashboard)"}},
+                    "auto_supervise": {"type": "boolean", "description": "run a quick supervisor check in the background whenever a scene changes on disk (dashboard)"},
+                    "require_director": {"type": "boolean", "description": "final render and delivery need the director's sign-off for the current scene (default true)"}},
             returns="profile", when="During onboarding, after asking the user for their brand.")
 def profile_set(**patch) -> dict:
     return workspace.profile_set(patch)
@@ -91,12 +94,12 @@ def agent_selftest() -> dict:
     return agentkit.selftest()
 
 
-@capability("agent_install", "Zainstaluj skill i konfigurację MCP", "Zapisuje skill (SKILL.md) i wpis vstudio w .mcp.json.", "onboarding", mutates=True,
-            params={"skill": {"type": "boolean", "default": True}, "mcp_config": {"type": "boolean", "default": True},
-                    "scope": {"type": "string", "enum": ["project", "user"], "default": "project"}},
-            returns="installed{skill, mcp_config}")
-def agent_install(skill: bool = True, mcp_config: bool = True, scope: str = "project") -> dict:
-    return agentkit.install(skill, mcp_config, scope)
+@capability("agent_install", "Zainstaluj skill, agenta-recenzenta i konfigurację MCP", "Zapisuje skill (SKILL.md), subagenta `vstudio-director` (recenzent przed wysyłką) i wpis vstudio w .mcp.json.", "onboarding", mutates=True,
+            params={"skill": {"type": "boolean", "default": True}, "director": {"type": "boolean", "default": True, "description": "install the vstudio-director reviewer subagent"},
+                    "mcp_config": {"type": "boolean", "default": True}, "scope": {"type": "string", "enum": ["project", "user"], "default": "project"}},
+            returns="installed{skill, director_agent, mcp_config}")
+def agent_install(skill: bool = True, mcp_config: bool = True, scope: str = "project", director: bool = True) -> dict:
+    return agentkit.install(skill, mcp_config, scope, director)
 
 
 # ============================================================ library
@@ -307,7 +310,170 @@ def check_explain(code: str) -> dict:
     return supervisor.explain(code)
 
 
+# ============================================================ director
+
+_DIRECT_PLATFORM = {"type": "string", "enum": director.PLATFORMS, "description": "reels, tiktok, shorts, story (fast), feed, linkedin (standard), web, presentation (calm). Default: from the project format."}
+
+
+def _brief_review(rep: dict, limit: int = 14) -> dict:
+    m = rep["metrics"]
+    keep = ("platform", "pace", "max_gap", "events", "gaps", "hook", "looks", "looks_required", "motion", "max_words", "assets_visible", "plan_adherence",
+            "samples", "thinned", "motion_skipped", "phase_s")
+    return {"verdict": rep["verdict"], "score": rep["score"], "round": rep["round"], "counts": rep["counts"], "delta": rep["delta"],
+            "findings": [{k: f.get(k) for k in ("code", "severity", "t", "detail", "fix")} for f in rep["findings"][:limit]],
+            "next_actions": rep["next_actions"], "metrics": {k: m[k] for k in keep if k in m}}
+
+
+@capability("styles_list", "Biblioteka stylów", "14 stylów (kinetyczna typografia, szkło, neo-brutalizm, luksus, retro, naklejki, dane, 3D...) z tonem, energią, platformami, plus przejścia i układy bitów.", "direct",
+            params={"platform": {"type": "string", "enum": director.PLATFORMS}, "energy_min": {"type": "integer", "minimum": 1, "maximum": 5},
+                    "query": {"type": "string", "description": "word from the name, tone or goal (English or Polish)"}},
+            returns="styles[], transitions[], layouts{}", when="Before building a film: pick styles by goal and tone; mix a main style with two accents.")
+def styles_list(platform: str | None = None, energy_min: int | None = None, query: str | None = None) -> dict:
+    return {"styles": styles.listing(platform, energy_min, query),
+            "transitions": [{"id": k, "name": v["name"], "sound": v["sound"], "how": v["how"]} for k, v in styles.TRANSITIONS.items()], "layouts": styles.LAYOUTS}
+
+
+@capability("style_get", "Opis stylu", "Pełny opis jednego stylu: paleta, typografia, język ruchu, przejścia, zasady kompozycji i gotowa receptura CSS/GSAP.", "direct",
+            params={"id": {"type": "string", "enum": [s["id"] for s in styles.STYLES]}}, required=("id",), returns="style, text",
+            when="After director_plan: read the recipe of every style used in the storyboard before writing the scene.")
+def style_get(id: str) -> dict:  # noqa: A002 - nazwa parametru jest częścią kontraktu narzędzia
+    st = styles.get(id)
+    return {"style": st, "text": styles.style_text(st)}
+
+
+@capability("director_plan", "Plan reżyserski", "Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: bity co 2-3 s (hak, rozwinięcie, dowód, CTA) ze stylem, układem, przejściem, dźwiękiem i hasłami do assetów.", "direct",
+            mutates=True,
+            params={"project": PROJECT, "goal": {"type": "string", "description": "what the film is about and what the viewer should do"}, "tone": {"type": "string", "description": "e.g. premium, playful, techy (adds to the brand tone)"},
+                    "platform": _DIRECT_PLATFORM, "pace": {"type": "string", "enum": list(director.PACE_GAP)},
+                    "prefer": {"type": "array", "items": {"type": "string"}, "description": "style ids to favour"}, "avoid": {"type": "array", "items": {"type": "string"}, "description": "style ids to exclude"},
+                    "cta": {"type": "string", "description": "the call to action line"}, "loop": {"type": "boolean", "default": False},
+                    "write_storyboard": {"type": "boolean", "default": False, "description": "also write STORYBOARD.md (the previous one is kept as STORYBOARD.previous.md)"}},
+            required=("project", "goal"), returns="styles{main, accents, why}, beats[], contract, brand",
+            when="BEFORE building the scene: the plan is what director_review later checks the film against.")
+def director_plan(project: str, goal: str, tone: str = "", platform: str | None = None, pace: str | None = None, prefer: list | None = None,
+                  avoid: list | None = None, cta: str = "", loop: bool = False, write_storyboard: bool = False) -> dict:
+    pdir, pr = _proj(project)
+    return {"project": workspace.project_id(pdir), "plan": director.plan(pdir, pr, goal, tone, platform, pace, prefer, avoid, cta, loop, write_storyboard)}
+
+
+@capability("director_review", "Przegląd reżysera", "Mierzy film oczami widza: rytm (nowa sytuacja co 2-3 s), hak, różnorodność looków, ruch (przyspieszenia, stagger), widoczność i fonty tekstu (polskie znaki), obrazy, migotanie. Zwraca werdykt, znaleziska, taśmę klatek i wykres rytmu.", "direct",
+            images=True, mutates=True,
+            params={"project": PROJECT, "depth": {"type": "string", "enum": list(director.DEPTHS), "default": "standard"}, "platform": _DIRECT_PLATFORM,
+                    "pace": {"type": "string", "enum": list(director.PACE_GAP)}},
+            required=("project",), returns="verdict, score, findings[], metrics, state, checklist, images (filmstrip, rhythm chart, evidence)",
+            when="Before telling the user a film is ready, and before the final render: LOOK at the returned images, fix findings, re-run, then director_signoff.")
+def director_review(project: str, depth: str = "standard", platform: str | None = None, pace: str | None = None) -> dict:
+    pdir, pr = _proj(project)
+    rep = director.review(pdir, pr, platform=platform, pace=pace, depth=depth)
+    imgs = []
+    if rep.get("assets"):
+        base = pdir / "director" / rep["assets"]["dir"]
+        imgs.append(_img(pdir, base / rep["assets"]["filmstrip"], f"taśma klatek, przegląd {rep['round']}"))
+        imgs.append(_img(pdir, base / rep["assets"]["rhythm"], "wykres rytmu (zielone: nowe sytuacje, czerwone: luki)"))
+        for f in rep["findings"]:
+            if f.get("evidence") and f["severity"] != "info" and len(imgs) < 4:
+                imgs.append(_img(pdir, base / f["evidence"], f"{f['code']} przy {f['t']}s"))
+    st = director.state(pdir)
+    how = ("Look at the images with your own eyes. If every checklist item holds and no errors remain, call director_signoff (approve true, notes of what you saw, "
+           "accept: {CODE: reason} for each warning you keep on purpose). Otherwise fix the findings and run director_review again."
+           if rep["counts"]["error"] == 0 else "Errors block sign-off: fix them (see next_actions) and run director_review again.")
+    return {"project": workspace.project_id(pdir), **_brief_review(rep), "state": st, "checklist": director.CHECKLIST, "how_to_continue": how, "images": imgs}
+
+
+@capability("director_signoff", "Zatwierdzenie reżysera", "Świadome zatwierdzenie (albo odrzucenie) aktualnej wersji sceny po obejrzeniu klatek: checklista, notatka, zaakceptowane ostrzeżenia z powodem. Zmiana sceny unieważnia decyzję.", "direct",
+            mutates=True,
+            params={"project": PROJECT, "approve": {"type": "boolean"}, "notes": {"type": "string", "description": "1-2 sentences: what you saw in the frames (min 12 characters)"},
+                    "checklist": {"type": "object", "description": "{" + ", ".join(f'"{k}": true' for k in director.CHECKLIST) + "}; all must be true to approve"},
+                    "accept": {"type": "object", "description": "{CODE: reason} for warnings kept on purpose (errors cannot be accepted)"}},
+            required=("project", "approve", "notes"), returns="state, record",
+            when="After director_review, once you have looked at the frames. Final render and delivery refuse to start without an approved sign-off for the current scene.")
+def director_signoff(project: str, approve: bool, notes: str, checklist: dict | None = None, accept: dict | None = None) -> dict:
+    from . import registry
+
+    pdir, _ = _proj(project)
+    by = {"mcp": "agent (MCP)", "dashboard": "człowiek (dashboard)", "cli": "CLI"}.get(registry.current_source(), registry.current_source())
+    return {"project": workspace.project_id(pdir), **director.signoff(pdir, approve, notes, checklist, accept, by=by)}
+
+
+@capability("director_latest", "Ostatni przegląd reżysera", "Ostatni raport reżysera bez uruchamiania nowego, stan zatwierdzenia (czy aktualny), zapisany plan i historia rund.", "direct",
+            params={"project": PROJECT}, required=("project",), returns="review|null, state, plan|null, history[]")
+def director_latest(project: str) -> dict:
+    pdir, _ = _proj(project)
+    return {"project": workspace.project_id(pdir), "review": director.latest(pdir), "state": director.state(pdir), "plan": director.load_plan(pdir),
+            "history": director.history(pdir), "checklist": director.CHECKLIST}
+
+
+# ============================================================ assets
+
+def _palette_colors() -> list[str]:
+    pal = workspace.profile_get()["palette"]
+    return [pal["accent"], pal["accent2"], pal["ink"], pal["bg"]]
+
+
+@capability("assets_search", "Szukaj assetów", "Ikony i obrazy: wbudowane ikony SVG (offline), Iconify (ikony, licencja sprawdzana w API) albo Openverse (zdjęcia CC0/PD/CC-BY). Zwraca ref do assets_add.", "assets",
+            params={"query": {"type": "string", "description": "English or Polish word, e.g. cart, koszyk, rocket"}, "source": {"type": "string", "enum": ["builtin", "iconify", "openverse"], "default": "builtin"},
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 30, "default": 12}},
+            required=("query",), returns="results[] {id (ref), name, license, attribution, preview}",
+            when="Where a beat is only text: find an icon or sticker for it. Start with builtin (offline); use iconify/openverse when you need more (needs internet).")
+def assets_search(query: str, source: str = "builtin", limit: int = 12) -> dict:
+    return assets_mod.search(query, source, limit)
+
+
+@capability("assets_add", "Dodaj asset do projektu", "Zapisuje ikonę lub obraz w src/assets/ (SVG oczyszczany, obraz zmniejszany i kodowany ponownie) ze śladem licencji i zwraca gotowy kod do sceny.", "assets",
+            mutates=True,
+            params={"project": PROJECT, "ref": {"type": "string", "description": "builtin:<id> | iconify:<set>:<name> | openverse:<id> (from assets_search) | https URL"},
+                    "name": {"type": "string", "description": "file name without extension"}, "color": {"type": "string", "description": "#RRGGBB or currentColor (default; recolour by CSS `color`)"}},
+            required=("project", "ref"), returns="file, rel, license, snippet{html, note}",
+            when="After assets_search. Paste snippet.html into the scene; images load from assets/<file>. Downloads are checked (https only, public hosts, size and type limits).")
+def assets_add(project: str, ref: str, name: str | None = None, color: str | None = None) -> dict:
+    pdir, _ = _proj(project)
+    return {"project": workspace.project_id(pdir), **assets_mod.add(pdir, ref, name, color)}
+
+
+@capability("assets_generate", "Wygeneruj grafikę", "Deterministyczna grafika SVG z ziarna w kolorach marki: blob, mesh (zorza), dots, grid, rings, waves, rays, confetti, grain, starburst, squiggle, arrow.", "assets",
+            mutates=True,
+            params={"project": PROJECT, "kind": {"type": "string", "enum": list(assets_mod.GENERATORS)}, "seed": {"type": "integer", "minimum": 0, "maximum": 99999, "default": 1},
+                    "colors": {"type": "array", "items": {"type": "string"}, "description": "#RRGGBB list; default: brand accent, accent2, ink, bg (mesh uses the last as background)"},
+                    "name": {"type": "string"}, "width": {"type": "integer", "minimum": 64, "maximum": 4096}, "height": {"type": "integer", "minimum": 32, "maximum": 4096}},
+            required=("project", "kind"), returns="file, rel, snippet",
+            when="For backgrounds, textures, stickers and doodles that match the brand: no licence questions, no network.")
+def assets_generate(project: str, kind: str, seed: int = 1, colors: list | None = None, name: str | None = None, width: int | None = None, height: int | None = None) -> dict:
+    pdir, _ = _proj(project)
+    return {"project": workspace.project_id(pdir), **assets_mod.generate(pdir, kind, seed, colors or _palette_colors(), name, width, height)}
+
+
+@capability("assets_list", "Assety projektu", "Pliki w src/assets/ z pochodzeniem i licencją oraz lista generatorów i liczba wbudowanych ikon.", "assets",
+            params={"project": PROJECT}, required=("project",), returns="assets[], generators[], builtin_icons")
+def assets_list(project: str) -> dict:
+    pdir, _ = _proj(project)
+    return {"project": workspace.project_id(pdir), "assets": assets_mod.listing(pdir), "generators": assets_mod.generator_list(), "builtin_icons": len(assets_mod.ICONS)}
+
+
+@capability("assets_snippet", "Kod assetu do sceny", "HTML do wklejenia w scenę: SVG inline (przemalowywalny przez `color`) albo <img> z relatywną ścieżką.", "assets",
+            params={"project": PROJECT, "file": {"type": "string"}, "mode": {"type": "string", "enum": ["auto", "inline", "img"], "default": "auto"}},
+            required=("project", "file"), returns="mode, html, note")
+def assets_snippet(project: str, file: str, mode: str = "auto") -> dict:
+    pdir, _ = _proj(project)
+    return assets_mod.snippet(pdir, file, mode)
+
+
+@capability("assets_remove", "Usuń asset", "Usuwa plik z src/assets/ razem z wpisem w śladzie licencji.", "assets", mutates=True,
+            params={"project": PROJECT, "file": {"type": "string"}}, required=("project", "file"), returns="removed")
+def assets_remove(project: str, file: str) -> dict:
+    pdir, _ = _proj(project)
+    return assets_mod.remove(pdir, file)
+
+
 # ============================================================ render
+
+def _director_gate(pdir: Path, skip: bool, what: str) -> list[str]:
+    """Bramka reżysera: finalny render i wydanie wymagają zatwierdzenia aktualnej wersji sceny (wyłączalne w profilu albo jawnie przez skip_review)."""
+    if skip:
+        return ["Pominięto zatwierdzenie reżysera na wyraźną prośbę (skip_review)."]
+    if workspace.profile_get().get("require_director", True):
+        director.require(pdir, what)
+    return []
+
 
 def _need(*tools: str) -> None:
     """Sprawdza narzędzia zewnętrzne PRZED startem joba: błąd od razu i po ludzku, a nie dopiero w logu procesu."""
@@ -318,13 +484,16 @@ def _need(*tools: str) -> None:
 
 @capability("render_start", "Render", "Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait.", "render", job=True,
             params={"project": PROJECT, "final": {"type": "boolean", "default": False}, "audio": {"type": "string", "description": "path to a mixed audio file"},
-                    "force": {"type": "boolean", "default": False, "description": "skip the gate check for a final render"}},
+                    "force": {"type": "boolean", "default": False, "description": "skip the gate check for a final render"},
+                    "skip_review": {"type": "boolean", "default": False, "description": "skip the director sign-off requirement (only when the user explicitly asks)"}},
             required=("project",), returns="job, warnings[]",
-            when="Render a draft after the supervisor says pass; final only after brief, visual_rules and stills are approved.")
-def render_start(project: str, final: bool = False, audio: str | None = None, force: bool = False) -> dict:
+            when="Render a draft after the supervisor says pass; final only after brief, visual_rules and stills are approved AND the director signed off this version of the scene.")
+def render_start(project: str, final: bool = False, audio: str | None = None, force: bool = False, skip_review: bool = False) -> dict:
     _need("ffmpeg")
     pdir, pr = _proj(project)
     warns = []
+    if final:
+        warns += _director_gate(pdir, skip_review, "finalny render")
     rep = supervisor.latest(pdir)
     if rep is None:
         warns.append("Film nie był jeszcze sprawdzony nadzorcą (check_run).")
@@ -344,11 +513,14 @@ def sound_start(project: str) -> dict:
 
 
 @capability("deliver_start", "Wydanie", "QA pliku, plakat, paczka wydania i DELIVERY.md (job).", "render", job=True,
-            params={"project": PROJECT, "strict": {"type": "boolean", "default": False}}, required=("project",), returns="job")
-def deliver_start(project: str, strict: bool = False) -> dict:
+            params={"project": PROJECT, "strict": {"type": "boolean", "default": False},
+                    "skip_review": {"type": "boolean", "default": False, "description": "skip the director sign-off requirement (only when the user explicitly asks)"}},
+            required=("project",), returns="job, warnings[]", when="Only after director_signoff approved the current scene: delivery refuses to start otherwise.")
+def deliver_start(project: str, strict: bool = False, skip_review: bool = False) -> dict:
     _need("ffmpeg", "ffprobe")
     pdir, _ = _proj(project)
-    return {"job": jobs.start("deliver", workspace.project_id(pdir), pdir, ["deliver", "-p", str(pdir)] + (["--strict"] if strict else []))}
+    warns = _director_gate(pdir, skip_review, "wydanie")
+    return {"job": jobs.start("deliver", workspace.project_id(pdir), pdir, ["deliver", "-p", str(pdir)] + (["--strict"] if strict else [])), "warnings": warns}
 
 
 @capability("jobs_list", "Joby", "Ostatnie joby (render, dźwięk, wydanie) z postępem.", "render", params={"project": PROJECT}, returns="jobs[]")
