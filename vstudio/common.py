@@ -20,6 +20,7 @@ _ws = STUDIO.parent if STUDIO.parent.name == "projects" else None   # <workspace
 SCRIPTS = VENDOR if (VENDOR / "html_to_video.py").exists() else (_ws.parent / "scripts" if _ws else STUDIO / "scripts")
 ROOT = _ws.parent if _ws else STUDIO     # korzeń workspace albo korzeń repo
 OUTPUT = ROOT / "output"
+STATE_DIR = OUTPUT / ".studio"            # profil marki, aktywność agenta, joby, vendor (poza projektami; output/ jest w .gitignore)
 
 GATES = ["brief", "reference_spec", "visual_rules", "stills", "draft", "sound", "critic", "final"]
 ENGINES = ("html", "hyperframes", "remotion")
@@ -29,7 +30,17 @@ def log(msg: str = "") -> None:
     print(msg, file=sys.stderr, flush=True)
 
 
+class StudioError(Exception):
+    """Błąd operacji w trybie usługowym (MCP / dashboard): serwer nie może się zamknąć, więc die() rzuca wyjątek."""
+
+
+#: ustawiane przez `vstudio mcp` i `vstudio dashboard`; w zwykłym CLI die() kończy proces jak dotąd
+SERVICE_MODE = False
+
+
 def die(msg: str, code: int = 1):
+    if SERVICE_MODE:
+        raise StudioError(msg)
     print(f"error: {msg}", file=sys.stderr)
     raise SystemExit(code)
 

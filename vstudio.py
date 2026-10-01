@@ -76,6 +76,89 @@ def latest_render(pdir: Path, final: bool | None = None) -> Path:
     return cands[-1]
 
 
+# ------------------------------------------------------------------ studio (agent, dashboard, nadzór)
+
+def _studio_commands(a) -> int:
+    """Komendy warstwy studia: korzystają z rejestru możliwości, więc robią dokładnie to, co agent i dashboard."""
+    from vstudio import agentkit, registry, skillgen  # noqa: PLC0415
+    from vstudio import ops as _ops  # noqa: F401,PLC0415  (wypełnia rejestr)
+
+    if a.cmd == "mcp":
+        from vstudio.mcp_server import main as mcp_main
+        return mcp_main()
+    if a.cmd == "dashboard":
+        from vstudio.dashboard.server import serve
+        return serve(a.host, a.port, open_browser=not a.no_open)
+    if a.cmd == "check":
+        pdir, pr = resolve_project(getattr(a, "project", None))
+        rep = registry.call("check_run", {"project": str(pdir.relative_to(OUTPUT).as_posix()), "depth": a.depth}, source="cli")
+        rep.pop("images", None)
+        if a.json:
+            print(json.dumps(rep, indent=2, ensure_ascii=False))
+        else:
+            c = rep["counts"]
+            print(f"{rep['project']}  runda {rep['round']}  werdykt: {rep['verdict']}  wynik {rep['score']}/100  ({c['error']} błędów, {c['warn']} ostrzeżeń, {c['info']} info)")
+            for f in rep["findings"]:
+                at = f"  {f['t']:>5.2f}s" if f["t"] is not None else "         "
+                print(f"  {f['severity']:<5}{at}  {f['code']:<18} {f['detail']}")
+            if rep["delta"]:
+                d = rep["delta"]
+                print(f"  vs runda {d['since_round']}: naprawiono {len(d['resolved'])}, nowe {len(d['new'])}, wynik {d['score_change']:+d}")
+            for act in rep["next_actions"]:
+                print("  ->", act)
+        return 0 if rep["verdict"] != "blocked" else 3
+    if a.cmd == "tools":
+        from vstudio import docgen
+        if a.write_docs:
+            out = docgen.write()
+            print(out)
+            return 0
+        if a.json:
+            print(json.dumps(registry.describe(), indent=2, ensure_ascii=False))
+        else:
+            print(docgen.render() if a.markdown else docgen.table())
+        return 0
+    if a.cmd == "skill":
+        if a.install:
+            res = agentkit.install(skill=True, mcp_config=True, scope=a.scope)
+            emit(res, a.json, "\n".join(f"{k}: {v}" for k, v in res["installed"].items()) + "\n" + res["note"])
+            return 0
+        text = skillgen.render()
+        if a.write:
+            dest = Path(__file__).resolve().parent / "skills" / "vstudio" / "SKILL.md"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(text, encoding="utf-8")
+            print(dest)
+        else:
+            print(text)
+        return 0
+    if a.cmd == "vendor":
+        from vstudio import vendor
+        if a.vendor_cmd == "list":
+            rows = vendor.listing()
+            emit(rows, a.json, "\n".join(f"{r['url']}  ->  {r['file']} ({r['bytes']} B)" for r in rows) or "(brak lokalnych kopii)")
+        elif a.vendor_cmd == "add":
+            res = vendor.add(a.url, a.file)
+            emit(res, a.json, f"{res['url']}  ->  {res['file']} ({res['bytes']} B)")
+        else:
+            res = vendor.remove(a.url)
+            emit(res, a.json, "usunięto" if res["removed"] else "nie było takiej kopii")
+        return 0
+    if a.cmd == "onboard":
+        res = registry.call("studio_status", {}, source="cli")
+        if a.json:
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+        else:
+            print(f"vstudio: środowisko {'OK' if res['ready'] else 'WYMAGA NAPRAWY'} | profil marki: {res['brand'] or 'nie ustawiony'} | "
+                  f"projekty: {res['projects']} | agent: {'połączony' if res['agent']['connected'] else 'niepołączony'}")
+            for step in res["next"]:
+                print("  ->", step)
+            print("\nDashboard (onboarding krok po kroku): python vstudio.py dashboard")
+            print("Agent: python vstudio.py skill --install  (skill + wpis MCP), potem uruchom agenta w tym katalogu")
+        return 0
+    return 1
+
+
 # ------------------------------------------------------------------ cli
 
 def build_parser() -> argparse.ArgumentParser:
@@ -172,6 +255,31 @@ def build_parser() -> argparse.ArgumentParser:
     a_x.add_argument("audio")
     a_x.add_argument("-o", "--out", required=True)
 
+    sub.add_parser("mcp", help="serwer MCP (stdio) dla agenta: narzędzia, wiedza, prompty")
+    a_d = sub.add_parser("dashboard", help="dashboard: onboarding, podgląd, nadzór jakości, rendery, aktywność agenta")
+    a_d.add_argument("--host", default="127.0.0.1", help="tylko 127.0.0.1/localhost (dashboard zmienia pliki)")
+    a_d.add_argument("--port", type=int, default=8765)
+    a_d.add_argument("--no-open", action="store_true", help="nie otwieraj przeglądarki")
+    a_k = sub.add_parser("check", help="nadzór jakości: sprawdź film (błędy, klatki, pętla, determinizm, czytelność)")
+    a_k.add_argument("--project", "-p")
+    a_k.add_argument("--depth", choices=["quick", "standard", "deep"], default="standard")
+    a_t = sub.add_parser("tools", help="mapa wszystkich możliwości studia (te same, które ma agent i dashboard)")
+    a_t.add_argument("--markdown", action="store_true")
+    a_t.add_argument("--write-docs", action="store_true", help="zapisz docs/CAPABILITIES.md")
+    a_s = sub.add_parser("skill", help="skill dla agenta (generowany z rejestru)")
+    a_s.add_argument("--write", action="store_true", help="zapisz skills/vstudio/SKILL.md w repo")
+    a_s.add_argument("--install", action="store_true", help="zainstaluj skill i wpis MCP (.mcp.json)")
+    a_s.add_argument("--scope", choices=["project", "user"], default="project")
+    a_v = sub.add_parser("vendor", help="lokalne kopie bibliotek z CDN (np. GSAP) do pracy offline")
+    v_sub = a_v.add_subparsers(dest="vendor_cmd", required=True)
+    v_sub.add_parser("list")
+    va = v_sub.add_parser("add")
+    va.add_argument("url", help="adres albo skrót (gsap)")
+    va.add_argument("--file", help="lokalny plik do skopiowania zamiast pobierania")
+    vr = v_sub.add_parser("remove")
+    vr.add_argument("url")
+    sub.add_parser("onboard", help="stan studia i co zrobić dalej (środowisko, marka, agent, pierwszy film)")
+
     a_q = sub.add_parser("qa", help="audyt pliku przez scripts/video_qa.py")
     a_q.add_argument("video")
     a_q.add_argument("--json")
@@ -200,6 +308,13 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "doctor":
         from vstudio.doctor import report
         return 0 if report(json_out=a.json) else 2
+    if a.cmd in ("mcp", "dashboard", "check", "tools", "skill", "vendor", "onboard"):
+        from vstudio.common import StudioError  # noqa: PLC0415
+        from vstudio.registry import CapabilityError  # noqa: PLC0415
+        try:
+            return _studio_commands(a)
+        except (CapabilityError, StudioError) as exc:
+            die(str(exc))
     if a.cmd == "analyze":
         video = Path(a.video)
         if not video.exists():

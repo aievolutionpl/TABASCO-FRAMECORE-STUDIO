@@ -25,6 +25,7 @@ Dźwięk powstaje proceduralnie — zero licencji, zero materiałów stockowych,
 - [Możliwości](#możliwości)
 - [Przykładowa scena](#przykładowa-scena)
 - [Szybki start](#szybki-start)
+- [Studio: agent, nadzór jakości i dashboard](#studio-agent-nadzór-jakości-i-dashboard)
 - [Pipeline i bramki jakości](#pipeline-i-bramki-jakości)
 - [Kontrakt strony filmowej](#kontrakt-strony-filmowej)
 - [Zasady, które decydują o jakości](#zasady-które-decydują-o-jakości)
@@ -83,6 +84,7 @@ Plakat: [`assets/poster.jpg`](assets/poster.jpg) · Kontakt: [`assets/contact_sh
 | **Render** | `render` (roboczy, half-res) i `render --final` (1080p), `--audio`, `--subframes` |
 | **Dźwięk** | `cues` → `mix` → `mux`, albo `sound` jednym poleceniem; `sfx` — efekty proceduralne |
 | **Wydanie** | `qa` (audyt pliku) i `deliver` (QA + plakat + paczka) |
+| **Studio** | `dashboard`, `mcp`, `check`, `tools`, `skill`, `vendor`, `onboard`: agent, nadzór jakości i interfejs ([opis](#studio-agent-nadzór-jakości-i-dashboard)) |
 | **Silniki** | `html` (domyślny, zero zależności poza przeglądarką), `remotion`, `hyperframes` |
 
 ## Przykładowa scena
@@ -143,6 +145,92 @@ py -3 -I vstudio.py sound    -p moj-film
 py -3 -I vstudio.py render   --final -p moj-film --audio output/moja-marka/moj-film/audio/mix.m4a
 py -3 -I vstudio.py deliver  -p moj-film
 ```
+
+## Studio: agent, nadzór jakości i dashboard
+
+![Dashboard vstudio: podgląd sceny, oś czasu i panel nadzoru jakości](assets/dashboard.png)
+
+Oprócz potoku CLI studio ma warstwę dla **agenta** (np. Claude Code) i dla **człowieka**. Obie siedzą na tym samym silniku,
+więc niczego nie trzeba robić dwa razy:
+
+```
+agent (MCP)  ─┐
+dashboard    ─┼─►  rejestr możliwości (43 operacji) ─► projekt na dysku
+CLI          ─┘             │
+                            ├─► nadzorca jakości: sprawdza każdą zmianę sceny i mówi, co poprawić
+                            └─► log aktywności: dashboard pokazuje na żywo, co robi agent
+```
+
+```bash
+python vstudio.py dashboard            # interfejs w przeglądarce (onboarding przy pierwszym uruchomieniu)
+python vstudio.py skill --install      # skill dla agenta + wpis vstudio w .mcp.json
+python vstudio.py check -p moj-film    # nadzór z terminala (werdykt, znaleziska, delta względem poprzedniej rundy)
+```
+
+**Zero nowych zależności:** serwer MCP i dashboard są napisane na bibliotece standardowej Pythona, interfejs nie ładuje nic z sieci.
+
+### Nadzorca jakości: pilnuje generacji
+
+Po każdej zmianie sceny nadzorca ładuje ją w Chromium w rozmiarze projektu, próbkuje klatki i zwraca **werdykt** (`pass`,
+`needs_fixes`, `blocked`), wynik 0-100 i listę znalezisk z kodem, czasem, miejscem w kadrze i **wskazówką naprawy dla agenta**.
+Kolejna runda pokazuje, co naprawiono, co jest nowe i co wciąż wisi. Agent działa w pętli: edytuj, sprawdź, popraw, aż `pass`.
+
+| Kontrola | Łapie |
+| --- | --- |
+| Błędy strony i sieci | wyjątek JS, zablokowany CDN (`NET_FAILED`, z podpowiedzią: `vendor_add`) |
+| Kontrakt | brak `seek`, `DURATION`, `TEXTS`, `EV`; czas różny od projektu |
+| Determinizm | `NONDETERMINISTIC`: klatka zależy od kolejności `seek` (losowość, timery, nakładające się tweeny) |
+| Czas i ruch | puste klatki, martwy czas > 1 s, twarde cięcia, pętla, która nie domyka się |
+| Tekst | za krótko na ekranie, poza kadrem, niski kontrast, za mały, w strefie interfejsu platformy |
+
+Automatyczny nadzór w tle (włączony domyślnie): gdy scena zmieni się na dysku, dashboard sam robi szybką rundę, więc werdykt jest
+aktualny nawet wtedy, gdy agent o nim nie pamięta. Pełna lista kodów i napraw: [`docs/CAPABILITIES.md`](docs/CAPABILITIES.md).
+
+### Most dla agenta (MCP) i skill
+
+`python vstudio.py mcp` uruchamia serwer MCP (stdio). Agent dostaje:
+
+- **43 narzędzi** w 10 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
+  (agent naprawdę *widzi* film), nadzór, render, zadania, diagnostyka,
+- **zasoby**: skill, wiedza (kontrakt strony, deterministyczny GSAP, pętla pracy), brief i ostatni raport każdego projektu,
+- **prompty**: `make-video`, `fix-findings`, `onboard`.
+
+Połączenie: dashboard → Agent → *Zainstaluj* (zapisuje `SKILL.md` i wpis w `.mcp.json`), albo ręcznie
+`claude mcp add vstudio -- python vstudio.py mcp`. Przycisk *Testuj połączenie* robi prawdziwy handshake. Użytkownik zleca pracę
+z dashboardu („Poproś agenta”), agent podejmuje ją przez `task_next`, a cała jego aktywność widać na żywo.
+
+### Dashboard
+
+| Widok | Do czego |
+| --- | --- |
+| **Start** | co dalej (środowisko, marka, zadania), projekty z podglądem, „poproś agenta” |
+| **Biblioteka** | 8 szablonów z żywym podglądem (najedź, żeby odtworzyć), nowy projekt jednym kliknięciem |
+| **Warsztat projektu** | podgląd sterowany `seek` (to, co widzisz, to się wyrenderuje), klatka po klatce, oś czasu z dźwiękiem, tekstami i znaleziskami; zakładki: Nadzór, Źródło (edytor z historią i **paleta sceny**: zmiana koloru w całej scenie albo zastosowanie kolorów marki jednym kliknięciem), Render (jobs z postępem i anulowaniem), Potok (bramki), Agent |
+| **Agent** | instalacja i test połączenia, tablica zadań, aktywność na żywo |
+| **Mapa możliwości** | wszystkie operacje z parametrami i przyciskiem „Wypróbuj” |
+| **Onboarding** | środowisko, marka (paleta, font, ton, format), agent, pierwszy film |
+
+Dashboard słucha tylko na `localhost` (zmienia pliki projektów), odrzuca obcy `Host`/`Origin`, wymaga tokenu sesji dla każdej zmiany
+i nie wychodzi poza katalog projektu. Podglądy scen (a to kod, który może napisać agent) działają w piaskownicy
+(`Content-Security-Policy: sandbox allow-scripts`, nieprzezroczysty origin), więc scena nie ma dostępu do tokenu ani do API;
+panel steruje nią wyłącznie przez `postMessage` (`seek`, `info`). Skróty: spacja odtwarza, ←/→ krok o klatkę (z Shift o sekundę), L pętla.
+
+Joby (render, dźwięk, wydanie): w projekcie działa naraz jeden, bo dotykają tych samych plików. Stan jest w `output/.studio/jobs/`
+i jest wspólny dla agenta (MCP) i dashboardu, więc dashboard może anulować job uruchomiony przez agenta. Anulowanie zabija całe drzewo
+procesów (render → chromium → ffmpeg) i usuwa urwane pliki powstałe od startu joba; zamknięcie serwera też przerywa jego joby.
+
+### Praca offline: vendor
+
+Strony z GSAP ładowanym z CDN nie uruchomią się bez sieci. `python vstudio.py vendor add gsap` (albo `--file plik.js` bez sieci) zapisuje
+lokalną kopię, a podgląd, nadzorca i render podmieniają żądanie do CDN na plik z dysku. HTML sceny zostaje bez zmian.
+
+### Mapa możliwości
+
+Każda operacja jest zarejestrowana **raz** w [`vstudio/registry.py`](vstudio/registry.py) (nazwa, schemat parametrów, „kiedy użyć”,
+czy zmienia pliki, czy jest jobem). Z tego jednego opisu powstają narzędzia MCP, API dashboardu,
+[`docs/CAPABILITIES.md`](docs/CAPABILITIES.md) i tabela w skillu [`skills/vstudio/SKILL.md`](skills/vstudio/SKILL.md); test pilnuje,
+żeby pliki nie rozjechały się z kodem. Nowa operacja to jedna funkcja z dekoratorem `@capability` w `vstudio/ops.py`, potem
+`python vstudio.py tools --write-docs` i `python vstudio.py skill --write`.
 
 ## Pipeline i bramki jakości
 
@@ -258,6 +346,13 @@ vstudio compare   render vs referencja -> CRITIC_BRIEF.md
 vstudio edl       montaż z listy decyzji (JSON)
 vstudio qa        audyt pliku
 vstudio deliver   QA + plakat + paczka wydania
+vstudio dashboard dashboard w przeglądarce (onboarding, podgląd, nadzór, rendery, aktywność agenta)
+vstudio mcp       serwer MCP dla agenta (narzędzia, wiedza, prompty)
+vstudio check     nadzór jakości: błędy, klatki, pętla, determinizm, czytelność
+vstudio tools     mapa wszystkich możliwości (--write-docs generuje docs/CAPABILITIES.md)
+vstudio skill     skill dla agenta (--write, --install)
+vstudio vendor    lokalne kopie bibliotek z CDN: add | list | remove
+vstudio onboard   stan studia i co zrobić dalej
 ```
 
 Każda komenda przyjmuje `--json`, więc da się je zagnieżdzić w skryptach i CI.
@@ -266,11 +361,12 @@ Każda komenda przyjmuje `--json`, więc da się je zagnieżdzić w skryptach i 
 
 ```
 output/<brand>/<slug>/
-├── src/index.html        # film (kontrakt strony)
+├── src/index.html        # film (kontrakt strony); src/.history/ = wersje sceny (cofanie)
 ├── project.json          # parametry + stan bramek
 ├── brief.md              # cel, grupa docelowa, przekaz
 ├── visual_rules.md       # paleta, typografia, kompozycja
 ├── stills/               # klatki kontrolne + sheet.jpg
+├── supervisor/           # rundy nadzoru: round-NNN.json, taśma filmowa, klatki-dowody
 ├── audio/                # cues.json, mix.m4a
 ├── renders/              # draft / final (.mp4 + .qa.json)
 └── final/                # plakat, contact sheet, qa.json, DELIVERY.md
@@ -301,6 +397,8 @@ W praktyce `sound` wykonuje kroki 2–5 jednym poleceniem.
 ## Prywatność
 
 - Zero telemetrii. Nic nie wychodzi poza Twoją maszynę poza instalacją zależności.
+- Dashboard i serwer MCP nie łączą się z siecią; dashboard słucha wyłącznie na `localhost`. Stan użytkownika (profil marki, zadania, joby,
+  lokalne kopie bibliotek) leży w `output/.studio/`, poza repozytorium.
 - Zero materiałów stockowych i zero licencji do rozliczania — dźwięk jest generowany.
 - Render działa lokalnie w headless Chromium; strona filmowa nigdy nie łączy się z siecią
   (jedyny wyjątek: pętle w `examples/motion-graphics/` ładują GSAP z `cdnjs.cloudflare.com`, tak jak w promptach —

@@ -58,7 +58,7 @@ def check() -> list[dict]:
             except Exception as exc:  # pragma: no cover - środowiskowe
                 ver = f"błąd importu: {exc}"
         add(mod, bool(spec), ver)
-    chrome = find_chrome()
+    chrome = _playwright_chromium_path() or find_chrome()
     add("chromium (playwright/chrome)", bool(chrome), chrome or "uruchom: py -3 -m playwright install chromium")
     for f in ("html_to_video.py", "video_qa.py"):
         add(f"renderery/{f}", (SCRIPTS / f).exists(), str(SCRIPTS / f))
@@ -74,7 +74,21 @@ def check() -> list[dict]:
 
 
 def _starter() -> Path:
-    return ROOT / "Skills" / "remotion-video-creator" / "templates" / "html-video-starter.html"
+    cands = (STUDIO / "templates" / "html-video-starter.html",
+             ROOT / "Skills" / "remotion-video-creator" / "templates" / "html-video-starter.html")
+    return next((p for p in cands if p.exists()), cands[0])
+
+
+def _playwright_chromium_path() -> str | None:
+    """Chromium, którego faktycznie użyje Playwright (respektuje PLAYWRIGHT_BROWSERS_PATH), bez uruchamiania przeglądarki."""
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as pw:
+            exe = pw.chromium.executable_path
+            return exe if exe and os.path.exists(exe) else None
+    except Exception:  # noqa: BLE001 - brak playwright / brak przeglądarki: zgłosi to osobny check
+        return None
 
 
 def report(json_out: bool = False) -> bool:

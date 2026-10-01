@@ -15,6 +15,7 @@ import re
 import sys
 from pathlib import Path
 
+from . import vendor
 from .common import SCRIPTS, die, log
 
 
@@ -37,6 +38,7 @@ def open_page(page_path: Path, size: tuple[int, int] = (1920, 1080), timeout: in
         with sync_playwright() as pw:
             browser = h.launch_browser(pw, None)
             ctx = browser.new_context(viewport={"width": size[0], "height": size[1]})
+            vendor.install_routes(ctx)                      # lokalne kopie bibliotek z CDN (vstudio vendor), gdy są
             page = ctx.new_page()
             page.set_default_timeout(timeout * 1000)
             page.on("pageerror", lambda e: log(f"[page error] {e}"))
