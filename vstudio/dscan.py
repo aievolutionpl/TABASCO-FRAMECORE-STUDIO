@@ -18,7 +18,7 @@ GRID = 8                # kadr dzielimy na GRID x GRID bloków; blok „zmienił
 BLOCK_MIN = 0.04
 SHIFT_THR = 0.12        # tyle KADRU (w blokach) musi się wyraźnie zmienić względem chwili sprzed 0.5 s, żeby to była nowa sytuacja wizualna
 HOOK_THR = 0.08         # tyle kadru musi się zmienić w pierwszych 1.5 s, żeby otwarcie miało hak
-LOOK_TAU = 14.0         # odległość układu kolorów (0-100), od której dwa momenty uznajemy za dwa różne „looki”
+LOOK_TAU = 12.0         # odległość układu kolorów (0-100), od której dwa momenty uznajemy za dwa różne „looki” (kalibracja na 10 szablonach: jednolite filmy 1-2 looki, filmy ze zmianą tła i kart 3-4)
 
 
 def thumb(im):
@@ -58,23 +58,24 @@ def shift_series(thumbs: list, step: float, back: float = 0.5) -> list[float]:
     return [block_change(thumbs[max(0, i - k)], thumbs[i]) if i else 0.0 for i in range(len(thumbs))]
 
 
-def find_events(times: list[float], series: list[float], thr: float = SHIFT_THR, min_sep: float = 0.7) -> list[float]:
-    """Chwile nowych sytuacji wizualnych: początek każdego skupiska próbek z D >= thr (dla twardego cięcia to chwila cięcia).
+def find_events(times: list[float], series: list[float], thr: float = SHIFT_THR, min_sep: float = 0.7, rise: float = 0.12, lookback_s: float = 0.4) -> list[float]:
+    """Chwile nowych sytuacji wizualnych: narastające zbocze zmiany kadru powyżej progu `thr`.
 
+    Zbocze to wzrost o >= `rise` względem najniższego poziomu z ostatnich `lookback_s` sekund. Dla twardego cięcia to chwila cięcia; wewnątrz ciągłej
+    zmiany (np. przewijane okno) nowy bit z gwałtownym skokiem też jest zdarzeniem, a równy ruch nie rodzi go co próbkę. Okno jest w sekundach, nie
+    w próbkach: przy rzadszym próbkowaniu (`quick`) trwały skok nie może wrócić jako drugie zdarzenie, zanim minie `min_sep`.
     t = 0 liczy się zawsze (pierwsza klatka jest „nowa” z definicji). Zdarzenia bliższe niż `min_sep` scalamy.
     """
     events = [0.0]
-    i, n = 1, len(series)
-    while i < n:
-        if series[i] >= thr:
-            j = i
-            while j + 1 < n and series[j + 1] >= thr:
-                j += 1
-            if times[i] - events[-1] >= min_sep:
-                events.append(round(times[i], 3))
-            i = j + 1
-        else:
-            i += 1
+    for i in range(1, len(series)):
+        if series[i] < thr:
+            continue
+        j = i
+        while j > 0 and times[i] - times[j - 1] <= lookback_s + 1e-9:
+            j -= 1
+        base = min(series[j:i]) if j < i else series[i - 1]
+        if series[i] - base >= rise and times[i] - events[-1] >= min_sep:
+            events.append(round(times[i], 3))
     return events
 
 
@@ -113,7 +114,14 @@ def color_layout(th) -> list[float]:
 
 
 def look_distance(a: list[float], b: list[float]) -> float:
-    return sum(abs(x - y) for x, y in zip(a, b)) / len(a)
+    """Różnica „looków”: pół średniej różnicy całego kadru, pół różnicy w najbardziej zmienionej komórce 3x3.
+
+    Sama średnia nie widzi dużej karty na małym kawałku kadru (zmienia jedną komórkę z dziewięciu), a sama największa komórka rozbija
+    jednolity film przy każdym przesunięciu elementu. Mieszanka łapie obie zmiany i jest odporna na drobny ruch.
+    """
+    n = len(a) // 3
+    cells = [sum(abs(a[i * 3 + k] - b[i * 3 + k]) for k in range(3)) / 3 for i in range(n)]
+    return 0.5 * (sum(cells) / n) + 0.5 * max(cells)
 
 
 def look_clusters(thumbs: list, times: list[float], slice_s: float = 1.0, tau: float = LOOK_TAU) -> tuple[list[int], int, list[list[float]]]:

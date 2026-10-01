@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - rolka: polecajka narzędzia</title>
+<!--
+  Format rolki "polecajka narzędzia" (tool-drop), 1080x1920, 16 s, GSAP 3.12.5.
+  Bity (director_plan format=tool-drop): hak 0-2.4 s (napisy nad nagraniem) | demo 2.4-5.6 s (okno przeglądarki + wordmark) |
+  karta zasobu 5.6-9.4 s (ikona, plakietka DARMOWY, komenda wpisywana w terminalu) | korzyści 9.4-12.6 s | CTA "skomentuj słowo" 12.6-16 s.
+  Czasy są dobrane do czasu czytania (znaki / 15 + 1,5 s): każdy napis zostaje na ekranie dość długo, żeby dało się go przeczytać.
+
+  Układ: nagranie twórcy w dolnych ~55% kadru (tu: placeholder), karty i okno na scenie powyżej, napisy słowo po słowie na styku.
+  Podmień: nazwę produktu, adres, komendę, opisy i słowo CTA (zmienne w sekcji CONTENT na dole); napisy zbuduj narzędziem captions_build
+  z własnego tekstu lub SRT. Własne nagranie: zrenderuj scenę jako nakładkę z przezroczystością (render_start overlay: true) i złóż w montażu;
+  w trybie nakładki znikają tło i placeholder nagrania (window.__ALPHA__).
+
+  Kontrakt strony vstudio: window.DURATION / seek(t) / EV / TEXTS(t) / __ready / __CAPTURE__. Zestaw ruchu (sprężyny, krzywe, napisy) wchodzi ze znacznika poniżej.
+  Uwaga: GSAP ładowany z CDN (cdnjs); do pracy offline: vendor add gsap.
+-->
+<style>
+  :root { --cap-size: 100px; --cap-hl: #FFC93C; --cap-font: "Archivo Black", "Inter", "Helvetica Neue", Arial, sans-serif; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0E0E10; }
+  html.alpha, html.alpha body { background: transparent; }
+  html.alpha #bg, html.alpha #footage { display: none; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1920px; margin: -960px 0 0 -540px; overflow: hidden;
+           transform-origin: 50% 50%; font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: #fff; }
+  .abs { position: absolute; }
+  .t { margin: 0; }
+
+  /* tło: rozmyte plamy (kopia nagrania rozmyta i przyciemniona w oryginalnej rolce) */
+  #bg { position: absolute; inset: 0; background: #0E0E10; overflow: hidden; }
+  #bg .b { position: absolute; border-radius: 50%; filter: blur(90px); }
+  #b1 { left: -240px; top: 1000px; width: 820px; height: 820px; background: #FF5C2B; opacity: .3; }
+  #b2 { left: 560px; top: 1100px; width: 900px; height: 900px; background: #4D6BFF; opacity: .22; }
+  /* panele nastroju: każdy bit ma własną barwę tła sceny (zmiana wyglądu, nie tylko treści); pod nagraniem znikają w przezroczystość */
+  .pn { position: absolute; left: 0; top: 0; width: 1080px; height: 960px; opacity: 0; }
+  #pn1 { background: radial-gradient(100% 80% at 30% 20%, rgba(255, 92, 43, .78), rgba(160, 40, 10, .35) 55%, rgba(14, 14, 16, 0) 100%); opacity: 1; }
+  #pn2 { background: radial-gradient(100% 80% at 70% 30%, rgba(77, 107, 255, .88), rgba(30, 40, 140, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn3 { background: radial-gradient(100% 80% at 50% 25%, rgba(255, 201, 60, .88), rgba(255, 138, 0, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn3b { background: radial-gradient(100% 80% at 50% 25%, rgba(255, 120, 30, .92), rgba(200, 60, 10, .46) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn4 { background: radial-gradient(100% 80% at 40% 20%, rgba(138, 77, 255, .88), rgba(60, 30, 150, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn4b { background: radial-gradient(100% 80% at 60% 20%, rgba(230, 60, 170, .88), rgba(120, 20, 100, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn5 { background: radial-gradient(80% 60% at 50% 40%, rgba(255, 92, 43, .5), rgba(11, 16, 48, .92) 60%, rgba(14, 14, 16, 0) 100%); }
+  #ping { left: 340px; top: 460px; width: 400px; height: 400px; border-radius: 50%; border: 10px solid #FF5C2B; box-sizing: border-box; opacity: 0; }
+
+  /* placeholder nagrania twórcy: dolne ~55% kadru */
+  #footage { position: absolute; left: 0; top: 880px; width: 1080px; height: 1040px; overflow: hidden; background: linear-gradient(180deg, #202028 0%, #101014 100%); }
+  #footage::before { content: ""; position: absolute; left: 0; top: 0; width: 100%; height: 180px; background: linear-gradient(180deg, rgba(14, 14, 16, .9), rgba(14, 14, 16, 0)); z-index: 2; }
+  #fpush { position: absolute; inset: 0; transform-origin: 50% 40%; }
+  #head { position: absolute; left: 370px; top: 120px; width: 340px; height: 400px; border-radius: 50% 50% 46% 46%; background: linear-gradient(180deg, #43434e, #2d2d36); }
+  #torso { position: absolute; left: 140px; top: 500px; width: 800px; height: 700px; border-radius: 50% 50% 0 0; background: linear-gradient(180deg, #3a3a45, #25252c); }
+  #rim { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: radial-gradient(60% 50% at 50% 30%, rgba(255, 201, 60, .13), transparent 70%); }
+
+  /* napisy słowo po słowie na styku nagrania i sceny */
+  #cap { top: 850px; height: 150px; z-index: 10; }
+
+  /* ---- bit 1: kafelek ikony ---- */
+  #tile { left: 390px; top: 330px; width: 300px; height: 300px; border-radius: 74px; background: linear-gradient(135deg, #FFD84D 0%, #FF9F1C 100%);
+          box-shadow: 0 40px 90px rgba(255, 159, 28, .35); display: flex; align-items: center; justify-content: center; }
+  #tile svg { width: 190px; height: 190px; }
+
+  /* ---- bit 2: okno przeglądarki ---- */
+  #win { left: 60px; top: 220px; width: 960px; height: 570px; border-radius: 28px; background: #F6F6F8; overflow: hidden; box-shadow: 0 40px 100px rgba(0, 0, 0, .5); }
+  #tabs { position: absolute; left: 0; top: 0; width: 100%; height: 72px; background: #E3E3E8; }
+  .dot { position: absolute; top: 25px; width: 22px; height: 22px; border-radius: 50%; }
+  #tab { position: absolute; left: 170px; top: 14px; width: 330px; height: 58px; border-radius: 16px 16px 0 0; background: #F6F6F8; }
+  #tab i { position: absolute; left: 22px; top: 18px; width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #FFD84D, #FF9F1C); }
+  #tab b { position: absolute; left: 60px; top: 24px; width: 190px; height: 10px; border-radius: 5px; background: #C9C9D1; }
+  #bar { position: absolute; left: 0; top: 72px; width: 100%; height: 84px; background: #F6F6F8; }
+  #url { position: absolute; left: 150px; top: 12px; right: 40px; height: 62px; border-radius: 20px; background: #E9E9EE; display: flex; align-items: center; padding-left: 22px; }
+  #url svg { width: 30px; height: 30px; flex: none; }
+  #urlText { margin: 0 0 0 14px; font-size: 44px; font-weight: 500; color: #26262B; white-space: nowrap; }
+  .nav { position: absolute; top: 24px; width: 36px; height: 36px; }
+  #view { position: absolute; left: 0; top: 156px; width: 100%; height: 414px; overflow: hidden; background: #F6F6F8; }
+  #zoom { position: absolute; left: 0; top: 0; width: 100%; height: 900px; transform-origin: 60% 28%; }
+  #scroll { position: absolute; left: 0; top: 0; width: 100%; height: 900px; }
+  .rail { position: absolute; left: 0; top: 0; width: 150px; height: 900px; background: #EFEFF3; }
+  .rail i { position: absolute; left: 24px; width: 90px; height: 14px; border-radius: 7px; background: #D2D2DA; }
+  .hdr { position: absolute; left: 190px; width: 140px; height: 16px; border-radius: 8px; background: #B9B9C3; }
+  .tileS { position: absolute; width: 250px; height: 150px; border-radius: 14px; overflow: hidden; }
+  #m1 { background: linear-gradient(180deg, #5AA9E6 0%, #8FD3A5 55%, #2F6B4F 100%); }
+  #m1 u { position: absolute; left: 70px; top: 36px; width: 110px; height: 78px; border-radius: 8px; background: rgba(15, 18, 24, .78); }
+  #m2 { background: #E1E1E6; }
+  #m2 u { position: absolute; left: 62px; top: 14px; width: 126px; height: 122px; border-radius: 14px; background: #15151A; border: 5px solid #2B2B33; }
+  #m2 s { position: absolute; left: 82px; width: 70px; height: 8px; border-radius: 4px; background: #5A5A66; }
+  #m3 { background: #17171C; }
+  #m3 u { position: absolute; left: 84px; top: 26px; width: 82px; height: 82px; border-radius: 50%; background: linear-gradient(180deg, #F2F2F5, #9A9AA6); }
+  #m4 { background: linear-gradient(120deg, #0B3D2E 0%, #19C37D 55%, #0B3D2E 100%); }
+  #m4 u { position: absolute; left: 36px; top: 62px; width: 150px; height: 18px; border-radius: 9px; background: rgba(255, 255, 255, .85); }
+  #m5 { background: #0B0B10; }
+  #m5 u { position: absolute; left: 80px; top: 24px; width: 90px; height: 90px; border-radius: 50%; border: 10px solid transparent;
+          background: linear-gradient(#0B0B10, #0B0B10) padding-box, conic-gradient(#6B5BFF, #2DE2E6, #FF5C8A, #6B5BFF) border-box; }
+  #m6 { background: linear-gradient(180deg, #FFB86B 0%, #E9654B 40%, #1F4E5F 41%, #2AA6A0 100%); }
+
+  /* wordmark: duży szeryfowy kursywa pod oknem */
+  #mark { left: 0; top: 1030px; width: 1080px; text-align: center; font: italic 400 156px/1.05 "DM Serif Display", "Playfair Display", Georgia, "Times New Roman", serif;
+          text-shadow: 0 8px 40px rgba(0, 0, 0, .45); z-index: 6; }
+
+  /* ---- bit 3: karta zasobu ---- */
+  #card { left: 120px; top: 240px; width: 840px; height: 560px; border-radius: 44px; background: #FAF7F2; box-shadow: 0 40px 100px rgba(0, 0, 0, .5); color: #151519; }
+  #ico { left: 48px; top: 48px; width: 190px; height: 190px; border-radius: 42px; background: linear-gradient(135deg, #FFD84D 0%, #FF9F1C 100%); display: flex; align-items: center; justify-content: center; }
+  #ico svg { width: 124px; height: 124px; }
+  #name { left: 264px; top: 46px; font: 800 62px/1.1 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; white-space: nowrap; }
+  #repo { left: 264px; top: 120px; font: 500 44px/1.2 Inter, "Helvetica Neue", Arial, sans-serif; color: #7A7A82; white-space: nowrap; }
+  #pill { left: 264px; top: 184px; height: 66px; padding: 0 30px; border-radius: 33px; background: #FF5C2B; color: #fff; display: flex; align-items: center;
+          font: 800 44px/1 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: .02em; white-space: nowrap; }
+  #cmdBox { left: 48px; top: 296px; width: 744px; height: 100px; border-radius: 24px; background: #0E0E10; }
+  #cmdText, #cmdGhost { position: absolute; left: 30px; top: 24px; margin: 0; font: 500 44px/1.2 "JetBrains Mono", "DejaVu Sans Mono", ui-monospace, Menlo, Consolas, monospace; color: #F5F5F7; white-space: pre; }
+  #cmdGhost { visibility: hidden; }
+  #desc { left: 48px; top: 436px; width: 744px; font: 700 44px/1.28 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; }
+
+  /* ---- bit 4: korzyści ---- */
+  .row { left: 110px; height: 96px; display: flex; align-items: center; gap: 30px; }
+  .row .ck { width: 90px; height: 90px; border-radius: 50%; background: #FF5C2B; display: flex; align-items: center; justify-content: center; flex: none; }
+  .row .ck svg { width: 50px; height: 50px; }
+  .row p { margin: 0; font: 800 76px/1 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; text-shadow: 0 6px 30px rgba(0, 0, 0, .4); white-space: nowrap; }
+
+  /* ---- bit 5: CTA „skomentuj słowo” ---- */
+  #bubble { left: 450px; top: 220px; width: 180px; height: 180px; }
+  #c1 { left: 0; top: 440px; width: 1080px; text-align: center; font: 800 96px/1.05 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; text-shadow: 0 6px 30px rgba(0, 0, 0, .4); }
+  #kw { left: 0; top: 580px; width: 1080px; display: flex; justify-content: center; }
+  #kw p { background: #FF5C2B; color: #fff; padding: 20px 66px 26px; border-radius: 999px; font: 900 138px/1 "Archivo Black", Inter, "Helvetica Neue", Arial, sans-serif;
+          letter-spacing: -.01em; box-shadow: 0 30px 80px rgba(255, 92, 43, .4); }
+  #c3 { left: 0; top: 790px; width: 1080px; text-align: center; font: 700 76px/1.1 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; text-shadow: 0 6px 30px rgba(0, 0, 0, .4); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"><div class="b" id="b1"></div><div class="b" id="b2"></div>
+    <div class="pn" id="pn1"></div><div class="pn" id="pn2"></div><div class="pn" id="pn3"></div><div class="pn" id="pn3b"></div><div class="pn" id="pn4"></div><div class="pn" id="pn4b"></div><div class="pn" id="pn5"></div></div>
+  <div id="footage"><div id="fpush"><div id="torso"></div><div id="head"></div><div id="rim"></div></div></div>
+
+  <!-- bit 1 -->
+  <div id="tile" class="abs"><svg viewBox="0 0 160 160" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M72 28 L30 80 L72 132" stroke="#6B3A00" stroke-width="16"/><path d="M104 36 L140 80 L104 124 L84 80 Z" fill="#B8650A" stroke="#6B3A00" stroke-width="8"/></svg></div>
+
+  <!-- bit 2 -->
+  <div id="win" class="abs">
+    <div id="tabs"><i class="dot" style="left:30px;background:#FF5F57"></i><i class="dot" style="left:68px;background:#FEBC2E"></i><i class="dot" style="left:106px;background:#28C840"></i><div id="tab"><i></i><b></b></div></div>
+    <div id="bar">
+      <svg class="nav" style="left:32px" viewBox="0 0 24 24" fill="none" stroke="#8B8B95" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      <svg class="nav" style="left:84px" viewBox="0 0 24 24" fill="none" stroke="#B8B8C0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <div id="url"><svg viewBox="0 0 24 24" fill="none" stroke="#5A5A66" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg><p id="urlText" class="t"></p></div>
+    </div>
+    <div id="view"><div id="zoom"><div id="scroll">
+      <div class="rail"><i style="top:40px"></i><i style="top:84px;width:70px"></i><i style="top:128px"></i><i style="top:172px;width:60px"></i><i style="top:216px"></i><i style="top:260px;width:76px"></i></div>
+      <div class="hdr" style="top:28px"></div>
+      <div class="tileS" id="m1" style="left:190px;top:64px"><u></u></div>
+      <div class="tileS" id="m2" style="left:464px;top:64px"><u></u><s style="top:36px"></s><s style="top:56px;width:50px"></s><s style="top:76px"></s><s style="top:96px;width:40px"></s></div>
+      <div class="tileS" id="m3" style="left:738px;top:64px"><u></u></div>
+      <div class="hdr" style="top:250px;width:110px"></div>
+      <div class="tileS" id="m4" style="left:190px;top:286px"><u></u></div>
+      <div class="tileS" id="m5" style="left:464px;top:286px"><u></u></div>
+      <div class="tileS" id="m6" style="left:738px;top:286px"></div>
+      <div class="hdr" style="top:472px;width:90px"></div>
+    </div></div></div>
+  </div>
+  <p id="mark" class="abs t"></p>
+
+  <!-- bit 3 -->
+  <div id="card" class="abs">
+    <div id="ico" class="abs"><svg viewBox="0 0 160 160" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M72 28 L30 80 L72 132" stroke="#6B3A00" stroke-width="16"/><path d="M104 36 L140 80 L104 124 L84 80 Z" fill="#B8650A" stroke="#6B3A00" stroke-width="8"/></svg></div>
+    <p id="name" class="abs t"></p>
+    <p id="repo" class="abs t"></p>
+    <div id="pill" class="abs"><span id="pillText" class="t"></span></div>
+    <div id="cmdBox" class="abs"><p id="cmdText" class="t"></p><p id="cmdGhost"></p></div>
+    <p id="desc" class="abs t"></p>
+  </div>
+
+  <!-- bit 4 -->
+  <div id="benefits">
+    <div class="row abs" id="r1" style="top:300px"><div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><p class="t"></p></div>
+    <div class="row abs" id="r2" style="top:440px"><div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><p class="t"></p></div>
+    <div class="row abs" id="r3" style="top:580px"><div class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><p class="t"></p></div>
+  </div>
+
+  <!-- bit 5 -->
+  <div id="cta">
+    <svg id="bubble" class="abs" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 16h-7l-4.5 3.5V16H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 5z"/></svg>
+    <p id="c1" class="abs t"></p>
+    <div id="ping" class="abs"></div>
+    <div id="kw" class="abs"><p class="t"></p></div>
+    <p id="c3" class="abs t"></p>
+  </div>
+
+  <div id="cap" class="abs"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<!--@motion-kit-->
+<script>
+(function () {
+  /* ================= CONTENT: tu podmieniasz treść ================= */
+  var CONTENT = {
+    url: 'flowkit.dev/ui', mark: 'flowkit.dev',
+    name: 'motion-design', repo: 'twojanazwa/skills', pill: 'DARMOWY SKILL',
+    cmd: '$ npx skills add flowkit',
+    desc: 'Płynny, fizyczny ruch.',
+    benefits: ['Płynny ruch', 'Jedna komenda', 'Za darmo'],
+    cta1: 'Skomentuj', keyword: 'ANIMACJA', cta3: 'a wyślę Ci link'
+  };
+  /* napisy: dane z captions_build (tu wygenerowane z tekstu lektora; dokładne czasy dają SRT albo znaczniki słów) */
+  var CAPTIONS = { style: "single", lines: [
+      {"t0": 0.25, "t1": 0.683, "words": [{"t0": 0.25, "t1": 0.683, "w": "Ten", "hl": false}]},
+      {"t0": 0.683, "t1": 1.55, "words": [{"t0": 0.683, "t1": 1.55, "w": "darmowy", "hl": true}]},
+      {"t0": 1.55, "t1": 2.2, "words": [{"t0": 1.55, "t1": 2.2, "w": "skill", "hl": false}]},
+      {"t0": 2.6, "t1": 3.388, "words": [{"t0": 2.6, "t1": 3.388, "w": "zamienia", "hl": false}]},
+      {"t0": 3.388, "t1": 3.65, "words": [{"t0": 3.388, "t1": 3.65, "w": "AI", "hl": true}]},
+      {"t0": 3.65, "t1": 4.875, "words": [{"t0": 3.65, "t1": 3.825, "w": "w", "hl": false}, {"t0": 3.825, "t1": 4.875, "w": "projektanta", "hl": false}]},
+      {"t0": 4.875, "t1": 5.4, "words": [{"t0": 4.875, "t1": 5.4, "w": "ruchu", "hl": false}]},
+      {"t0": 6.0, "t1": 6.978, "words": [{"t0": 6.0, "t1": 6.978, "w": "Wklejasz", "hl": false}]},
+      {"t0": 6.978, "t1": 7.63, "words": [{"t0": 6.978, "t1": 7.63, "w": "jedną", "hl": false}]},
+      {"t0": 7.63, "t1": 8.5, "words": [{"t0": 7.63, "t1": 8.5, "w": "komendę", "hl": true}]},
+      {"t0": 9.5, "t1": 10.052, "words": [{"t0": 9.5, "t1": 9.638, "w": "i", "hl": false}, {"t0": 9.638, "t1": 10.052, "w": "Twoje", "hl": false}]},
+      {"t0": 10.052, "t1": 10.674, "words": [{"t0": 10.052, "t1": 10.674, "w": "animacje", "hl": false}]},
+      {"t0": 10.674, "t1": 11.364, "words": [{"t0": 10.674, "t1": 11.364, "w": "wyglądają", "hl": false}]},
+      {"t0": 11.364, "t1": 12.4, "words": [{"t0": 11.364, "t1": 12.4, "w": "profesjonalnie", "hl": true}]}
+    ] };
+
+  var DUR = 16, CAPTURE = !!window.__CAPTURE__;
+  if (window.__ALPHA__) document.documentElement.classList.add('alpha');
+  var $ = function (s) { return document.querySelector(s); };
+  var stage = $('#stage');
+  function fit() { stage.style.transform = 'scale(' + Math.min(innerWidth / 1080, innerHeight / 1920) + ')'; }
+
+  $('#urlText').textContent = CONTENT.url; $('#mark').textContent = CONTENT.mark;
+  $('#name').textContent = CONTENT.name; $('#repo').textContent = CONTENT.repo; $('#pillText').textContent = CONTENT.pill;
+  $('#cmdGhost').textContent = CONTENT.cmd; $('#desc').textContent = CONTENT.desc;
+  [1, 2, 3].forEach(function (i) { $('#r' + i + ' p').textContent = CONTENT.benefits[i - 1]; });
+  $('#c1').textContent = CONTENT.cta1; $('#kw p').textContent = CONTENT.keyword; $('#c3').textContent = CONTENT.cta3;
+
+  gsap.config({ force3D: false });
+  var tl = gsap.timeline({ repeat: -1, paused: CAPTURE });
+  var out = VS.ease.out, io = VS.ease.inOut, sp = VS.spring(220, 16), spd = VS.springDuration(220, 16), sp2 = VS.spring(300, 22), spd2 = VS.springDuration(300, 22);
+
+  /* stany startowe, wszystkie w czasie 0 osi */
+  tl.set('#tile', { opacity: 0, y: -70, scale: .8 }, 0)
+    .set('#win', { opacity: 0, y: -60, scale: .98 }, 0)
+    .set('#scroll', { y: 0 }, 0).set('#zoom', { scale: 1 }, 0)
+    .set('#mark', { opacity: 0, filter: 'blur(18px)', letterSpacing: '.08em' }, 0)
+    .set('#card', { opacity: 0, y: -50, scale: 1 }, 0)
+    .set('#ico', { scale: .6, opacity: 0 }, 0).set('#name,#repo,#desc', { opacity: 0, y: 14 }, 0)
+    .set('#pill', { scale: .5, opacity: 0 }, 0).set('#cmdBox', { opacity: 0 }, 0)
+    .set('.row', { opacity: 0, x: -50 }, 0).set('.row .ck', { scale: .4 }, 0)
+    .set('#bubble', { scale: .5, opacity: 0 }, 0).set('#c1,#c3', { opacity: 0, y: 18 }, 0).set('#kw', { scale: .7, opacity: 0 }, 0)
+    .set('#fpush', { scale: 1 }, 0).set('#b1,#b2', { x: 0, y: 0 }, 0)
+    .set('#ping', { opacity: 0, scale: .6 }, 0);
+
+  /* nagranie powoli najeżdża, plamy pod nim dryfują tam i z powrotem */
+  tl.to('#fpush', { scale: 1.05, duration: DUR, ease: 'none' }, 0)
+    .to('#b1', { x: 90, y: -70, duration: 8, ease: 'sine.inOut' }, 0).to('#b1', { x: 0, y: 0, duration: 8, ease: 'sine.inOut' }, 8)
+    .to('#b2', { x: -80, y: 60, duration: 8, ease: 'sine.inOut' }, 0).to('#b2', { x: 0, y: 0, duration: 8, ease: 'sine.inOut' }, 8);
+
+  /* panele nastroju: pomarańcz (hak) -> błękit (demo) -> żółć, potem ciepły pomarańcz (karta) -> fiolet, potem róż (korzyści) -> ciemny (CTA) */
+  function mood(id, inAt, outAt) {
+    tl.to(id, { opacity: 1, duration: .5, ease: io }, inAt);
+    if (outAt != null) tl.to(id, { opacity: 0, duration: .5, ease: io }, outAt);
+  }
+  tl.to('#pn1', { opacity: 0, duration: .5, ease: io }, 2.3);
+  mood('#pn2', 2.3, 5.5); mood('#pn3', 5.5, 7.4); mood('#pn3b', 7.4, 9.3); mood('#pn4', 9.3, 11.0); mood('#pn4b', 11.0, 12.5); mood('#pn5', 12.5, null);
+
+  /* bit 1 (0-2.4): kafelek ikony spada ze sprężyną */
+  tl.to('#tile', { opacity: 1, duration: .3, ease: out }, .15)
+    .to('#tile', { y: 0, scale: 1, duration: spd, ease: sp }, .15)
+    .to('#tile', { opacity: 0, scale: .9, duration: .25, ease: out }, 2.2);
+
+  /* bit 2 (2.4-5.6): okno przeglądarki, treść przewija się i najeżdża, wordmark wchodzi z rozmycia */
+  tl.to('#win', { opacity: 1, y: 0, scale: 1, duration: .5, ease: out }, 2.45)
+    .to('#scroll', { y: -150, duration: 2.4, ease: io }, 2.9)
+    .to('#zoom', { scale: 1.14, duration: 2.4, ease: io }, 2.9)
+    .to('#mark', { opacity: 1, filter: 'blur(0px)', letterSpacing: '0em', duration: .7, ease: out }, 2.75)
+    .to('#win', { opacity: 0, y: -30, scale: .96, duration: .3, ease: out }, 5.4)
+    .to('#mark', { opacity: 0, duration: .25, ease: out }, 5.45);
+
+  /* bit 3 (5.6-9.4): karta zasobu; plakietka na sprężynie, komenda wpisywana w seek() */
+  tl.to('#card', { opacity: 1, y: 0, duration: .5, ease: out }, 5.65)
+    .to('#ico', { opacity: 1, duration: .3, ease: out }, 5.8).to('#ico', { scale: 1, duration: spd, ease: sp }, 5.8)
+    .to('#name', { opacity: 1, y: 0, duration: .4, ease: out }, 5.95)
+    .to('#repo', { opacity: 1, y: 0, duration: .4, ease: out }, 6.05)
+    .to('#pill', { opacity: 1, duration: .2, ease: out }, 6.15).to('#pill', { scale: 1, duration: spd, ease: sp }, 6.15)
+    .to('#cmdBox', { opacity: 1, duration: .3, ease: out }, 6.15)
+    .to('#desc', { opacity: 1, y: 0, duration: .45, ease: out }, 6.35)
+    .to('#card', { opacity: 0, scale: .96, duration: .25, ease: out }, 9.2);
+
+  /* bit 4 (9.4-12.6): trzy korzyści z haczykami, z opóźnieniem */
+  [1, 2, 3].forEach(function (i) {
+    var t0 = 9.5 + (i - 1) * .22;
+    tl.to('#r' + i, { opacity: 1, x: 0, duration: .45, ease: out }, t0)
+      .to('#r' + i + ' .ck', { scale: 1, duration: spd, ease: sp }, t0 + .1);
+  });
+  tl.to('.row', { opacity: 0, x: 30, duration: .25, ease: out }, 12.3);
+
+  /* bit 5 (12.6-16): CTA: słowo w dużej plakietce, potem trzymamy w bezruchu */
+  tl.to('#bubble', { opacity: 1, duration: .2, ease: out }, 12.65).to('#bubble', { scale: 1, duration: spd2, ease: sp2 }, 12.65)
+    .to('#c1', { opacity: 1, y: 0, duration: .35, ease: out }, 12.75)
+    .to('#kw', { opacity: 1, duration: .2, ease: out }, 12.9).to('#kw', { scale: 1, duration: spd2, ease: sp2 }, 12.9)
+    .to('#c3', { opacity: 1, y: 0, duration: .35, ease: out }, 13.1)
+    .to('#ping', { opacity: .9, duration: .01 }, 14.3).to('#ping', { scale: 3.4, duration: .9, ease: out }, 14.3).to('#ping', { opacity: 0, duration: .8, ease: io }, 14.4);
+
+  tl.set({}, {}, DUR);
+  if (CAPTURE) { tl.totalTime(DUR - 0.001, false); tl.totalTime(0, false); }
+
+  /* zdarzenia dźwiękowe: z nich powstaje cue sheet */
+  window.EV = [{ t: .2, type: 'hit' }, { t: 2.45, type: 'whoosh' }, { t: 2.75, type: 'pop' }, { t: 5.65, type: 'whoosh' }, { t: 5.85, type: 'pop' }, { t: 6.2, type: 'pop' },
+    { t: 6.4, type: 'type' }, { t: 9.5, type: 'tick' }, { t: 9.72, type: 'tick' }, { t: 9.94, type: 'tick' }, { t: 7.4, type: 'pop' }, { t: 11.0, type: 'pop' }, { t: 12.65, type: 'hit' }, { t: 13.0, type: 'chime' }, { t: 14.3, type: 'pop' }];
+  window.DURATION = DUR;
+
+  VS.captions.mount($('#cap'), CAPTIONS, { style: 'single' });
+  var ghostRect = null;
+  function measureGhost() { var r = document.createRange(); r.selectNodeContents($('#cmdGhost').firstChild); var b = r.getBoundingClientRect(); ghostRect = { dx: b.left, dy: b.top, w: b.width, h: b.height }; }
+
+  function wrap(t) { return ((t % DUR) + DUR) % DUR; }
+  window.seek = function (t) {
+    t = wrap(t);
+    tl.pause(); tl.totalTime(t, false);
+    $('#cmdText').textContent = VS.type(CONTENT.cmd, t, 6.2, 26);
+    VS.captions.draw(t);
+  };
+
+  /* TEXTS(t): każdy widoczny napis z boksem, czytany z DOM; komenda zgłaszana w pełnej długości (układ jest stały) */
+  function eff(e) { var o = 1; for (; e && e.nodeType === 1; e = e.parentElement) o *= parseFloat(getComputedStyle(e).opacity); return o; }
+  window.TEXTS = function (t) {
+    var out = [];
+    [].slice.call(document.querySelectorAll('.t')).forEach(function (el, i) {
+      if (!el.textContent || eff(el) < 0.05 || el.id === 'cmdText') return;
+      var r = document.createRange(); r.selectNodeContents(el); var b = r.getBoundingClientRect();
+      out.push({ id: el.id || ('t' + i), text: el.textContent, x0: b.left, y0: b.top, x1: b.right, y1: b.bottom });
+    });
+    var c = $('#cmdText');
+    if (ghostRect && eff(c) > 0.05 && c.textContent) {
+      var o = c.getBoundingClientRect();
+      out.push({ id: 'cmd', text: CONTENT.cmd, x0: o.left, y0: o.top, x1: o.left + ghostRect.w, y1: o.bottom });
+    }
+    return out.concat(VS.captions.texts(t));
+  };
+
+  window.__ready = document.fonts.ready.then(function () { fit(); measureGhost(); });
+  fit();
+  if (!CAPTURE) {
+    addEventListener('resize', fit);
+    var t0 = performance.now();
+    (function loop() { window.seek((performance.now() - t0) / 1000); requestAnimationFrame(loop); })();
+  }
+})();
+</script>
+</body>
+</html>

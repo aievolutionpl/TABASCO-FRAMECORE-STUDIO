@@ -25,6 +25,11 @@ LAYOUTS: dict[str, str] = {
     "full-bleed-caption": "full-frame texture, gradient or photo plate with a lower-third caption",
     "list-reveal": "3 lines revealed one by one, each with a check icon",
     "cta-card": "brand mark, one action line, handle or URL; holds still for at least 1.5 s",
+    "caption-line": "footage fills the lower 55%; ONE big uppercase word (two at most) sits at the seam between footage and stage, white, 8-10% of the frame height, key word in the accent colour, spring pop-in; stay inside 10%-80% of the height",
+    "browser-frame": "macOS-style window (traffic lights, tab, URL pill) with the product site inside; scroll the content and push in 10-14% to the part that matters; the site name appears under it as a serif wordmark",
+    "resource-card": "off-white rounded card: icon tile, name, owner/repo, an orange pill (FREE), a dark terminal chip with the install command (typed), a two-line description",
+    "wordmark-title": "large serif italic name on a blurred, darkened backdrop; one line, centred; enters by blur-in with a slight letter-spacing settle",
+    "cta-comment": "comment CTA ('Comment WORD and I will send you the link'): the keyword in a big pill with a speech-bubble icon; holds still for at least 1.8 s",
 }
 
 #: przejścia między bitami: każde da się zrobić deterministycznie w GSAP (stany startowe w tl.set, brak losowości).
@@ -51,6 +56,8 @@ TRANSITIONS: dict[str, dict] = {
                       "how": "Outgoing filter blur(0 -> 18px) with opacity 1 -> 0 while incoming goes blur(18px -> 0) with opacity 0 -> 1 (0.5 s sine.inOut). Keep blur under 24px."},
     "tilt-flip": {"name": "Obrót karty", "sound": "pop",
                   "how": "Parent has perspective 1200px; outgoing child rotationX 0 -> -90, incoming 90 -> 0 (0.5 s back.out(1.1))."},
+    "card-drop": {"name": "Karta z góry", "sound": "pop",
+                  "how": "Outgoing card scales 1 -> 0.96 and fades in 0.25 s; incoming card slides from y -40px with opacity 0 -> 1 in 0.45 s (VS.ease.out) while its shadow grows with it."},
     "shutter": {"name": "Żaluzja", "sound": "whoosh",
                 "how": "6 horizontal bars scaleY 0 -> 1 with a 0.05 s stagger cover the frame, content swaps, bars scaleY 1 -> 0 from the other end."},
 }
@@ -311,9 +318,102 @@ STYLES: list[dict] = [
      "avoid": ["Sharp corners", "Black text on pastel at small sizes (check LOW_CONTRAST)"],
      "recipe": (".pill{background:#fff;border-radius:32px;box-shadow:0 14px 34px rgba(242,140,168,.28);padding:.7em 1.1em}\n"
                 "// float, loops: tl.fromTo('#o',{y:0},{y:-10,duration:D/2,ease:'sine.inOut'},0); tl.to('#o',{y:0,duration:D/2,ease:'sine.inOut'},D/2);")},
+    {"id": "creator-captions", "name": "Napisy twórcy", "tagline": "Nagranie na dole, karty u góry i wielkie napisy słowo po słowie na styku.",
+     "look": {"bg": "photo", "layout": "captions"}, "energy": 4,
+     "tags": ["creator", "talking", "captions", "educational", "tips", "expert", "vlog", "twórca", "poradnik", "ekspert", "edukacyjny", "mówiąca głowa"],
+     "goals": ["educational", "tips", "tool", "announcement", "recommendation", "poradnik", "wskazówki", "narzędzie", "polecenie"],
+     "platforms": ["reels", "tiktok", "shorts", "story"],
+     "palette": {"bg": "#0C0C10", "ink": "#FFFFFF", "accent": "#FFD60A", "accent2": "#FF5C2B"},
+     "type": {"stack": "'Archivo Black','Inter','Helvetica Neue',Arial,sans-serif", "case": "upper", "weight": 900, "tracking": "-0.01em", "min_size": "8% of frame height for captions"},
+     "motion": {"duration": "0.12-0.2 s per word", "ease": "VS.spring(300, 21) for the word pop, VS.ease.out for cards", "stagger": "0.06 s", "camera": "slow push-in 2-4% on the footage; cards drop from the top"},
+     "transitions": ["card-drop", "punch-in", "wipe-slide", "blur-dissolve"],
+     "layouts": ["caption-line", "big-type", "list-reveal", "number-counter", "icon-grid", "cta-comment"],
+     "assets": ["blurred copy of the footage as the backdrop", "floating cards", "check icons", "speech-bubble icon"],
+     "pairs_with": ["tool-showcase", "kinetic-type", "glass-ui", "data-story"],
+     "composition": ["Footage in the lower 55% of a 9:16 frame (face centred, headroom); the top ~40% is the stage for cards and screen recordings.",
+                     "Captions at the seam (about 45-50% of the height): ONE word at a time, uppercase heavy grotesque, white, 8-10% of the frame height, soft shadow, key word in the accent.",
+                     "Backdrop: a blurred, saturated, darkened, scaled-up copy of the footage (filter: blur(40px) saturate(1.3) brightness(.7)).",
+                     "Cards float: 28-36px radius, soft shadow, 4-6% side margin; they enter by dropping in from the top and leave by shrinking to 0.96 with a fade.",
+                     "Keep captions out of the bottom 20% (reel UI covers it) and the top 10%."],
+     "avoid": ["Captions of more than 3 words at once", "Caption colour changes on every word", "Cards touching the screen edges", "Static footage with no push-in"],
+     "recipe": ("body{background:#0C0C10}.backdrop{position:absolute;inset:-10%;filter:blur(40px) saturate(1.3) brightness(.7)}\n"
+                ".card{position:absolute;left:5%;right:5%;border-radius:32px;background:#FAF7F2;box-shadow:0 24px 60px rgba(0,0,0,.35)}\n"
+                "// captions from captions_build: VS.captions.mount(cap, window.CAPTIONS, {style:'single'}); inside seek(t): VS.captions.draw(t)\n"
+                "// card drop: tl.set('#c',{y:-40,opacity:0},0); tl.to('#c',{y:0,opacity:1,duration:.45,ease:VS.ease.out},t0);   // exit: scale .96 + fade in .25 s\n"
+                "// footage push-in: tl.to('#footage',{scale:1.04,duration:DUR,ease:'none'},0);")},
+    {"id": "tool-showcase", "name": "Polecajka narzędzia", "tagline": "Okno przeglądarki, karta zasobu z plakietką DARMOWY i szeryfowy wordmark na rozmytym tle.",
+     "look": {"bg": "dark", "layout": "card"}, "energy": 3,
+     "tags": ["tool", "resource", "free", "skill", "app", "library", "narzędzie", "darmowy", "zasób", "aplikacja", "biblioteka", "komponenty"],
+     "goals": ["tool", "resource", "recommendation", "promo", "narzędzie", "polecenie", "darmowe"],
+     "platforms": ["reels", "tiktok", "shorts", "linkedin", "story"],
+     "palette": {"bg": "#0E0E10", "ink": "#FFFFFF", "accent": "#FF5C2B", "accent2": "#FFC93C"},
+     "type": {"stack": "'Inter','Helvetica Neue',Arial,sans-serif (cards), 'DM Serif Display','Playfair Display',Georgia,serif italic (wordmark), 'JetBrains Mono',ui-monospace,monospace (command)",
+              "case": "mixed", "weight": 800, "tracking": "-0.02em", "min_size": "3.5% of frame height"},
+     "motion": {"duration": "0.4-0.7 s", "ease": "VS.ease.out for cards, VS.spring(220, 18) for the pill", "stagger": "0.08 s", "camera": "push-in 10-14% on the browser content; the page scrolls under it"},
+     "transitions": ["card-drop", "blur-dissolve", "push", "morph"],
+     "layouts": ["browser-frame", "resource-card", "wordmark-title", "list-reveal", "cta-card"],
+     "assets": ["traffic-light dots", "URL pill with a lock icon", "icon tile with a gradient", "terminal chip", "FREE pill"],
+     "pairs_with": ["creator-captions", "glass-ui", "kinetic-type", "dark-luxe"],
+     "composition": ["Browser window: 3 traffic lights (#FF5F57, #FEBC2E, #28C840), a tab, a URL pill with a lock; content grid of colourful thumbnails scrolling up; shadow 0 30px 80px rgba(0,0,0,.4).",
+                     "Resource card (off-white #FAF7F2, 28px radius): square icon tile with a yellow-orange gradient on the left, name (800 weight) with owner/repo in grey below, an orange pill (uppercase, 800 weight, white) 'DARMOWY', then a dark terminal chip with the command, then a bold two-line description.",
+                     "Wordmark: the product name in a large serif italic on the blurred dark backdrop, centred below the window, entering by blur-in.",
+                     "Zoom on purpose: scale the browser content 1.0 -> 1.12 around the part you talk about, never a blind zoom."],
+     "avoid": ["Real logos or screenshots you have no right to use (build the site with CSS shapes or add your own screenshot via assets_add)", "More than one orange element per card", "Command text smaller than 3.5% of the frame height"],
+     "recipe": (".win{border-radius:22px;background:#F4F4F6;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4)}.dots i{width:2.2%;aspect-ratio:1;border-radius:50%;display:inline-block}\n"
+                ".pill{background:#FF5C2B;color:#fff;font:800 3.4vw Inter,sans-serif;letter-spacing:.02em;padding:.5em 1em;border-radius:999px;text-transform:uppercase}\n"
+                ".cmd{background:#0E0E10;color:#F5F5F7;font:500 3.4vw 'JetBrains Mono',ui-monospace,monospace;border-radius:18px;padding:.7em 1em}   /* typed: el.textContent = '$ ' + VS.type(cmd, t, t0, 28) */\n"
+                ".mark{font:italic 400 13vw 'DM Serif Display','Playfair Display',Georgia,serif;color:#fff}\n"
+                "// pill pop: tl.set('#pill',{scale:.6,opacity:0},0); tl.to('#pill',{scale:1,opacity:1,duration:VS.springDuration(220,18),ease:VS.spring(220,18)},t0);")},
 ]
 
 _BY_ID = {s["id"]: s for s in STYLES}
+
+#: formaty rolek: sprawdzone układy bitów. `fixed` = stała długość (s), `share` = udział w pozostałym czasie. Źródło: analiza rolek twórców
+#: (nagranie + karty + napisy słowo po słowie + CTA „skomentuj słowo”).
+FORMATS: dict[str, dict] = {
+    "tool-drop": {
+        "name": "Polecajka narzędzia", "platform": "reels", "duration": [14, 24],
+        "about": "A creator recommends a free tool, library or skill: spoken hook with word-by-word captions over the footage, the product site in a browser window, a resource card with a FREE pill and the install command, a few benefits, and a comment-keyword CTA.",
+        "beats": [
+            {"role": "hook", "fixed": 2.4, "style": "creator-captions", "layout": "caption-line", "sound": "hit", "icons": ["bolt", "sparkle"],
+             "copy": "Spoken hook, captioned one word at a time (max 6 words): what the tool does for the viewer, key word highlighted. Footage fills the lower 55%; the stage above shows the first card or the wordmark."},
+            {"role": "demo", "share": 3.2, "style": "tool-showcase", "layout": "browser-frame", "transition": "card-drop", "icons": ["eye", "globe"],
+             "copy": "The product site in a browser window: scroll the content and push in 10-14% to the part that matters. The site name appears under the window as a serif wordmark."},
+            {"role": "card", "share": 3.8, "style": "tool-showcase", "layout": "resource-card", "transition": "card-drop", "icons": ["star", "download"],
+             "copy": "Resource card: icon tile, name, owner/repo, orange FREE pill, install command in a terminal chip (typed), two-line description."},
+            {"role": "benefit", "share": 3.2, "style": "creator-captions", "layout": "list-reveal", "transition": "wipe-slide", "icons": ["check", "bolt", "heart"],
+             "copy": "Three short benefits (max 3 words each) revealed one by one with check icons on the stage; captions continue at the seam."},
+            {"role": "cta", "fixed": 3.4, "style": "creator-captions", "layout": "cta-comment", "transition": "punch-in", "sound": "chime", "icons": ["chat", "arrow-right"],
+             "copy": "Comment WORD and I will send you the link: the keyword in a big pill with a speech-bubble icon. Holds still for at least 1.8 s."},
+        ]},
+    "talking-head": {
+        "name": "Mówiąca głowa z napisami", "platform": "reels", "duration": [10, 30],
+        "about": "A creator speaks to camera; every word is captioned, and cards on the stage above support each point (a number, an icon grid, a big line). Ends with a comment-keyword CTA.",
+        "beats": [
+            {"role": "hook", "fixed": 2.0, "style": "creator-captions", "layout": "caption-line", "sound": "hit", "icons": ["bolt"],
+             "copy": "The promise or a question in at most 6 words, captioned one word at a time over the footage. The stage above stays empty or shows a single number."},
+            {"role": "point", "share": 2.4, "style": "creator-captions", "layout": "number-counter", "transition": "card-drop", "icons": ["trend-up", "target"],
+             "copy": "Point 1: one number counting up with a unit and a short caption on a floating card."},
+            {"role": "point", "share": 2.4, "style": "kinetic-type", "layout": "big-type", "transition": "punch-in", "icons": ["bulb"],
+             "copy": "Point 2: the sentence as big kinetic type with the key word in the accent colour (a change of look keeps the rhythm)."},
+            {"role": "point", "share": 2.4, "style": "creator-captions", "layout": "icon-grid", "transition": "card-drop", "icons": ["check", "heart", "star"],
+             "copy": "Point 3: 3-4 icons with two-word labels popping in with a stagger."},
+            {"role": "cta", "fixed": 2.4, "style": "creator-captions", "layout": "cta-comment", "transition": "punch-in", "sound": "chime", "icons": ["chat"],
+             "copy": "Comment WORD and I will send you the link. Holds still for at least 1.8 s."},
+        ]},
+    "listicle": {
+        "name": "Lista N rzeczy", "platform": "reels", "duration": [10, 30],
+        "about": "A numbered list: a title that promises N things, one beat per item (each in a different look so every item feels new), then a comment-keyword CTA.",
+        "beats": [
+            {"role": "hook", "fixed": 2.0, "style": "kinetic-type", "layout": "big-type", "sound": "hit", "icons": ["bolt", "sparkle"],
+             "copy": "Title with the number, max 6 words ('3 narzędzia, które oszczędzają godziny'), the number in the accent colour."},
+            {"role": "item", "share": 2.6, "repeat": "items", "cycle": [["neo-brutal", "icon-grid"], ["kinetic-type", "big-type"], ["sticker-pop", "icon-grid"]],
+             "transition": "slide-stack", "icons": ["target", "star"],
+             "copy": "Item N: the big number (01, 02...), the item name in at most 4 words and one icon. Each item uses a different look."},
+            {"role": "cta", "fixed": 2.4, "style": "creator-captions", "layout": "cta-comment", "transition": "punch-in", "sound": "chime", "icons": ["chat"],
+             "copy": "Comment WORD and I will send you the full list. Holds still for at least 1.8 s."},
+        ]},
+}
 
 _STOP = {"i", "w", "z", "na", "do", "to", "się", "jest", "że", "o", "dla", "oraz", "the", "a", "an", "and", "of", "for", "in", "is", "to", "with",
          "film", "video", "wideo", "reklama", "ad", "film", "chce", "chcę", "zrób", "make", "create"}
@@ -443,4 +543,19 @@ def library_text() -> str:
     rows += ["", "# Transitions (all deterministic in GSAP)", ""]
     rows += [f"- **{k}** ({t['name']}, sound {t['sound']}): {t['how']}" for k, t in TRANSITIONS.items()]
     rows += ["", "# Beat layouts", ""] + [f"- **{k}**: {v}" for k, v in LAYOUTS.items()]
+    return "\n".join(rows) + "\n"
+
+
+def formats_text() -> str:
+    rows = ["# Reel formats (director_plan format=...)", "",
+            "Proven beat sheets from creator reels. A format fixes the beats, styles and layouts; the brand (palette, font, tone) stays yours. "
+            "Word-by-word captions come from `captions_build`; the footage is yours (render the scene as a transparent overlay with `overlay: true` and composite it in your editor).", ""]
+    for fid, f in FORMATS.items():
+        rows += [f"## {fid}: {f['name']} ({f['duration'][0]}-{f['duration'][1]} s)", "", f["about"], ""]
+        for b in f["beats"]:
+            span = f"{b['fixed']:g} s" if "fixed" in b else f"~{b['share']:g} share"
+            rows.append(f"- **{b['role']}** ({span}, {b.get('style') or 'rotating styles'}, {b.get('layout') or 'rotating layouts'}): {b['copy']}")
+        rows.append("")
+    rows += ["Caption rules: one word (two at most) at a time, uppercase heavy grotesque, white, 8-10% of the frame height, soft shadow, the key word in the accent colour, "
+             "inside 10%-80% of the height. Comment CTA: a keyword the viewer types (e.g. ANIMACJA), shown in a big pill, held still for at least 1.8 s."]
     return "\n".join(rows) + "\n"

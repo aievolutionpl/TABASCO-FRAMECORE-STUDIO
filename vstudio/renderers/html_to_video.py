@@ -19,6 +19,10 @@ Usage:
 
 Page conventions (all optional): window.DURATION or window.DUR (seconds), window.__ready (promise) or window.READY (bool),
 window.__CAPTURE__ is set to true before page scripts run, so pages can skip autoplay.
+
+Overlay mode (--alpha): transparent background, RGBA frames piped to ProRes 4444 (.mov), to lay the animation over your own footage in an editor.
+window.__ALPHA__ is true, html/body/#stage backgrounds are made transparent and elements marked data-alpha="hide" (full-bleed backdrops) are hidden.
+With --still the output is a transparent PNG. No audio: an overlay is a picture layer.
 """
 from __future__ import annotations
 
@@ -67,6 +71,12 @@ async () => {
   if (window.__ready) await window.__ready;
 }
 """
+
+
+# Overlay mode: only the animated layers stay; backdrops are removed (page-level `window.__ALPHA__` lets a scene adapt itself too).
+ALPHA_CSS = "html,body{background:transparent!important}#stage{background:transparent!important}[data-alpha=hide]{display:none!important}"
+PRORES_ARGS = ["-c:v", "prores_ks", "-profile:v", "4444", "-pix_fmt", "yuva444p10le", "-alpha_bits", "16", "-vendor", "apl0",
+               "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709"]
 
 
 def log(msg: str) -> None:
@@ -152,6 +162,11 @@ def start_ffmpeg(args, width: int, height: int, duration: float, out: Path, logf
     if not shutil.which("ffmpeg"):
         raise SystemExit("ffmpeg not found on PATH")
     src_w, src_h = round(width * args.scale), round(height * args.scale)  # screenshot size incl. device scale
+    if args.alpha:  # overlay: RGBA straight to ProRes 4444 with a 16-bit alpha plane, no audio
+        return subprocess.Popen(
+            ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgba", "-s", f"{src_w}x{src_h}", "-framerate", str(args.fps), "-i", "-",
+             "-vf", f"scale={width}:{height}:flags=lanczos:out_color_matrix=bt709:out_range=tv,format=yuva444p10le"] + PRORES_ARGS
+            + ["-r", str(args.fps), "-t", f"{duration:.3f}", str(out)], stdin=subprocess.PIPE, stderr=logfile)
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{src_w}x{src_h}", "-framerate", str(args.fps), "-i", "-",
@@ -182,9 +197,9 @@ def export_many(args) -> int:
             next(it, None)
         elif not tok.startswith(tuple(f"{f}=" for f in skip_with_value if f.startswith("--"))):
             base.append(tok)
-    ext = ".png" if args.still is not None else ".mp4"
+    ext = ".png" if args.still is not None else ".mov" if args.alpha else ".mp4"
     stem = Path(args.out) if args.out else Path(args.html).with_suffix("")
-    stem = stem.with_suffix("") if stem.suffix in (".mp4", ".png") else stem
+    stem = stem.with_suffix("") if stem.suffix in (".mp4", ".mov", ".png") else stem
     procs, failed, pending = [], 0, list(sizes)
     while pending or procs:
         while pending and len(procs) < args.jobs:
@@ -221,6 +236,7 @@ def main() -> int:
     ap.add_argument("--sizes", help="comma separated WxH list; renders each in parallel to <out>_WxH.mp4 (page must be responsive)")
     ap.add_argument("--jobs", type=int, default=3, help="parallel renders for --sizes (default 3)")
     ap.add_argument("--png", action="store_true", help="lossless PNG frames instead of JPEG q95 (slower)")
+    ap.add_argument("--alpha", action="store_true", help="overlay mode: transparent background, ProRes 4444 .mov (or a transparent PNG with --still); no audio")
     ap.add_argument("--scale", type=float, default=1.0, help="device scale factor, e.g. 2 for crisper text then downscaled")
     ap.add_argument("--root", help="directory to serve (default: folder of the HTML file)")
     ap.add_argument("--browser", help="Chromium executable path or channel name (chrome, msedge)")
@@ -233,6 +249,10 @@ def main() -> int:
     import numpy as np
     from PIL import Image
 
+    if args.alpha and args.audio:
+        raise SystemExit("--alpha does not take --audio: an overlay is a picture layer (mix sound in your editor)")
+    if args.alpha and args.still is None and args.out and Path(args.out).suffix.lower() != ".mov":
+        raise SystemExit("--alpha writes ProRes 4444: use an output name ending in .mov")
     width, height = args.size
     server = None
     if args.html.startswith(("http://", "https://")):
@@ -251,7 +271,7 @@ def main() -> int:
     elif args.still is not None:
         out = Path(args.html).with_suffix(".png")
     else:
-        out = Path(args.html).with_suffix(".mp4")
+        out = Path(args.html).with_suffix(".mov" if args.alpha else ".mp4")
     out.parent.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as pw:
@@ -263,12 +283,14 @@ def main() -> int:
             pg.set_default_timeout(args.timeout * 1000)
             pg.on("pageerror", lambda e: log(f"[page error] {e}"))
             pg.on("console", lambda m: log(f"[console.{m.type}] {m.text}") if m.type in ("error", "warning") else None)
-            pg.add_init_script("window.__CAPTURE__ = true;")
+            pg.add_init_script("window.__CAPTURE__ = true;" + (" window.__ALPHA__ = true;" if args.alpha else ""))
             install_vendor_routes(ctx)
             if use_clock:
                 pg.clock.install(time=0)
                 pg.clock.pause_at(1)  # frozen before any page script runs; we advance it manually
             pg.goto(url, wait_until="load")
+            if args.alpha:
+                pg.add_style_tag(content=ALPHA_CSS)
             return ctx, pg
 
         names = [args.fn] if args.fn else SEEK_NAMES
@@ -323,11 +345,11 @@ def main() -> int:
 
         start_frame = round(args.start * args.fps)
 
-        shot = {"type": "png"} if (args.png or args.still is not None) else {"type": "jpeg", "quality": 95}
+        shot = {"type": "png", "omit_background": True} if args.alpha else {"type": "png"} if (args.png or args.still is not None) else {"type": "jpeg", "quality": 95}
 
         if args.still is not None:
             goto_frame(round(args.still * args.fps))
-            page.screenshot(path=str(out), type="png")
+            page.screenshot(path=str(out), type="png", omit_background=args.alpha)
             log(f"wrote {out}")
         else:
             total = round(duration * args.fps)
@@ -336,7 +358,7 @@ def main() -> int:
             began = time.time()
             try:
                 def grab() -> "np.ndarray":
-                    return np.asarray(Image.open(io.BytesIO(page.screenshot(**shot))).convert("RGB"))
+                    return np.asarray(Image.open(io.BytesIO(page.screenshot(**shot))).convert("RGBA" if args.alpha else "RGB"))
 
                 sub = args.subframes
                 if sub > 1 and mode != "seek":
@@ -352,8 +374,14 @@ def main() -> int:
                         for k in range(sub):
                             seek_at((f + k / sub * args.shutter) / args.fps, f)
                             part = grab().astype(np.float32)
+                            if args.alpha:  # blend in premultiplied space, otherwise the edges of a fading layer turn dark
+                                part[..., :3] *= part[..., 3:] / 255.0
                             acc = part if acc is None else acc + part
-                        frame = (acc / sub + 0.5).astype(np.uint8)
+                        frame = acc / sub
+                        if args.alpha:
+                            a_ = frame[..., 3:]
+                            frame[..., :3] = np.where(a_ > 0, frame[..., :3] * 255.0 / np.maximum(a_, 1e-6), 0)
+                        frame = (frame + 0.5).clip(0, 255).astype(np.uint8)
                     ff.stdin.write(frame.tobytes())
                     if i % max(total // 10, 1) == 0:
                         log(f"  frame {i}/{total} ({time.time() - began:.0f}s)")

@@ -218,7 +218,7 @@ ROLE_LAYOUTS = {"hook": ["big-type", "number-counter", "product-hero", "full-ble
                 "setup": ["big-type", "full-bleed-caption", "icon-grid"], "reveal": ["product-hero", "device-mock", "big-type"],
                 "proof": ["number-counter", "quote-card", "split-compare", "icon-grid"], "benefit": ["icon-grid", "list-reveal", "device-mock"],
                 "detail": ["device-mock", "list-reveal", "icon-grid"], "cta": ["cta-card", "big-type"]}
-ROLE_ICONS = {"hook": ["bolt", "sparkle"], "problem": ["clock", "x"], "setup": ["user", "bulb"], "reveal": ["rocket", "sparkle"],
+ROLE_ICONS = {"demo": ["eye", "globe"], "card": ["star", "download"], "point": ["bulb", "check"], "item": ["target", "star"], "hook": ["bolt", "sparkle"], "problem": ["clock", "x"], "setup": ["user", "bulb"], "reveal": ["rocket", "sparkle"],
               "proof": ["star", "trend-up", "trophy"], "benefit": ["check", "heart", "shield"], "detail": ["sliders", "phone"], "cta": ["arrow-right", "link"]}
 ROLE_COPY = {"hook": "Max 6 words: a promise, a question or a number. On screen by 1.0 s.",
              "problem": "One sentence naming the pain in the viewer's words.", "setup": "Set the scene in at most 8 words.",
@@ -242,14 +242,51 @@ def load_plan(pdir: Path) -> dict | None:
     return _read_json(plan_path(pdir))
 
 
+def _format_beats(fmt: dict, dur: float, items: int) -> list[dict]:
+    """Bity formatu rolki z czasami: stałe (`fixed`) zachowują długość, reszta dzieli pozostały czas wg `share`; za krótki film skaluje stałe."""
+    specs: list[dict] = []
+    for b in fmt["beats"]:
+        if b.get("repeat") == "items":
+            for i in range(items):
+                style, layout = b["cycle"][i % len(b["cycle"])]
+                specs.append({**{k: v for k, v in b.items() if k not in ("cycle", "repeat")}, "style": style, "layout": layout,
+                              "copy": b["copy"].replace("Item N", f"Item {i + 1}")})
+        else:
+            specs.append(dict(b))
+    fixed = sum(b["fixed"] for b in specs if "fixed" in b)
+    share_sum = sum(b["share"] for b in specs if "share" in b)
+    n_flex = sum(1 for b in specs if "share" in b)
+    scale = 1.0
+    if dur - fixed < max(0.45 * dur, n_flex * 1.0):
+        scale = min(1.0, dur * 0.55 / fixed)
+    flex_total = dur - fixed * scale
+    if flex_total < n_flex * 0.8:
+        raise StudioError(f"ten format potrzebuje dłuższego filmu (jest {dur:g} s, minimum {max(1.8 * n_flex, 6):g} s): zwiększ duration albo zmniejsz items")
+    t = 0.0
+    for b in specs:
+        length = b["fixed"] * scale if "fixed" in b else flex_total * b["share"] / share_sum
+        b["t0"], b["t1"] = round(t, 2), round(t + length, 2)
+        t += length
+    specs[-1]["t1"] = round(dur, 2)
+    return specs
+
+
 def plan(pdir: Path, pr: dict, goal: str, tone: str = "", platform: str | None = None, pace: str | None = None, prefer: list[str] | None = None,
-         avoid: list[str] | None = None, cta: str = "", loop: bool = False, write_storyboard: bool = False) -> dict:
-    """Storyboard z bitami co 2-3 s: styl główny + dwa akcenty (różne układy), przejścia, dźwięk, hasła do assetów. Deterministycznie."""
+         avoid: list[str] | None = None, cta: str = "", loop: bool = False, write_storyboard: bool = False, format: str | None = None,  # noqa: A002
+         items: int = 3) -> dict:
+    """Storyboard z bitami co 2-3 s: styl główny + dwa akcenty (różne układy), przejścia, dźwięk, hasła do assetów. Deterministycznie.
+
+    Z `format` (tool-drop, talking-head, listicle) bity pochodzą ze sprawdzonego układu rolki zamiast z ogólnego szkieletu.
+    """
     from . import workspace
 
     if not (goal or "").strip():
         raise StudioError("goal: opisz, o czym jest film i do czego ma służyć")
-    platform = platform or platform_for(pr)
+    if format is not None and format not in styles.FORMATS:
+        raise StudioError(f"format: {', '.join(styles.FORMATS)}")
+    if not 2 <= int(items) <= 7:
+        raise StudioError("items: 2-7")
+    platform = platform or (styles.FORMATS[format]["platform"] if format else platform_for(pr))
     if platform not in PLATFORM_PACE:
         raise StudioError(f"platform: {', '.join(PLATFORMS)}")
     pace = pace or PLATFORM_PACE[platform]
@@ -257,47 +294,76 @@ def plan(pdir: Path, pr: dict, goal: str, tone: str = "", platform: str | None =
         raise StudioError(f"pace: {', '.join(PACE_GAP)}")
     prof = workspace.profile_get()
     tone_all = " ".join(x for x in (tone, prof.get("tone") if prof.get("onboarded") else "") if x)
-    rec = styles.recommend(goal, tone_all, platform, pace, prefer, avoid)
-    main, accents = styles.get(rec["main"]["id"]), [styles.get(a["id"]) for a in rec["accents"]]
     dur = float(pr["duration"])
-    target = {"fast": 2.0, "standard": 2.8, "calm": 4.0}[pace]
-    hook = min({"fast": 1.4, "standard": 1.8, "calm": 2.2}[pace], dur * 0.3)
-    end = min({"fast": 2.2, "standard": 2.6, "calm": 3.2}[pace], dur * 0.3)
-    mid_total = max(0.0, dur - hook - end)
-    n_mid = max(0, round(mid_total / target)) if mid_total >= 0.8 * target else 0
-    if mid_total > 0 and n_mid == 0:
-        n_mid = 1
-    roles = ["hook"] + (SEQUENCES.get(n_mid) or (SEQUENCES[5] + ["proof", "benefit", "detail"] * 4)[:n_mid]) + ["cta"]
-    mid_len = mid_total / n_mid if n_mid else 0.0
-    # style: hak i CTA w stylu głównym (spójność marki), środek na przemian z akcentami; dwa sąsiednie bity nigdy w tym samym stylu
-    pool = [accents[0] if accents else main, accents[1] if len(accents) > 1 else main, main]
-    seq: list[dict] = [main]
-    for i in range(n_mid):
-        pick = pool[i % len(pool)]
-        if pick["id"] == seq[-1]["id"]:
-            pick = next((c for c in pool if c["id"] != seq[-1]["id"]), pick)
-        seq.append(pick)
-    last = main if seq[-1]["id"] != main["id"] else (accents[0] if accents else main)
-    seq.append(last)
-    brand = {"palette": prof["palette"], "font": prof["font"]} if prof.get("onboarded") else {"palette": main["palette"], "font": main["type"]["stack"]}
+    prof_brand = {"palette": prof["palette"], "font": prof["font"]} if prof.get("onboarded") else None
     kws = styles.tokens(goal)[:3]
-    beats, t, prev_layout, used_tr = [], 0.0, None, []
-    for i, (role, st) in enumerate(zip(roles, seq)):
-        length = hook if i == 0 else end if role == "cta" else mid_len
-        layout = next((l for l in ROLE_LAYOUTS[role] if l in st["layouts"] and l != prev_layout), None) or next((l for l in st["layouts"] if l != prev_layout), st["layouts"][0])
-        tr = None
-        if i:
-            tr = next((x for x in st["transitions"] if x not in used_tr[-2:]), st["transitions"][0])
-            used_tr.append(tr)
-        beats.append({"n": i + 1, "role": role, "t0": round(t, 2), "t1": round(t + length, 2), "style": st["id"], "layout": layout,
-                      "transition_in": tr, "sound": styles.TRANSITIONS[tr]["sound"] if tr else "hit",
-                      "motion": {"ease": st["motion"]["ease"], "duration": st["motion"]["duration"], "camera": st["motion"]["camera"]},
-                      "copy": ROLE_COPY[role] if role != "cta" or not cta else f"{cta} (max 5 words) + handle or URL. Holds still for at least 1.5 s.",
-                      "icons": ROLE_ICONS[role], "asset_queries": kws[:2] if role in ("hook", "reveal", "proof") else []})
-        prev_layout = layout
-        t += length
-    beats[-1]["t1"] = round(dur, 2)
+    if format:
+        fmt = styles.FORMATS[format]
+        specs = _format_beats(fmt, dur, int(items))
+        order = [b["style"] for b in specs]
+        main_id = max(dict.fromkeys(order), key=order.count)
+        accent_ids = [i for i in dict.fromkeys(order) if i != main_id][:2]
+        main, accents = styles.get(main_id), [styles.get(i) for i in accent_ids]
+        rec = {"main": styles.summary(main), "main_why": [f"format {format}: {fmt['name']}"], "accents": [styles.summary(a) for a in accents],
+               "accent_why": [f"{a['name']}: występuje w formacie {format}" for a in accents]}
+        beats, used_tr = [], []
+        for i, b in enumerate(specs):
+            st = styles.get(b["style"])
+            tr = None
+            if i:
+                tr = b.get("transition") or next((x for x in st["transitions"] if x not in used_tr[-2:]), st["transitions"][0])
+                used_tr.append(tr)
+            beats.append({"n": i + 1, "role": b["role"], "t0": b["t0"], "t1": b["t1"], "style": b["style"], "layout": b["layout"], "transition_in": tr,
+                          "sound": b.get("sound") or (styles.TRANSITIONS[tr]["sound"] if tr else "hit"),
+                          "motion": {"ease": st["motion"]["ease"], "duration": st["motion"]["duration"], "camera": st["motion"]["camera"]},
+                          "copy": b["copy"] if b["role"] != "cta" or not cta else f"{cta}. " + b["copy"],
+                          "icons": b.get("icons", ROLE_ICONS.get(b["role"], [])), "asset_queries": kws[:2] if b["role"] in ("hook", "demo", "card", "item") else []})
+        brand = prof_brand or {"palette": main["palette"], "font": main["type"]["stack"]}
+    else:
+        rec = styles.recommend(goal, tone_all, platform, pace, prefer, avoid)
+        main, accents = styles.get(rec["main"]["id"]), [styles.get(a["id"]) for a in rec["accents"]]
+        target = {"fast": 2.0, "standard": 2.8, "calm": 4.0}[pace]
+        hook = min({"fast": 1.4, "standard": 1.8, "calm": 2.2}[pace], dur * 0.3)
+        end = min({"fast": 2.2, "standard": 2.6, "calm": 3.2}[pace], dur * 0.3)
+        mid_total = max(0.0, dur - hook - end)
+        n_mid = max(0, round(mid_total / target)) if mid_total >= 0.8 * target else 0
+        if mid_total > 0 and n_mid == 0:
+            n_mid = 1
+        roles = ["hook"] + (SEQUENCES.get(n_mid) or (SEQUENCES[5] + ["proof", "benefit", "detail"] * 4)[:n_mid]) + ["cta"]
+        mid_len = mid_total / n_mid if n_mid else 0.0
+        # style: hak i CTA w stylu głównym (spójność marki), środek na przemian z akcentami; dwa sąsiednie bity nigdy w tym samym stylu
+        pool = [accents[0] if accents else main, accents[1] if len(accents) > 1 else main, main]
+        seq: list[dict] = [main]
+        for i in range(n_mid):
+            pick = pool[i % len(pool)]
+            if pick["id"] == seq[-1]["id"]:
+                pick = next((c for c in pool if c["id"] != seq[-1]["id"]), pick)
+            seq.append(pick)
+        last = main if seq[-1]["id"] != main["id"] else (accents[0] if accents else main)
+        seq.append(last)
+        brand = prof_brand or {"palette": main["palette"], "font": main["type"]["stack"]}
+        beats, t, prev_layout, used_tr = [], 0.0, None, []
+        for i, (role, st) in enumerate(zip(roles, seq)):
+            length = hook if i == 0 else end if role == "cta" else mid_len
+            layout = next((l for l in ROLE_LAYOUTS[role] if l in st["layouts"] and l != prev_layout), None) or next((l for l in st["layouts"] if l != prev_layout), st["layouts"][0])
+            tr = None
+            if i:
+                tr = next((x for x in st["transitions"] if x not in used_tr[-2:]), st["transitions"][0])
+                used_tr.append(tr)
+            beats.append({"n": i + 1, "role": role, "t0": round(t, 2), "t1": round(t + length, 2), "style": st["id"], "layout": layout,
+                          "transition_in": tr, "sound": styles.TRANSITIONS[tr]["sound"] if tr else "hit",
+                          "motion": {"ease": st["motion"]["ease"], "duration": st["motion"]["duration"], "camera": st["motion"]["camera"]},
+                          "copy": ROLE_COPY[role] if role != "cta" or not cta else f"{cta} (max 5 words) + handle or URL. Holds still for at least 1.5 s.",
+                          "icons": ROLE_ICONS[role], "asset_queries": kws[:2] if role in ("hook", "reveal", "proof") else []})
+            prev_layout = layout
+            t += length
+        beats[-1]["t1"] = round(dur, 2)
     p = {"created": time.strftime("%Y-%m-%dT%H:%M:%S"), "goal": goal.strip(), "tone": tone_all, "platform": platform, "pace": pace, "duration": dur, "loop": loop,
+         "format": {"id": format, "name": styles.FORMATS[format]["name"]} if format else None,
+         "warnings": [f"beat {b['n']} ({b['role']}) lasts {b['t1'] - b['t0']:.1f} s: add a visible change inside it (zoom, new card or layout)"
+                      for b in beats if b["t1"] - b["t0"] > PACE_GAP[pace] + 1.0]
+                     + [f"beat {b['n']} ({b['role']}) lasts only {b['t1'] - b['t0']:.1f} s: too short to read, lengthen the film or drop items"
+                        for b in beats if b["t1"] - b["t0"] < 1.0],
          "styles": {"main": rec["main"], "main_why": rec["main_why"], "accents": rec["accents"], "accent_why": rec["accent_why"]},
          "brand": brand, "beats": beats,
          "contract": {"visible_change_every_s": PACE_GAP[pace], "hook_by_s": 1.0, "max_words_per_beat": 6, "styles_used": sorted({b["style"] for b in beats}),
@@ -335,6 +401,13 @@ def _write_storyboard(pdir: Path, p: dict) -> str:
 
 
 # ------------------------------------------------------------------ przegląd
+
+def _same_text(api: str, dom: str) -> bool:
+    """Czy napis zgłoszony w TEXTS(t) to ten sam co w DOM: krótkie (1 znak) tylko przez równość, dłuższe też przez zawieranie (częściowo wpisany tekst)."""
+    if not api or not dom:
+        return False
+    return api == dom or (len(api) >= 2 and (api in dom or dom in api))
+
 
 def _words(text: str) -> int:
     return len(re.findall(r"\w+", text))
@@ -581,7 +654,7 @@ def review(pdir: Path, pr: dict, platform: str | None = None, pace: str | None =
             covered = 0
             for si, t, _it in vs:
                 api = texts_api[si] or []
-                if any(len(dscan.norm_text(x.get("text", ""))) >= 2 and (dscan.norm_text(x.get("text", "")) in nt or nt in dscan.norm_text(x.get("text", ""))) for x in api):
+                if any(_same_text(dscan.norm_text(x.get("text", "")), nt) for x in api):
                     covered += 1
             if covered < len(vs) * 0.5:
                 blind.append(p["text"][:24])

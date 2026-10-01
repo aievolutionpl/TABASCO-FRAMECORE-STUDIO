@@ -271,8 +271,33 @@ def render_stills(pdir: Path, proj: dict, times: list[float]) -> list[Path]:
 
 # ------------------------------------------------------------------ render
 
-def render(pdir: Path, proj: dict, final: bool, tag: str | None, subframes: int | None, audio: str | None, force: bool) -> Path:
+def render_overlay(pdir: Path, proj: dict, tag: str | None = None, subframes: int | None = None) -> Path:
+    """Nakładka z przezroczystością (ProRes 4444, .mov) w pełnej rozdzielczości projektu: same animowane warstwy, bez tła, do położenia na własnym nagraniu."""
+    if proj["engine"] != "html":
+        die("nakładka z przezroczystością działa tylko dla projektów html (engine: html)")
+    (w, h), fps = proj["size"], proj["fps"]
+    stamp = __import__("datetime").datetime.now().strftime("%Y%m%d-%H%M%S")
+    name = f"{proj['slug']}_{tag or 'overlay'}_{stamp}.mov"
+    out = pdir / "renders" / name
+    cmd = [sys.executable, SCRIPTS / "html_to_video.py", pdir / "src" / "index.html", "-o", out, "--size", f"{w}x{h}", "--fps", fps, "--alpha",
+           "--subframes", subframes if subframes is not None else 4]
+    run(cmd, capture=False, env=vendor.env())
+    if not out.exists():
+        die(f"render nakładki nie utworzył pliku: {out}")
+    entry = {"file": f"renders/{name}", "final": False, "overlay": True, "at": __import__("datetime").datetime.now().isoformat(timespec="seconds")}
+    _, fresh = load_project(pdir)
+    fresh.setdefault("renders", []).append(entry)
+    save_project(pdir, fresh)
+    proj.update(fresh)
+    return out
+
+
+def render(pdir: Path, proj: dict, final: bool, tag: str | None, subframes: int | None, audio: str | None, force: bool, overlay: bool = False) -> Path:
     eng, (w, h), fps = proj["engine"], proj["size"], proj["fps"]
+    if overlay:
+        if final or audio:
+            die("--overlay nie łączy się z --final ani --audio: nakładka jest zawsze w pełnej rozdzielczości i bez dźwięku")
+        return render_overlay(pdir, proj, tag, subframes)
     if final and not force:
         need = ["brief", "visual_rules", "stills"] + (["reference_spec"] if proj.get("ref") else [])
         missing = [g for g in need if proj["gates"].get(g) in (None, False)]

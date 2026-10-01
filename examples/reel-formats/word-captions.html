@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - rolka: mówiąca głowa z napisami</title>
+<!--
+  Format rolki "mówiąca głowa z napisami" (talking-head), 1080x1920, 13.5 s, GSAP 3.12.5.
+  Bity (director_plan format=talking-head): hak 0-2 s | punkt 1: liczba na karcie 2-5 s | punkt 2: kinetyczna typografia 5-7.8 s |
+  punkt 3: siatka ikon 7.8-10.6 s | CTA "skomentuj słowo" 10.6-13.5 s. Każdy punkt ma inną barwę tła i inny układ: co kilka sekund nowa sytuacja wizualna.
+
+  Układ: nagranie twórcy w dolnych ~55% kadru (tu: placeholder), karty na scenie powyżej, napisy po 2 słowa (styl "pop") na styku.
+  Podmień treść w sekcji CONTENT; napisy zbuduj narzędziem captions_build z własnego tekstu, SRT albo znaczników słów.
+  Własne nagranie: zrenderuj scenę jako nakładkę z przezroczystością (render_start overlay: true) i złóż w montażu.
+  Treść przykładowa (to nie są prawdziwe dane): podmień ją na swoją.
+
+  Kontrakt strony vstudio: window.DURATION / seek(t) / EV / TEXTS(t) / __ready / __CAPTURE__. Zestaw ruchu wchodzi ze znacznika poniżej.
+-->
+<style>
+  :root { --cap-size: 92px; --cap-hl: #FFC93C; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0E0E10; }
+  html.alpha, html.alpha body { background: transparent; }
+  html.alpha #bg, html.alpha #footage { display: none; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1920px; margin: -960px 0 0 -540px; overflow: hidden;
+           transform-origin: 50% 50%; font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: #fff; }
+  .abs { position: absolute; }
+  .t { margin: 0; }
+
+  #bg { position: absolute; inset: 0; background: #0E0E10; overflow: hidden; }
+  .pn { position: absolute; left: 0; top: 0; width: 1080px; height: 960px; opacity: 0; }
+  #pn1 { background: radial-gradient(100% 80% at 30% 20%, rgba(255, 92, 43, .8), rgba(160, 40, 10, .36) 55%, rgba(14, 14, 16, 0) 100%); opacity: 1; }
+  #pn2 { background: radial-gradient(100% 80% at 70% 30%, rgba(77, 107, 255, .88), rgba(30, 40, 140, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn2b { background: radial-gradient(100% 80% at 50% 30%, rgba(40, 190, 255, .88), rgba(10, 80, 150, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn3 { background: radial-gradient(100% 80% at 40% 20%, rgba(138, 77, 255, .88), rgba(60, 30, 150, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn3b { background: radial-gradient(100% 80% at 60% 20%, rgba(230, 60, 170, .88), rgba(120, 20, 100, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn4 { background: radial-gradient(100% 80% at 60% 25%, rgba(20, 200, 170, .82), rgba(10, 90, 100, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn4b { background: radial-gradient(100% 80% at 40% 25%, rgba(150, 220, 60, .8), rgba(50, 110, 30, .42) 55%, rgba(14, 14, 16, 0) 100%); }
+  #pn5 { background: radial-gradient(80% 60% at 50% 40%, rgba(255, 92, 43, .5), rgba(11, 16, 48, .92) 60%, rgba(14, 14, 16, 0) 100%); }
+
+  #footage { position: absolute; left: 0; top: 880px; width: 1080px; height: 1040px; overflow: hidden; background: linear-gradient(180deg, #202028 0%, #101014 100%); }
+  #footage::before { content: ""; position: absolute; left: 0; top: 0; width: 100%; height: 180px; background: linear-gradient(180deg, rgba(14, 14, 16, .9), rgba(14, 14, 16, 0)); z-index: 2; }
+  #fpush { position: absolute; inset: 0; transform-origin: 50% 40%; }
+  #head { position: absolute; left: 370px; top: 120px; width: 340px; height: 400px; border-radius: 50% 50% 46% 46%; background: linear-gradient(180deg, #43434e, #2d2d36); }
+  #torso { position: absolute; left: 140px; top: 500px; width: 800px; height: 700px; border-radius: 50% 50% 0 0; background: linear-gradient(180deg, #3a3a45, #25252c); }
+
+  #cap { top: 850px; height: 150px; z-index: 10; }
+
+  /* bit 1: wielka liczba */
+  #big { left: 0; top: 262px; width: 1080px; text-align: center; font: 900 440px/1 "Archivo Black", Inter, "Helvetica Neue", Arial, sans-serif; color: #FFC93C; text-shadow: 0 20px 80px rgba(0, 0, 0, .35); }
+  #bigLabel { left: 0; top: 705px; width: 1080px; text-align: center; font: 900 110px/1 "Archivo Black", Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.01em; }
+
+  /* bit 2: karta z licznikiem */
+  #cardA { left: 160px; top: 240px; width: 760px; height: 540px; border-radius: 48px; background: #FAF7F2; box-shadow: 0 40px 100px rgba(0, 0, 0, .5); color: #151519; }
+  #num { left: 0; top: 70px; width: 760px; text-align: center; font: 900 250px/1 "Archivo Black", Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; color: #E34A14; }
+  #unit { left: 0; top: 330px; width: 760px; text-align: center; font: 800 80px/1 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; }
+  #unitLabel { left: 0; top: 440px; width: 760px; text-align: center; font: 500 52px/1.1 Inter, "Helvetica Neue", Arial, sans-serif; color: #7A7A82; }
+
+  /* bit 3: kinetyczna typografia */
+  .kin { left: 0; width: 1080px; height: 190px; text-align: center; font: 900 150px/190px "Archivo Black", Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; text-shadow: 0 14px 60px rgba(0, 0, 0, .35); overflow: hidden; }
+  .kin span { display: block; }
+  #k2 { color: #FFC93C; }
+
+  /* bit 4: siatka ikon */
+  .ic { top: 300px; width: 260px; display: flex; flex-direction: column; align-items: center; gap: 28px; }
+  .ic .disc { width: 190px; height: 190px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+  .ic .disc svg { width: 100px; height: 100px; }
+  .ic p { font: 800 60px/1.1 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; text-shadow: 0 6px 30px rgba(0, 0, 0, .4); white-space: nowrap; }
+
+  /* bit 5: CTA */
+  #bubble { left: 450px; top: 220px; width: 180px; height: 180px; }
+  #c1 { left: 0; top: 440px; width: 1080px; text-align: center; font: 800 96px/1.05 Inter, "Helvetica Neue", Arial, sans-serif; letter-spacing: -.02em; text-shadow: 0 6px 30px rgba(0, 0, 0, .4); }
+  #kw { left: 0; top: 580px; width: 1080px; display: flex; justify-content: center; }
+  #kw p { background: #FF5C2B; color: #fff; padding: 20px 66px 26px; border-radius: 999px; font: 900 138px/1 "Archivo Black", Inter, "Helvetica Neue", Arial, sans-serif; box-shadow: 0 30px 80px rgba(255, 92, 43, .4); }
+  #ping { left: 340px; top: 460px; width: 400px; height: 400px; border-radius: 50%; border: 10px solid #FF5C2B; box-sizing: border-box; opacity: 0; }
+  #c3 { left: 0; top: 790px; width: 1080px; text-align: center; font: 700 76px/1.1 Inter, "Helvetica Neue", Arial, sans-serif; text-shadow: 0 6px 30px rgba(0, 0, 0, .4); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"><div class="pn" id="pn1"></div><div class="pn" id="pn2"></div><div class="pn" id="pn2b"></div><div class="pn" id="pn3"></div><div class="pn" id="pn3b"></div><div class="pn" id="pn4"></div><div class="pn" id="pn4b"></div><div class="pn" id="pn5"></div></div>
+  <div id="footage"><div id="fpush"><div id="torso"></div><div id="head"></div></div></div>
+
+  <!-- bit 1 -->
+  <p id="big" class="abs t"></p><p id="bigLabel" class="abs t"></p>
+
+  <!-- bit 2 -->
+  <div id="cardA" class="abs"><p id="num" class="abs t"></p><p id="unit" class="abs t"></p><p id="unitLabel" class="abs t"></p></div>
+
+  <!-- bit 3 -->
+  <div id="kin"><div class="kin abs" id="k1" style="top:230px"><span class="t"></span></div><div class="kin abs" id="k2" style="top:400px"><span class="t"></span></div><div class="kin abs" id="k3" style="top:570px"><span class="t"></span></div></div>
+
+  <!-- bit 4 -->
+  <div id="icons">
+    <div class="ic abs" id="i1" style="left:70px"><div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#6D3CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></div><p class="t"></p></div>
+    <div class="ic abs" id="i2" style="left:410px"><div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#FF5C2B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="#FF5C2B"/></svg></div><p class="t"></p></div>
+    <div class="ic abs" id="i3" style="left:750px"><div class="disc"><svg viewBox="0 0 24 24" fill="none" stroke="#14C8AA" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><p class="t"></p></div>
+  </div>
+
+  <!-- bit 5 -->
+  <div id="cta">
+    <svg id="bubble" class="abs" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 16h-7l-4.5 3.5V16H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 5z"/></svg>
+    <p id="c1" class="abs t"></p><div id="ping" class="abs"></div><div id="kw" class="abs"><p class="t"></p></div><p id="c3" class="abs t"></p>
+  </div>
+
+  <div id="cap" class="abs"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<!--@motion-kit-->
+<script>
+(function () {
+  /* ================= CONTENT: tu podmieniasz treść (przykładowa, nie prawdziwe dane) ================= */
+  var CONTENT = {
+    big: '3', bigLabel: 'TRIKI',
+    num: 10, unit: 'minut', unitLabel: 'na plan jutra',
+    kin: ['JEDNA', 'RZECZ', 'NARAZ'],
+    icons: ['Wieczór', 'Fokus', 'Finisz'],
+    cta1: 'Skomentuj', keyword: 'PORADNIK', cta3: 'a wyślę Ci listę'
+  };
+  var CAPTIONS = { style: "pop", lines: [
+      {"t0": 0.3, "t1": 0.944, "words": [{"t0": 0.3, "t1": 0.522, "w": "Trzy", "hl": false}, {"t0": 0.522, "t1": 0.944, "w": "nawyki,", "hl": false}]},
+      {"t0": 0.944, "t1": 1.744, "words": [{"t0": 0.944, "t1": 1.211, "w": "które", "hl": false}, {"t0": 1.211, "t1": 1.744, "w": "oszczędzają", "hl": false}]},
+      {"t0": 1.744, "t1": 2.1, "words": [{"t0": 1.744, "t1": 2.1, "w": "godziny", "hl": true}]},
+      {"t0": 2.55, "t1": 3.951, "words": [{"t0": 2.55, "t1": 3.376, "w": "Pierwszy:", "hl": false}, {"t0": 3.376, "t1": 3.951, "w": "planuję", "hl": false}]},
+      {"t0": 3.951, "t1": 5.1, "words": [{"t0": 3.951, "t1": 4.382, "w": "dzień", "hl": false}, {"t0": 4.382, "t1": 5.1, "w": "wieczorem", "hl": true}]},
+      {"t0": 5.45, "t1": 6.543, "words": [{"t0": 5.45, "t1": 6.091, "w": "Drugi:", "hl": false}, {"t0": 6.091, "t1": 6.543, "w": "robię", "hl": false}]},
+      {"t0": 6.543, "t1": 7.448, "words": [{"t0": 6.543, "t1": 6.995, "w": "jedną", "hl": true}, {"t0": 6.995, "t1": 7.448, "w": "rzecz", "hl": false}]},
+      {"t0": 7.448, "t1": 7.9, "words": [{"t0": 7.448, "t1": 7.9, "w": "naraz", "hl": false}]},
+      {"t0": 8.3, "t1": 9.345, "words": [{"t0": 8.3, "t1": 8.822, "w": "Trzeci:", "hl": false}, {"t0": 8.822, "t1": 9.345, "w": "kończę,", "hl": true}]},
+      {"t0": 9.345, "t1": 10.06, "words": [{"t0": 9.345, "t1": 9.675, "w": "zanim", "hl": false}, {"t0": 9.675, "t1": 10.06, "w": "zacznę", "hl": false}]},
+      {"t0": 10.06, "t1": 10.5, "words": [{"t0": 10.06, "t1": 10.5, "w": "kolejne", "hl": false}]}
+    ] };
+
+  var DUR = 13.5, CAPTURE = !!window.__CAPTURE__;
+  if (window.__ALPHA__) document.documentElement.classList.add('alpha');
+  var $ = function (s) { return document.querySelector(s); };
+  var stage = $('#stage');
+  function fit() { stage.style.transform = 'scale(' + Math.min(innerWidth / 1080, innerHeight / 1920) + ')'; }
+
+  $('#big').textContent = CONTENT.big; $('#bigLabel').textContent = CONTENT.bigLabel;
+  $('#unit').textContent = CONTENT.unit; $('#unitLabel').textContent = CONTENT.unitLabel;
+  [1, 2, 3].forEach(function (i) { $('#k' + i + ' span').textContent = CONTENT.kin[i - 1]; $('#i' + i + ' p').textContent = CONTENT.icons[i - 1]; });
+  $('#c1').textContent = CONTENT.cta1; $('#kw p').textContent = CONTENT.keyword; $('#c3').textContent = CONTENT.cta3;
+
+  gsap.config({ force3D: false });
+  var tl = gsap.timeline({ repeat: -1, paused: CAPTURE });
+  var out = VS.ease.out, io = VS.ease.inOut, sp = VS.spring(220, 16), spd = VS.springDuration(220, 16), sp2 = VS.spring(300, 22), spd2 = VS.springDuration(300, 22);
+
+  tl.set('#big', { opacity: 0, scale: .6, transformOrigin: '50% 60%' }, 0).set('#bigLabel', { opacity: 0, y: 40 }, 0)
+    .set('#cardA', { opacity: 0, y: -60, scale: .98 }, 0).set('#num,#unit,#unitLabel', { opacity: 0, y: 16 }, 0)
+    .set('.kin span', { y: 200 }, 0).set('.kin', { opacity: 1 }, 0).set('#kin', { opacity: 0 }, 0)
+    .set('.ic', { opacity: 0, y: 40 }, 0).set('.ic .disc', { scale: .5 }, 0)
+    .set('#bubble', { scale: .5, opacity: 0 }, 0).set('#c1,#c3', { opacity: 0, y: 18 }, 0).set('#kw', { scale: .7, opacity: 0 }, 0)
+    .set('#fpush', { scale: 1 }, 0).set('#ping', { opacity: 0, scale: .6 }, 0);
+
+  tl.to('#fpush', { scale: 1.05, duration: DUR, ease: 'none' }, 0);
+
+  /* tło: pomarańcz -> błękit (potem lazur) -> fiolet (potem róż) -> morski (potem zieleń) -> ciemny: zmiana barwy w środku dłuższych bitów to akcent rytmu */
+  function mood(id, inAt, outAt) {
+    tl.to(id, { opacity: 1, duration: .5, ease: io }, inAt);
+    if (outAt != null) tl.to(id, { opacity: 0, duration: .5, ease: io }, outAt);
+  }
+  tl.to('#pn1', { opacity: 0, duration: .5, ease: io }, 1.9);
+  mood('#pn2', 1.9, 3.5); mood('#pn2b', 3.5, 4.9); mood('#pn3', 4.9, 6.4); mood('#pn3b', 6.4, 7.7); mood('#pn4', 7.7, 9.2); mood('#pn4b', 9.2, 10.5); mood('#pn5', 10.5, null);
+
+  /* bit 1 (0-2): wielka liczba i słowo uderzają ze sprężyną */
+  tl.to('#big', { opacity: 1, duration: .2, ease: out }, .1).to('#big', { scale: 1, duration: spd, ease: sp }, .1)
+    .to('#bigLabel', { opacity: 1, y: 0, duration: .35, ease: out }, .15)
+    .to('#big', { opacity: 0, scale: .92, duration: .25, ease: out }, 1.9).to('#bigLabel', { opacity: 0, duration: .25, ease: out }, 1.9);
+
+  /* bit 2 (2-5): karta z licznikiem (liczba rośnie w seek()) */
+  tl.to('#cardA', { opacity: 1, y: 0, scale: 1, duration: .5, ease: out }, 2.0)
+    .to('#num', { opacity: 1, y: 0, duration: .4, ease: out }, 2.2)
+    .to('#unit', { opacity: 1, y: 0, duration: .4, ease: out }, 2.45)
+    .to('#unitLabel', { opacity: 1, y: 0, duration: .4, ease: out }, 2.6)
+    .to('#cardA', { opacity: 0, y: -30, scale: .96, duration: .3, ease: out }, 4.75);
+
+  /* bit 3 (5-7.8): trzy słowa wjeżdżają spod maski, środkowe w kolorze akcentu */
+  tl.set('#kin', { opacity: 1 }, 4.9);
+  [1, 2, 3].forEach(function (i) { tl.to('#k' + i + ' span', { y: 0, duration: .55, ease: out }, 5.0 + (i - 1) * .22); });
+  tl.to('#kin', { opacity: 0, duration: .25, ease: out }, 7.5);
+
+  /* bit 4 (7.8-10.6): siatka ikon, z opóźnieniem */
+  [1, 2, 3].forEach(function (i) {
+    var t0 = 7.85 + (i - 1) * .2;
+    tl.to('#i' + i, { opacity: 1, y: 0, duration: .45, ease: out }, t0).to('#i' + i + ' .disc', { scale: 1, duration: spd, ease: sp }, t0);
+  });
+  tl.to('.ic', { opacity: 0, y: -20, duration: .25, ease: out }, 10.3);
+
+  /* bit 5 (10.6-13): CTA */
+  tl.to('#bubble', { opacity: 1, duration: .2, ease: out }, 10.65).to('#bubble', { scale: 1, duration: spd2, ease: sp2 }, 10.65)
+    .to('#c1', { opacity: 1, y: 0, duration: .35, ease: out }, 10.75)
+    .to('#kw', { opacity: 1, duration: .2, ease: out }, 10.9).to('#kw', { scale: 1, duration: spd2, ease: sp2 }, 10.9)
+    .to('#c3', { opacity: 1, y: 0, duration: .35, ease: out }, 10.95)
+    .to('#ping', { opacity: .9, duration: .01 }, 12.2).to('#ping', { scale: 3.4, duration: .9, ease: out }, 12.2).to('#ping', { opacity: 0, duration: .8, ease: io }, 12.3);
+
+  tl.set({}, {}, DUR);
+  if (CAPTURE) { tl.totalTime(DUR - 0.001, false); tl.totalTime(0, false); }
+
+  window.EV = [{ t: .1, type: 'hit' }, { t: 2.0, type: 'whoosh' }, { t: 2.2, type: 'pop' }, { t: 4.95, type: 'whoosh' }, { t: 5.0, type: 'hit' }, { t: 5.22, type: 'hit' }, { t: 5.44, type: 'hit' },
+    { t: 7.85, type: 'whoosh' }, { t: 8.0, type: 'pop' }, { t: 8.2, type: 'pop' }, { t: 8.4, type: 'pop' }, { t: 3.5, type: 'pop' }, { t: 6.4, type: 'pop' }, { t: 9.2, type: 'pop' }, { t: 10.65, type: 'hit' }, { t: 11.0, type: 'chime' }, { t: 12.2, type: 'pop' }];
+  window.DURATION = DUR;
+
+  VS.captions.mount($('#cap'), CAPTIONS, { style: 'pop' });
+  function wrap(t) { return ((t % DUR) + DUR) % DUR; }
+  window.seek = function (t) {
+    t = wrap(t);
+    tl.pause(); tl.totalTime(t, false);
+    $('#num').textContent = String(Math.round(VS.count(t, 2.3, 3.4, 0, CONTENT.num, VS.ease.out)));
+    VS.captions.draw(t);
+  };
+
+  function eff(e) { var o = 1; for (; e && e.nodeType === 1; e = e.parentElement) o *= parseFloat(getComputedStyle(e).opacity); return o; }
+  window.TEXTS = function (t) {
+    var res = [];
+    [].slice.call(document.querySelectorAll('.t')).forEach(function (el, i) {
+      if (!el.textContent || eff(el) < 0.05) return;
+      var r = document.createRange(); r.selectNodeContents(el); var b = r.getBoundingClientRect();
+      var mask = el.closest('.kin');                       /* tekst wjeżdża spod maski: zgłaszamy go, gdy widać co najmniej połowę */
+      if (mask) { var m = mask.getBoundingClientRect(), h = Math.max(0, Math.min(b.bottom, m.bottom) - Math.max(b.top, m.top)); if (h < 0.5 * (b.bottom - b.top)) return; }
+      res.push({ id: el.id || ('t' + i), text: el.id === 'num' ? String(CONTENT.num) : el.textContent, x0: b.left, y0: b.top, x1: b.right, y1: b.bottom });
+    });
+    return res.concat(VS.captions.texts(t));
+  };
+
+  window.__ready = document.fonts.ready.then(fit);
+  fit();
+  if (!CAPTURE) {
+    addEventListener('resize', fit);
+    var t0 = performance.now();
+    (function loop() { window.seek((performance.now() - t0) / 1000); requestAnimationFrame(loop); })();
+  }
+})();
+</script>
+</body>
+</html>

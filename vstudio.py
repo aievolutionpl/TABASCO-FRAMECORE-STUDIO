@@ -191,6 +191,20 @@ def _director_commands(a, registry) -> int:
         elif a.assets_cmd == "generate":
             res = call("assets_generate", {"project": _pid(a.project), "kind": a.kind, "seed": a.seed, **({"name": a.name} if a.name else {})})
             emit(res, a.json, f"{res['rel']}\n{res['snippet']['html'][:200]}")
+        elif a.assets_cmd == "captions":
+            args = {"project": _pid(a.project), "style": a.style, "start": a.start, "wpm": a.wpm}
+            if a.text:
+                args["text"] = a.text
+            elif a.srt:
+                args["srt"] = Path(a.srt).read_text(encoding="utf-8")
+            else:
+                args["words"] = json.loads(Path(a.words).read_text(encoding="utf-8"))
+            args.update({k: v for k, v in (("end", a.end), ("max_words", a.max_words), ("highlight", a.highlight)) if v})
+            res = call("captions_build", args)
+            emit(res, a.json, f"{res['rel']}: {res['lines']} linii, {res['words']} słów, {res['start']:g}-{res['end']:g} s\n{res['note']}\n\n{res['snippet']}")
+        elif a.assets_cmd == "kit":
+            res = call("motion_kit_add", {"project": _pid(a.project)})
+            emit(res, a.json, f"{res['rel']}\n\n{res['usage']}")
         else:
             res = call("assets_list", {"project": _pid(a.project)})
             emit(res, a.json, "\n".join(f"{r['rel']:<34}{r['origin']:<10}{r.get('license') or ''}" for r in res["assets"]) or "(brak assetów)")
@@ -198,10 +212,14 @@ def _director_commands(a, registry) -> int:
     pid = _pid(getattr(a, "project", None))
     if a.director_cmd == "plan":
         args = {"project": pid, "goal": a.goal, "tone": a.tone or "", "cta": a.cta or "", "loop": a.loop, "write_storyboard": a.write_storyboard,
-                **{k: v for k, v in (("platform", a.platform), ("pace", a.pace), ("prefer", a.prefer), ("avoid", a.avoid)) if v}}
+                **{k: v for k, v in (("platform", a.platform), ("pace", a.pace), ("prefer", a.prefer), ("avoid", a.avoid), ("format", a.format)) if v}}
+        if a.format:
+            args["items"] = a.items
         pl = call("director_plan", args)["plan"]
-        rows = [f"styl główny: {pl['styles']['main']['name']}  | akcenty: " + ", ".join(x["name"] for x in pl["styles"]["accents"]) + f"  | tempo: {pl['pace']} ({pl['platform']})"]
+        rows = [f"styl główny: {pl['styles']['main']['name']}  | akcenty: " + ", ".join(x["name"] for x in pl["styles"]["accents"]) + f"  | tempo: {pl['pace']} ({pl['platform']})"
+                + (f"  | format: {pl['format']['name']}" if pl.get("format") else "")]
         rows += [f"  {b['t0']:>5.1f}-{b['t1']:<5.1f} {b['role']:<8} {b['style']:<18} {b['layout']:<18} {b['transition_in'] or '-'}" for b in pl["beats"]]
+        rows += [f"  uwaga: {w}" for w in pl.get("warnings", [])]
         emit(pl, a.json, "\n".join(rows))
         return 0
     if a.director_cmd == "review":
@@ -258,6 +276,7 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--times", type=_times, default=[0.0, 1.5, 3.0, 5.0], help="np. 0,1.5,3,5")
         if name == "render":
             p.add_argument("--final", action="store_true")
+            p.add_argument("--overlay", action="store_true", help="nakładka z przezroczystością (ProRes 4444 .mov) na własne nagranie; bez tła i bez dźwięku")
             p.add_argument("--tag")
             p.add_argument("--subframes", type=int)
             p.add_argument("--audio")
@@ -363,6 +382,8 @@ def build_parser() -> argparse.ArgumentParser:
     d_plan.add_argument("--avoid", action="append", help="id stylu do wykluczenia (można powtarzać)")
     d_plan.add_argument("--loop", action="store_true")
     d_plan.add_argument("--write-storyboard", action="store_true", help="zapisz też STORYBOARD.md")
+    d_plan.add_argument("--format", choices=["tool-drop", "talking-head", "listicle"], help="format rolki ze sprawdzonym układem bitów")
+    d_plan.add_argument("--items", type=int, default=3, help="liczba pozycji w formacie listicle (2-7)")
     d_rev = dr.add_parser("review", help="przegląd reżysera (kod wyjścia 3, gdy są błędy)")
     d_rev.add_argument("--project", "-p")
     d_rev.add_argument("--depth", choices=["quick", "standard", "deep"], default="standard")
@@ -398,6 +419,20 @@ def build_parser() -> argparse.ArgumentParser:
     as_g.add_argument("--name")
     as_l = asub.add_parser("list")
     as_l.add_argument("--project", "-p")
+    as_c = asub.add_parser("captions", help="napisy słowo po słowie z tekstu, SRT/VTT albo znaczników słów (JSON)")
+    as_c.add_argument("--project", "-p")
+    src = as_c.add_mutually_exclusive_group(required=True)
+    src.add_argument("--text", help="tekst lektora (czasy szacowane)")
+    src.add_argument("--srt", metavar="PLIK", help="plik SRT albo VTT")
+    src.add_argument("--words", metavar="PLIK", help="plik JSON: [{t0, t1, w}]")
+    as_c.add_argument("--style", choices=["single", "pop", "karaoke"], default="single")
+    as_c.add_argument("--start", type=float, default=0.0)
+    as_c.add_argument("--end", type=float)
+    as_c.add_argument("--wpm", type=float, default=150.0)
+    as_c.add_argument("--max-words", type=int)
+    as_c.add_argument("--highlight", action="append", help="słowo kluczowe w kolorze akcentu (można powtarzać)")
+    as_k = asub.add_parser("kit", help="zestaw ruchu: sprężyny, krzywe, napisy (src/assets/motion-kit.js)")
+    as_k.add_argument("--project", "-p")
 
     a_q = sub.add_parser("qa", help="audyt pliku przez scripts/video_qa.py")
     a_q.add_argument("video")
@@ -501,7 +536,7 @@ def main(argv: list[str] | None = None) -> int:
         emit({"stills": [str(o) for o in outs]}, a.json, "\n".join(str(o) for o in outs))
         return 0
     if a.cmd == "render":
-        out = proj.render(pdir, pr, final=a.final, tag=a.tag, subframes=a.subframes, audio=a.audio, force=a.force)
+        out = proj.render(pdir, pr, final=a.final, tag=a.tag, subframes=a.subframes, audio=a.audio, force=a.force, overlay=a.overlay)
         emit({"render": str(out)}, a.json, str(out))
         return 0
     if a.cmd == "readcheck":

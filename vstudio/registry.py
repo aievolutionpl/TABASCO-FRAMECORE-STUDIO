@@ -29,7 +29,7 @@ CATEGORIES = [
     ("inspect", "Podgląd klatek i osi czasu"),
     ("supervise", "Nadzór jakości"),
     ("direct", "Reżyser: styl, plan i przegląd przed wysyłką"),
-    ("assets", "Assety: ikony, grafiki, zdjęcia"),
+    ("assets", "Assety: ikony, grafiki, napisy, zdjęcia"),
     ("render", "Render, dźwięk, wydanie"),
     ("agent", "Zadania dla agenta"),
     ("system", "Środowisko i aktywność"),

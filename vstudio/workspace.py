@@ -139,9 +139,9 @@ def summarize(pdir: Path, pr: dict, detail: bool = False) -> dict:
     out["director"] = {"state": ds["state"], "verdict": ds["review"]["verdict"] if ds["review"] else None, "score": ds["review"]["score"] if ds["review"] else None}
     if detail:
         renders = []
-        for f in sorted((pdir / "renders").glob("*.mp4"), key=lambda x: x.stat().st_mtime, reverse=True):
+        for f in sorted(list((pdir / "renders").glob("*.mp4")) + list((pdir / "renders").glob("*.mov")), key=lambda x: x.stat().st_mtime, reverse=True):
             renders.append({"file": f"renders/{f.name}", "mb": round(f.stat().st_size / 1e6, 2), "at": f.stat().st_mtime,
-                            "final": "_final_" in f.name})
+                            "final": "_final_" in f.name, "overlay": f.suffix == ".mov"})
         out.update(gates={g: pr["gates"].get(g) for g in GATES}, critic_score=pr.get("critic_score"), renders=renders,
                    has_source=src.exists(), status=proj.cmd_status(pdir, pr),
                    vendor=vendor.status_for_html(src.read_text(encoding="utf-8")) if src.exists() else None,
@@ -171,7 +171,7 @@ def templates() -> list[dict]:
     out = []
     for t in data["templates"]:
         f = STUDIO / t["file"]
-        html = f.read_text(encoding="utf-8") if f.exists() else ""
+        html = expand_template(f.read_text(encoding="utf-8")) if f.exists() else ""
         st = vendor.status_for_html(html)
         out.append({**t, "available": f.exists(), "external": st["external"], "needs_network": bool(st["needs_network"])})
     return out
@@ -186,8 +186,19 @@ def get_template(tid: str) -> dict:
     raise StudioError(f"nieznany szablon '{tid}'. Dostępne: {', '.join(t['id'] for t in templates())}")
 
 
+KIT_MARK = "<!--@motion-kit-->"
+
+
+def expand_template(html: str) -> str:
+    """Szablon może zawierać znacznik `<!--@motion-kit-->`: w jego miejsce wchodzi templates/motion-kit.js (jedno źródło prawdy dla wszystkich szablonów)."""
+    if KIT_MARK not in html:
+        return html
+    kit = (STUDIO / "templates" / "motion-kit.js").read_text(encoding="utf-8")
+    return html.replace(KIT_MARK, "<script>\n" + kit + "\n</script>")
+
+
 def template_html(tid: str) -> str:
-    return (STUDIO / get_template(tid)["file"]).read_text(encoding="utf-8")
+    return expand_template((STUDIO / get_template(tid)["file"]).read_text(encoding="utf-8"))
 
 
 def create_project(slug: str, brand: str | None = None, template: str | None = None, format: str | None = None,

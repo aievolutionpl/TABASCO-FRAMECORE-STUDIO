@@ -2,7 +2,7 @@
 
 > Plik generowany z rejestru możliwości (`vstudio/registry.py`, operacje w `vstudio/ops.py`). Nie edytuj ręcznie: `python vstudio.py tools --write-docs`.
 
-Studio ma **55 operacji** w 12 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
+Studio ma **57 operacji** w 12 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
 
 | Powierzchnia | Jak | Dla kogo |
 | --- | --- | --- |
@@ -276,7 +276,7 @@ Zasady: kontrakt strony, deterministyczny GSAP, pętla pracy, kody znalezisk, ru
 
 | Parametr | Typ | Wymagany | Opis |
 | --- | --- | --- | --- |
-| `topic` | string (contract \| direction \| styles \| assets \| gsap \| workflow \| findings \| motion \| visual \| brand) | tak |  |
+| `topic` | string (contract \| direction \| styles \| formats \| assets \| gsap \| workflow \| findings \| feel \| motion \| visual \| brand) | tak |  |
 
 ## Podgląd klatek i osi czasu
 
@@ -393,7 +393,7 @@ Pełny opis jednego stylu: paleta, typografia, język ruchu, przejścia, zasady 
 
 | Parametr | Typ | Wymagany | Opis |
 | --- | --- | --- | --- |
-| `id` | string (kinetic-type \| glass-ui \| neo-brutal \| swiss-minimal \| dark-luxe \| retro-synth \| sticker-pop \| gradient-mesh \| isometric-3d \| data-story \| paper-cut \| cinematic-captions \| terminal-code \| pastel-soft) | tak |  |
+| `id` | string (kinetic-type \| glass-ui \| neo-brutal \| swiss-minimal \| dark-luxe \| retro-synth \| sticker-pop \| gradient-mesh \| isometric-3d \| data-story \| paper-cut \| cinematic-captions \| terminal-code \| pastel-soft \| creator-captions \| tool-showcase) | tak |  |
 
 ### `director_plan`: Plan reżyserski
 
@@ -401,7 +401,7 @@ Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: 
 
 **Kiedy:** BEFORE building the scene: the plan is what director_review later checks the film against.
 
-**Zwraca:** styles{main, accents, why}, beats[], contract, brand
+**Zwraca:** styles{main, accents, why}, beats[], contract, brand, format, warnings[]
 
 **Cechy:** zmienia pliki
 
@@ -417,6 +417,8 @@ Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: 
 | `cta` | string | nie | the call to action line |
 | `loop` | boolean | nie | Domyślnie: `False`. |
 | `write_storyboard` | boolean | nie | also write STORYBOARD.md (the previous one is kept as STORYBOARD.previous.md) Domyślnie: `False`. |
+| `format` | string (tool-drop \| talking-head \| listicle) | nie | reel format with a proven beat sheet: tool-drop (recommend a free tool), talking-head (captions over footage), listicle (N things) |
+| `items` | integer | nie | number of items for the listicle format Domyślnie: `3`. |
 
 ### `director_review`: Przegląd reżysera
 
@@ -463,7 +465,7 @@ Ostatni raport reżysera bez uruchamiania nowego, stan zatwierdzenia (czy aktual
 | --- | --- | --- | --- |
 | `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
 
-## Assety: ikony, grafiki, zdjęcia
+## Assety: ikony, grafiki, napisy, zdjęcia
 
 ### `assets_search`: Szukaj assetów
 
@@ -538,6 +540,44 @@ HTML do wklejenia w scenę: SVG inline (przemalowywalny przez `color`) albo <img
 | `file` | string | tak |  |
 | `mode` | string (auto \| inline \| img) | nie | Domyślnie: `auto`. |
 
+### `captions_build`: Napisy słowo po słowie
+
+Z tekstu lektora, SRT/VTT albo znaczników słów buduje dane napisów (czasy słów, linie, podświetlenia) i zapisuje je razem z silnikiem w src/assets/. Zwraca kod do wklejenia w scenę.
+
+**Kiedy:** For talking-head and tool-drop reels: captions that appear with the voice. Give exact timings (srt/words) when you have them.
+
+**Zwraca:** file, lines, words, start, end, preview[], snippet
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `text` | string | nie | the spoken script; word times are estimated (use srt or words for exact timing) |
+| `srt` | string | nie | SRT or VTT text with cue timings; words are spread inside each cue |
+| `words` | array | nie | [{t0, t1, w}] word timestamps (e.g. from a transcription tool) |
+| `start` | number | nie | seconds: where the script starts in the film (text and srt) Domyślnie: `0`. |
+| `end` | number | nie | seconds: where the script ends (text); default from wpm |
+| `wpm` | number | nie | speaking pace used when end is not given Domyślnie: `150`. |
+| `style` | string (single \| pop \| karaoke) | nie | single: one big word at a time | pop: words pop in, line stays | karaoke: whole line, active word highlighted Domyślnie: `single`. |
+| `max_words` | integer | nie | words per line (default 1 for single, 3 otherwise) |
+| `highlight` | array | nie | key words shown in the highlight colour |
+| `numbers` | boolean | nie | highlight words with digits Domyślnie: `True`. |
+
+### `motion_kit_add`: Zestaw ruchu (sprężyny, krzywe)
+
+Zapisuje src/assets/motion-kit.js: sprężyny jako ease dla GSAP, mocne krzywe Béziera, licznik, pisanie znak po znaku i silnik napisów. Wszystko deterministyczne.
+
+**Kiedy:** Before writing motion that should feel physical: springs and strong ease-out curves instead of linear or default eases.
+
+**Zwraca:** file, usage
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+
 ### `assets_remove`: Usuń asset
 
 Usuwa plik z src/assets/ razem z wpisem w śladzie licencji.
@@ -555,7 +595,7 @@ Usuwa plik z src/assets/ razem z wpisem w śladzie licencji.
 
 ### `render_start`: Render
 
-Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait.
+Uruchamia render jako job (draft w połowie rozdzielczości, final albo nakładka z przezroczystością). Zwraca job; postęp przez job_get/job_wait.
 
 **Kiedy:** Render a draft after the supervisor says pass; final only after brief, visual_rules and stills are approved AND the director signed off this version of the scene.
 
@@ -568,6 +608,7 @@ Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca 
 | `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
 | `final` | boolean | nie | Domyślnie: `False`. |
 | `audio` | string | nie | path to a mixed audio file |
+| `overlay` | boolean | nie | transparent ProRes 4444 .mov of the animated layers only (no backdrop, no audio, full size) to lay over the user's own footage; mark full-bleed backdrops with data-alpha="hide" or branch on window.__ALPHA__ Domyślnie: `False`. |
 | `force` | boolean | nie | skip the gate check for a final render Domyślnie: `False`. |
 | `skip_review` | boolean | nie | skip the director sign-off requirement (only when the user explicitly asks) Domyślnie: `False`. |
 

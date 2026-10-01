@@ -82,7 +82,9 @@ def events_to_cues(ev: dict, sfx_map: dict | None = None, default_gain: float = 
 
 def readcheck(page_path: Path, step: float = 0.04, latin_cps: float = 15.0, cjk_cps: float = 4.5, pad: float = 1.5,
               min_seconds: float = 1.5, fps: float = 30.0, size=(1920, 1080)) -> dict:
-    """Every on-screen text must stay unchanged for chars/cps + pad seconds, stay inside the frame, and hold still >= 8 frames before moving."""
+    """Every on-screen text must stay unchanged for chars/cps + pad seconds, stay inside the frame, and hold still >= 8 frames before moving.
+
+    An entry with `caption: true` (word-by-word captions that follow the voice) is only checked for staying inside the frame."""
     with open_page(page_path, size) as page:
         if not page.evaluate("typeof window.TEXTS === 'function'"):
             die("page has no window.TEXTS(t); add it to enable the reading-time check (see projects/video-studio/README.md)")
@@ -104,7 +106,7 @@ def readcheck(page_path: Path, step: float = 0.04, latin_cps: float = 15.0, cjk_
                 p = pieces.get(pid)
                 box = (x["x0"], x["y0"], x["x1"], x["y1"])
                 if not p:
-                    pieces[pid] = {"id": pid, "text": x["text"], "t0": t, "t1": t, "boxes": [box]}
+                    pieces[pid] = {"id": pid, "text": x["text"], "t0": t, "t1": t, "boxes": [box], "caption": bool(x.get("caption"))}
                 else:
                     p["t1"] = t; p["boxes"].append(box)
             t += step
@@ -119,14 +121,14 @@ def readcheck(page_path: Path, step: float = 0.04, latin_cps: float = 15.0, cjk_
         shown = p["t1"] - p["t0"] + step
         row = {"id": p["id"], "text": text[:60], "from": round(p["t0"], 2), "shown_s": round(shown, 2), "needs_s": round(need, 2)}
         stats.append(row)
-        if shown + 1e-6 < need:
+        if shown + 1e-6 < need and not p.get("caption"):               # napisy słowo po słowie są mówione: czas czytania ich nie dotyczy
             failures.append(f"'{text[:40]}' ({p['id']}) is on screen {shown:.2f}s from t={p['t0']:.2f}s; needs {need:.2f}s to be read")
         b = p["boxes"]
         if any(x0 < -1 or y0 < -1 or x1 > W + 1 or y1 > H + 1 for x0, y0, x1, y1 in b):
             failures.append(f"'{text[:40]}' ({p['id']}) leaves the frame (box outside {W}x{H})")
         # hold-still rule: after the text settles it must stay put >= 8 frames before it moves again
         cs = [((x0 + x1) / 2, (y0 + y1) / 2) for x0, y0, x1, y1 in b]
-        settle = next((i for i in range(len(cs) - 2) if all(abs(cs[i + k + 1][0] - cs[i + k][0]) + abs(cs[i + k + 1][1] - cs[i + k][1]) < 0.6 for k in range(2))), None)
+        settle = None if p.get("caption") else next((i for i in range(len(cs) - 2) if all(abs(cs[i + k + 1][0] - cs[i + k][0]) + abs(cs[i + k + 1][1] - cs[i + k][1]) < 0.6 for k in range(2))), None)
         if settle is not None:
             base = cs[settle]
             mv = next((i for i in range(settle, len(cs)) if abs(cs[i][0] - base[0]) + abs(cs[i][1] - base[1]) > 3.0), None)

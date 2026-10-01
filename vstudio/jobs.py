@@ -188,7 +188,7 @@ def cleanup_partial(job: dict, pdir: Path) -> list[str]:
     if job["kind"] in ("render", "sound"):
         before = set(job.get("before", []))
         for f in list((pdir / "renders").glob("*")):
-            if f.is_file() and f.name not in before and f.suffix in (".mp4", ".json"):
+            if f.is_file() and f.name not in before and f.suffix in (".mp4", ".mov", ".json"):
                 f.unlink(missing_ok=True)
                 removed.append(f.name)
     return removed
@@ -198,7 +198,7 @@ def _result(job: dict, pdir: Path, last_line: str) -> dict:
     res: dict = {"output": last_line}
     if job["kind"] in ("render", "sound"):
         before = set(job.get("before", []))
-        fresh = [f for f in (pdir / "renders").glob("*.mp4") if f.name not in before]
+        fresh = [f for f in list((pdir / "renders").glob("*.mp4")) + list((pdir / "renders").glob("*.mov")) if f.name not in before]
         if fresh:
             newest = max(fresh, key=lambda f: f.stat().st_mtime)
             res["file"] = f"renders/{newest.name}"

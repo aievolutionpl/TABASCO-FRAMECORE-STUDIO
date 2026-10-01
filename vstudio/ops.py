@@ -8,7 +8,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from . import activity, agentkit, assets as assets_mod, director, doctor as doctor_mod, jobs, knowledge, styles, supervisor, vendor, workspace
+from . import activity, agentkit, assets as assets_mod, captions as captions_mod, director, doctor as doctor_mod, jobs, knowledge, styles, supervisor, vendor, workspace
 from .common import StudioError
 from .registry import REGISTRY, capability, describe
 
@@ -347,13 +347,16 @@ def style_get(id: str) -> dict:  # noqa: A002 - nazwa parametru jest częścią 
                     "platform": _DIRECT_PLATFORM, "pace": {"type": "string", "enum": list(director.PACE_GAP)},
                     "prefer": {"type": "array", "items": {"type": "string"}, "description": "style ids to favour"}, "avoid": {"type": "array", "items": {"type": "string"}, "description": "style ids to exclude"},
                     "cta": {"type": "string", "description": "the call to action line"}, "loop": {"type": "boolean", "default": False},
-                    "write_storyboard": {"type": "boolean", "default": False, "description": "also write STORYBOARD.md (the previous one is kept as STORYBOARD.previous.md)"}},
-            required=("project", "goal"), returns="styles{main, accents, why}, beats[], contract, brand",
+                    "write_storyboard": {"type": "boolean", "default": False, "description": "also write STORYBOARD.md (the previous one is kept as STORYBOARD.previous.md)"},
+                    "format": {"type": "string", "enum": list(styles.FORMATS), "description": "reel format with a proven beat sheet: tool-drop (recommend a free tool), talking-head (captions over footage), listicle (N things)"},
+                    "items": {"type": "integer", "minimum": 2, "maximum": 7, "default": 3, "description": "number of items for the listicle format"}},
+            required=("project", "goal"), returns="styles{main, accents, why}, beats[], contract, brand, format, warnings[]",
             when="BEFORE building the scene: the plan is what director_review later checks the film against.")
 def director_plan(project: str, goal: str, tone: str = "", platform: str | None = None, pace: str | None = None, prefer: list | None = None,
-                  avoid: list | None = None, cta: str = "", loop: bool = False, write_storyboard: bool = False) -> dict:
+                  avoid: list | None = None, cta: str = "", loop: bool = False, write_storyboard: bool = False, format: str | None = None,  # noqa: A002
+                  items: int = 3) -> dict:
     pdir, pr = _proj(project)
-    return {"project": workspace.project_id(pdir), "plan": director.plan(pdir, pr, goal, tone, platform, pace, prefer, avoid, cta, loop, write_storyboard)}
+    return {"project": workspace.project_id(pdir), "plan": director.plan(pdir, pr, goal, tone, platform, pace, prefer, avoid, cta, loop, write_storyboard, format, items)}
 
 
 @capability("director_review", "Przegląd reżysera", "Mierzy film oczami widza: rytm (nowa sytuacja co 2-3 s), hak, różnorodność looków, ruch (przyspieszenia, stagger), widoczność i fonty tekstu (polskie znaki), obrazy, migotanie. Zwraca werdykt, znaleziska, taśmę klatek i wykres rytmu.", "direct",
@@ -457,6 +460,40 @@ def assets_snippet(project: str, file: str, mode: str = "auto") -> dict:
     return assets_mod.snippet(pdir, file, mode)
 
 
+@capability("captions_build", "Napisy słowo po słowie", "Z tekstu lektora, SRT/VTT albo znaczników słów buduje dane napisów (czasy słów, linie, podświetlenia) i zapisuje je razem z silnikiem w src/assets/. Zwraca kod do wklejenia w scenę.", "assets",
+            mutates=True,
+            params={"project": PROJECT, "text": {"type": "string", "description": "the spoken script; word times are estimated (use srt or words for exact timing)"},
+                    "srt": {"type": "string", "description": "SRT or VTT text with cue timings; words are spread inside each cue"},
+                    "words": {"type": "array", "items": {"type": "object"}, "description": "[{t0, t1, w}] word timestamps (e.g. from a transcription tool)"},
+                    "start": {"type": "number", "minimum": 0, "default": 0, "description": "seconds: where the script starts in the film (text and srt)"},
+                    "end": {"type": "number", "description": "seconds: where the script ends (text); default from wpm"},
+                    "wpm": {"type": "number", "minimum": 40, "maximum": 400, "default": 150, "description": "speaking pace used when end is not given"},
+                    "style": {"type": "string", "enum": list(captions_mod.STYLES), "default": "single",
+                              "description": "single: one big word at a time | pop: words pop in, line stays | karaoke: whole line, active word highlighted"},
+                    "max_words": {"type": "integer", "minimum": 1, "maximum": 6, "description": "words per line (default 1 for single, 3 otherwise)"},
+                    "highlight": {"type": "array", "items": {"type": "string"}, "description": "key words shown in the highlight colour"},
+                    "numbers": {"type": "boolean", "default": True, "description": "highlight words with digits"}},
+            required=("project",), returns="file, lines, words, start, end, preview[], snippet",
+            when="For talking-head and tool-drop reels: captions that appear with the voice. Give exact timings (srt/words) when you have them.")
+def captions_build(project: str, text: str | None = None, srt: str | None = None, words: list | None = None, start: float = 0.0, end: float | None = None,
+                   wpm: float = 150.0, style: str = "single", max_words: int | None = None, highlight: list | None = None, numbers: bool = True) -> dict:
+    pdir, _ = _proj(project)
+    data = captions_mod.build(text=text, srt=srt, words=words, start=start, end=end, wpm=wpm, max_words=max_words, style=style, highlight=highlight, numbers=numbers)
+    out = captions_mod.write(pdir, data)
+    prev = [{"t0": ln["t0"], "t1": ln["t1"], "text": " ".join(w["w"] for w in ln["words"])} for ln in data["lines"][:4]]
+    return {"project": workspace.project_id(pdir), **out, "style": data["style"], "lines": len(data["lines"]), "words": data["words"],
+            "start": data["start"], "end": data["end"], "preview": prev,
+            "note": "Timings are estimated from word length unless you passed srt or words." if text else "Timings taken from your input."}
+
+
+@capability("motion_kit_add", "Zestaw ruchu (sprężyny, krzywe)", "Zapisuje src/assets/motion-kit.js: sprężyny jako ease dla GSAP, mocne krzywe Béziera, licznik, pisanie znak po znaku i silnik napisów. Wszystko deterministyczne.", "assets",
+            mutates=True, params={"project": PROJECT}, required=("project",), returns="file, usage",
+            when="Before writing motion that should feel physical: springs and strong ease-out curves instead of linear or default eases.")
+def motion_kit_add(project: str) -> dict:
+    pdir, _ = _proj(project)
+    return {"project": workspace.project_id(pdir), **captions_mod.install_kit(pdir), "usage": captions_mod.KIT_USAGE}
+
+
 @capability("assets_remove", "Usuń asset", "Usuwa plik z src/assets/ razem z wpisem w śladzie licencji.", "assets", mutates=True,
             params={"project": PROJECT, "file": {"type": "string"}}, required=("project", "file"), returns="removed")
 def assets_remove(project: str, file: str) -> dict:
@@ -482,24 +519,28 @@ def _need(*tools: str) -> None:
         raise StudioError(f"{', '.join(missing)} nie jest na PATH: ta operacja wymaga FFmpeg (zobacz doctor)")
 
 
-@capability("render_start", "Render", "Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait.", "render", job=True,
+@capability("render_start", "Render", "Uruchamia render jako job (draft w połowie rozdzielczości, final albo nakładka z przezroczystością). Zwraca job; postęp przez job_get/job_wait.", "render", job=True,
             params={"project": PROJECT, "final": {"type": "boolean", "default": False}, "audio": {"type": "string", "description": "path to a mixed audio file"},
+                    "overlay": {"type": "boolean", "default": False, "description": "transparent ProRes 4444 .mov of the animated layers only (no backdrop, no audio, full size) to lay over the user's own footage; "
+                                                                                    "mark full-bleed backdrops with data-alpha=\"hide\" or branch on window.__ALPHA__"},
                     "force": {"type": "boolean", "default": False, "description": "skip the gate check for a final render"},
                     "skip_review": {"type": "boolean", "default": False, "description": "skip the director sign-off requirement (only when the user explicitly asks)"}},
             required=("project",), returns="job, warnings[]",
             when="Render a draft after the supervisor says pass; final only after brief, visual_rules and stills are approved AND the director signed off this version of the scene.")
-def render_start(project: str, final: bool = False, audio: str | None = None, force: bool = False, skip_review: bool = False) -> dict:
+def render_start(project: str, final: bool = False, audio: str | None = None, force: bool = False, skip_review: bool = False, overlay: bool = False) -> dict:
     _need("ffmpeg")
     pdir, pr = _proj(project)
     warns = []
-    if final:
-        warns += _director_gate(pdir, skip_review, "finalny render")
+    if overlay and (final or audio):
+        raise StudioError("overlay nie łączy się z final ani audio: nakładka jest zawsze w pełnej rozdzielczości i bez dźwięku")
+    if final or overlay:
+        warns += _director_gate(pdir, skip_review, "render nakładki" if overlay else "finalny render")
     rep = supervisor.latest(pdir)
     if rep is None:
         warns.append("Film nie był jeszcze sprawdzony nadzorcą (check_run).")
     elif rep["verdict"] != "pass":
         warns.append(f"Ostatni nadzór: {rep['verdict']} (wynik {rep['score']}, runda {rep['round']}).")
-    args = ["render", "-p", str(pdir)] + (["--final"] if final else []) + (["--audio", audio] if audio else []) + (["--force"] if force else [])
+    args = ["render", "-p", str(pdir)] + (["--final"] if final else []) + (["--overlay"] if overlay else []) + (["--audio", audio] if audio else []) + (["--force"] if force else [])
     job = jobs.start("render", workspace.project_id(pdir), pdir, args, source="api")
     return {"job": job, "warnings": warns}
 
