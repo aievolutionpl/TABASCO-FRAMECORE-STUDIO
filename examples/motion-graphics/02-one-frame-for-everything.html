@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - motion 2: one frame for everything</title>
+<!--
+  Motion graphic 2/6 - "One frame for everything": czarny telefon stoi w miejscu i nigdy sie nie rusza, nie skaluje, nie tnie.
+  Zmienia sie tylko ekran w srodku: 6 ekranow, kazdy wjezdza z prawej (xPercent 100 -> 0) i wypycha poprzedni w lewo (0 -> -100), 0.4 s.
+  1080x1350, tlo #EEF0F4, GSAP 3.12.5, jedna os czasu 7 s, repeat: -1. Ekrany przyciete zaokraglonym ekranem telefonu.
+  Na koncu ostatni ekran (zielony) przygasa i petla wraca do czatu.
+
+  Kontrakt strony vstudio: window.DURATION / window.seek(t) / window.EV / window.TEXTS(t) / window.__ready / window.__CAPTURE__
+  Uwaga: GSAP jest ladowany z CDN (adres z promptu) - render wymaga dostepu do cdnjs.cloudflare.com.
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #EEF0F4; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1350px; margin: -675px 0 0 -540px;
+           overflow: hidden; background: #EEF0F4; transform-origin: 50% 50%;
+           font-family: Inter, "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif; color: #0B0E24; }
+
+  /* telefon: 540x1100, czarny, nigdy sie nie rusza; ekran 512x1072 z zaokraglonymi rogami */
+  #phone { position: absolute; left: 270px; top: 125px; width: 540px; height: 1100px; border-radius: 88px; background: #0A0A0C;
+           box-shadow: 0 40px 90px rgba(20, 24, 40, .28); }
+  #screen { position: absolute; left: 14px; top: 14px; width: 512px; height: 1072px; border-radius: 74px; overflow: hidden; background: #fff; }
+  #island { position: absolute; left: 210px; top: 32px; width: 120px; height: 34px; border-radius: 17px; background: #0A0A0C; z-index: 10; }
+
+  .scr { position: absolute; left: 0; top: 0; width: 512px; height: 1072px; background: #fff; overflow: hidden; }
+  .bubble { position: absolute; max-width: 360px; padding: 22px 28px; font-size: 34px; line-height: 1.25; font-weight: 500; border-radius: 34px; }
+  .h1 { position: absolute; left: 40px; font-weight: 800; letter-spacing: -.01em; }
+
+  /* 1. czat */
+  #s1 { background: #fff; }
+  #b1 { left: 36px; top: 300px; background: #E6E8EE; color: #0B0E24; border-bottom-left-radius: 10px; }
+  #b2 { right: 36px; top: 500px; background: #2F6BFF; color: #fff; border-bottom-right-radius: 10px; }
+  /* 2. wykres */
+  #tWeek { top: 150px; font-size: 56px; }
+  #bars { position: absolute; left: 40px; top: 300px; width: 432px; height: 600px; display: flex; align-items: flex-end; gap: 24px; }
+  .bar { flex: none; width: 64px; border-radius: 18px; background: #D5D9E2; }
+  /* 3. mapa */
+  #s3 { background: #DCEFD6; }
+  .road { position: absolute; background: #fff; }
+  #pin { position: absolute; left: 224px; top: 400px; width: 64px; height: 64px; border-radius: 50% 50% 50% 0; background: #FF3B30; transform: rotate(-45deg); }
+  #pin i { position: absolute; left: 20px; top: 20px; width: 24px; height: 24px; border-radius: 12px; background: #fff; }
+  #card { position: absolute; left: 28px; top: 862px; width: 456px; height: 160px; border-radius: 40px; background: #fff;
+          box-shadow: 0 12px 30px rgba(20, 40, 20, .18); display: flex; align-items: center; justify-content: center; }
+  #tArrive { font-size: 40px; font-weight: 800; }
+  /* 4. platnosc */
+  #tPay { top: 140px; font-size: 128px; line-height: 1; }
+  .field { position: absolute; left: 40px; width: 432px; height: 92px; border-radius: 28px; background: #EEF0F4; }
+  #confirm { position: absolute; left: 40px; top: 880px; width: 432px; height: 112px; border-radius: 56px; background: #000; color: #fff;
+             font-size: 38px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  /* 5. kalendarz */
+  .hl { position: absolute; left: 0; width: 512px; height: 2px; background: #E9ECF2; }
+  .ev { position: absolute; left: 40px; width: 432px; border-radius: 28px; color: #fff; font-size: 40px; font-weight: 800; padding: 28px 30px; box-sizing: border-box; }
+  /* 6. gotowe */
+  #s6 { background: #16B364; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #s6 svg { flex: none; width: 240px; height: 240px; display: block; margin-bottom: 36px; }
+  #tDone { font-size: 80px; font-weight: 800; color: #fff; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="phone">
+    <div id="screen">
+      <div id="s1" class="scr">
+        <div id="b1" class="bubble">Can you ship by Friday?</div>
+        <div id="b2" class="bubble">Yes. Tracking sent.</div>
+      </div>
+      <div id="s2" class="scr">
+        <div id="tWeek" class="h1">This week</div>
+        <div id="bars">
+          <div class="bar" style="height:200px"></div><div class="bar" style="height:330px"></div><div class="bar" style="height:250px"></div>
+          <div class="bar" style="height:400px"></div><div class="bar" style="height:560px;background:#2F6BFF"></div>
+        </div>
+      </div>
+      <div id="s3" class="scr">
+        <div class="road" style="left:-120px;top:330px;width:800px;height:52px;transform:rotate(-16deg)"></div>
+        <div class="road" style="left:240px;top:-140px;width:52px;height:1100px;transform:rotate(22deg)"></div>
+        <div id="pin"><i></i></div>
+        <div id="card"><div id="tArrive">Arriving in 12 min</div></div>
+      </div>
+      <div id="s4" class="scr">
+        <div id="tPay" class="h1">Pay</div>
+        <div class="field" style="top:340px"></div><div class="field" style="top:460px"></div><div class="field" style="top:580px;width:200px"></div>
+        <div id="confirm">Confirm</div>
+      </div>
+      <div id="s5" class="scr">
+        <div class="hl" style="top:140px"></div><div class="hl" style="top:300px"></div><div class="hl" style="top:460px"></div>
+        <div class="hl" style="top:620px"></div><div class="hl" style="top:780px"></div><div class="hl" style="top:940px"></div>
+        <div id="evA" class="ev" style="top:160px;height:150px;background:#2F6BFF">Team call</div>
+        <div id="evB" class="ev" style="top:470px;height:160px;background:#F58A07">Launch prep</div>
+        <div id="evC" class="ev" style="top:700px;height:130px;background:#22B573">Gym</div>
+      </div>
+      <div id="s6" class="scr">
+        <svg viewBox="0 0 24 24"><path fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.8 9.8 18 19.6 6.4"/></svg>
+        <div id="tDone">All done</div>
+      </div>
+    </div>
+    <div id="island"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function () {
+  var DUR = 7, CAPTURE = !!window.__CAPTURE__;
+  var stage = document.getElementById('stage');
+  function fit() { stage.style.transform = 'scale(' + Math.min(innerWidth / 1080, innerHeight / 1350) + ')'; }
+
+  gsap.config({ force3D: false });           /* transformacje 2D bez promocji warstw: raster klatki nie zalezy od historii seek */
+  gsap.defaults({ ease: 'power3.inOut' });
+  var tl = gsap.timeline({ repeat: -1, paused: CAPTURE });
+
+  /* start: widoczny tylko czat, pozostale ekrany poza ekranem po prawej; ostatni ekran pelny (po petli znow nieprzezroczysty) */
+  tl.set('#s1', { xPercent: 0 }, 0)
+    .set('#s2,#s3,#s4,#s5,#s6', { xPercent: 100 }, 0)
+    .set('#s6', { opacity: 1 }, 0);
+
+  /* 5 przejsc po ~1.1 s, kazde 0.4 s: wchodzacy 100 -> 0, wychodzacy 0 -> -100 */
+  var S = ['#s1', '#s2', '#s3', '#s4', '#s5', '#s6'], SWAP = 0.4, STEP = 1.1, swaps = [];
+  for (var k = 0; k < 5; k++) {
+    var at = 1.1 + k * STEP;
+    swaps.push(at);
+    tl.to(S[k + 1], { xPercent: 0, duration: SWAP }, at)
+      .to(S[k], { xPercent: -100, duration: SWAP }, at);
+  }
+
+  /* koniec: pod zielonym ekranem wraca czat, zielony przygasa i petla wraca do czatu */
+  tl.set('#s1', { xPercent: 0 }, 6.3)
+    .to('#s6', { opacity: 0, duration: 0.5 }, 6.4);
+  tl.set({}, {}, DUR);                       /* os trwa dokladnie 7 s */
+
+  /* ---------- haki vstudio ---------- */
+  if (CAPTURE) { tl.totalTime(DUR - 0.001, false); tl.totalTime(0, false); }
+  window.DURATION = DUR;
+  window.seek = function (t) { tl.pause(); tl.totalTime(((t % DUR) + DUR) % DUR, false); };
+  window.EV = swaps.map(function (s) { return { t: s, type: 'whoosh' }; })
+    .concat([{ t: 5.75, type: 'chime' }, { t: 6.4, type: 'pop' }]);
+
+  var TXT = [['chat-q', '#b1'], ['chat-a', '#b2'], ['this-week', '#tWeek'], ['arriving', '#tArrive'], ['pay', '#tPay'],
+             ['confirm', '#confirm'], ['team-call', '#evA'], ['launch-prep', '#evB'], ['gym', '#evC'], ['all-done', '#tDone']];
+  function visibleBox(el) {                  /* tekst widoczny (opacity >= .5) i przyciety przez rodzicow z overflow */
+    var rg = document.createRange(); rg.selectNodeContents(el);
+    var r = rg.getBoundingClientRect(), o = 1;
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      var cs = getComputedStyle(n); o *= parseFloat(cs.opacity);
+      if (n !== el && cs.overflow !== 'visible') {
+        var c = n.getBoundingClientRect();
+        r = { left: Math.max(r.left, c.left), top: Math.max(r.top, c.top), right: Math.min(r.right, c.right), bottom: Math.min(r.bottom, c.bottom) };
+      }
+    }
+    return (o < 0.5 || r.right <= r.left || r.bottom <= r.top) ? null : r;
+  }
+  window.TEXTS = function () {
+    var out = [];
+    TXT.forEach(function (it) {
+      var el = document.querySelector(it[1]), b = visibleBox(el);
+      if (b) out.push({ id: it[0], text: el.textContent.trim(), x0: b.left, y0: b.top, x1: b.right, y1: b.bottom });
+    });
+    return out;
+  };
+  window.__ready = document.fonts.ready.then(fit);
+  fit();
+  if (!CAPTURE) addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

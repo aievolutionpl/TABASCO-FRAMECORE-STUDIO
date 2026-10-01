@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vstudio - motion 5: pieces first, whole last</title>
+<!--
+  Motion graphic 5/6 - "Pieces first, whole last": pokaz czesci po kolei, calosc dopiero na koncu.
+  1080x1350, tlo #FFE3A3, GSAP 3.12.5, jedna os czasu 7 s, repeat: -1. Burger z prostych ksztaltow CSS.
+  Szesc warstw spada z gory co 0.55 s (bounce.out) i ukladaja sie jedna na drugiej: dolna buleczka, kotlet, ser (z zaciekami),
+  salata (falista), trzy plastry pomidora, gorna buleczka z sezamem. Etykieta u gory nazywa warstwe w chwili, gdy ladowanie
+  dotyka stosu (pierwsze odbicie). Gdy ostatnia warstwa siada (~3.9 s): "The whole thing", squash-and-bounce calego burgera
+  i czarna plakietka "Order ready" wbija sie pod spodem. 6.2 s: wszystko wypada dolem kadru i petla wraca do pustego tla.
+  Gotowy burger nigdy nie jest widoczny przed ostatnia warstwa.
+
+  Kontrakt strony vstudio: window.DURATION / window.seek(t) / window.EV / window.TEXTS(t) / window.__ready / window.__CAPTURE__
+  Uwaga: GSAP jest ladowany z CDN (adres z promptu) - render wymaga dostepu do cdnjs.cloudflare.com.
+-->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #FFE3A3; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1080px; height: 1350px; margin: -675px 0 0 -540px;
+           overflow: hidden; background: #FFE3A3; transform-origin: 50% 50%;
+           font-family: Inter, "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif; color: #2B1B10; }
+  .full { position: absolute; left: 0; top: 0; width: 1080px; height: 1350px; }
+
+  /* etykieta u gory: 7 tekstow jeden na drugim, przelaczane w czasie */
+  #labWrap { position: absolute; left: 0; top: 120px; width: 1080px; height: 120px; }
+  .lab { position: absolute; left: 0; top: 0; width: 1080px; height: 120px; display: flex; align-items: center; justify-content: center;
+         font-size: 100px; font-weight: 800; letter-spacing: -.01em; }
+
+  /* burger: kontener 520x460, dol na y=1010; warstwy pozycjonowane od dolu (bottom) */
+  #burger { position: absolute; left: 280px; top: 550px; width: 520px; height: 460px; transform-origin: 50% 100%; }
+  .ly { position: absolute; }
+  #lBunB   { left: 0;     bottom: 0;   width: 520px; height: 90px;  border-radius: 14px 14px 58px 58px; background: linear-gradient(#EBA840, #CF8A2A); }
+  #lPatty  { left: -14px; bottom: 76px; width: 548px; height: 84px; border-radius: 42px; background: linear-gradient(#6E3D28, #46261A); }
+  #lCheese { left: 0;     bottom: 150px; width: 520px; height: 46px; border-radius: 10px; background: #FFC929; }
+  .drip { position: absolute; top: 30px; background: #FFC929; border-radius: 0 0 28px 28px; }
+  #lLettuce { left: -20px; bottom: 176px; width: 560px; height: 80px; }
+  #lLettuce .band { position: absolute; left: 0; top: 0; width: 560px; height: 48px; border-radius: 26px 26px 0 0; background: #4FB946; }
+  #lLettuce .wave { position: absolute; top: 24px; width: 56px; height: 56px; border-radius: 28px; background: #62CB55; }
+  #lTomato { left: 0; bottom: 246px; width: 520px; height: 50px; }
+  .tom { position: absolute; top: 0; width: 150px; height: 50px; border-radius: 25px; background: #E5392B; }
+  .tom i { position: absolute; left: 22px; top: 11px; width: 106px; height: 26px; border-radius: 13px; background: #FF6B58; }
+  #lBunT { left: 0; bottom: 286px; width: 520px; height: 162px; border-radius: 260px 260px 36px 36px / 162px 162px 36px 36px;
+           background: radial-gradient(ellipse at 40% 25%, #F5BC5C 0%, #E59B37 55%, #C9801F 100%); }
+  .seed { position: absolute; width: 26px; height: 14px; border-radius: 7px; background: #FFF1CC; }
+
+  #badge { position: absolute; left: 330px; top: 1090px; width: 420px; height: 108px; border-radius: 54px; background: #111;
+           color: #FFE3A3; font-size: 46px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="labWrap">
+    <div class="lab">Bun</div><div class="lab">Patty</div><div class="lab">Cheese</div><div class="lab">Lettuce</div>
+    <div class="lab">Tomato</div><div class="lab">Top bun</div><div class="lab">The whole thing</div>
+  </div>
+
+  <div id="hero" class="full">
+    <div id="burger">
+      <div id="lBunB" class="ly"></div>
+      <div id="lPatty" class="ly"></div>
+      <div id="lCheese" class="ly">
+        <div class="drip" style="left:70px;width:54px;height:58px"></div>
+        <div class="drip" style="left:230px;width:40px;height:40px"></div>
+        <div class="drip" style="left:380px;width:60px;height:72px"></div>
+      </div>
+      <div id="lLettuce" class="ly"><div class="band"></div></div>
+      <div id="lTomato" class="ly">
+        <div class="tom" style="left:10px"><i></i></div><div class="tom" style="left:185px"><i></i></div><div class="tom" style="left:360px"><i></i></div>
+      </div>
+      <div id="lBunT" class="ly"></div>
+    </div>
+    <div id="badge">Order ready</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function () {
+  var DUR = 7, CAPTURE = !!window.__CAPTURE__;
+  var stage = document.getElementById('stage');
+  function fit() { stage.style.transform = 'scale(' + Math.min(innerWidth / 1080, innerHeight / 1350) + ')'; }
+
+  /* dekoracje generowane deterministycznie (stale tablice): fale salaty i ziarna sezamu */
+  var lettuce = document.getElementById('lLettuce');
+  for (var i = 0; i < 10; i++) { var w = document.createElement('div'); w.className = 'wave'; w.style.left = (i * 56) + 'px'; lettuce.appendChild(w); }
+  var bunT = document.getElementById('lBunT');
+  [[90, 46, -20], [170, 26, 10], [250, 18, -5], [330, 28, 15], [410, 50, -25], [130, 92, 30], [215, 70, -15], [300, 78, 20], [380, 104, -10], [60, 112, -35]]
+    .forEach(function (s) { var d = document.createElement('div'); d.className = 'seed'; d.style.left = s[0] + 'px'; d.style.top = s[1] + 'px';
+                            d.style.transform = 'rotate(' + s[2] + 'deg)'; bunT.appendChild(d); });
+
+  gsap.config({ force3D: false });           /* transformacje 2D bez promocji warstw: raster klatki nie zalezy od historii seek */
+  var tl = gsap.timeline({ repeat: -1, paused: CAPTURE });
+
+  var LAYERS = ['#lBunB', '#lPatty', '#lCheese', '#lLettuce', '#lTomato', '#lBunT'];
+  var DROP = 0.65, STEP = 0.55, FIRST = 0.5;                      /* ostatnia warstwa siada o 0.5 + 5*0.55 + 0.65 = 3.9 s */
+  var HIT = DROP / 2.75;                                           /* bounce.out: pierwsze dotkniecie po 1/2.75 czasu */
+  var landAt = [], labAt = [];
+
+  /* stany startowe w czasie 0 osi */
+  tl.set('#hero', { y: 0, scale: 1 }, 0)
+    .set('#burger', { scaleX: 1, scaleY: 1 }, 0)
+    .set('#labWrap', { y: 0 }, 0)
+    .set('.lab', { autoAlpha: 0 }, 0)
+    .set('#badge', { autoAlpha: 0, scale: 1, rotation: 0 }, 0)
+    .set(LAYERS.join(','), { y: -1300 }, 0);                       /* wszystkie warstwy nad kadrem */
+
+  /* 1. warstwy spadaja z gory, kazda z odbiciem; 2. etykieta nazywa warstwe przy pierwszym dotknieciu */
+  LAYERS.forEach(function (id, i) {
+    var st = FIRST + i * STEP, lab = '.lab:nth-child(' + (i + 1) + ')', tHit = st + DROP * HIT;
+    landAt.push(st + DROP); labAt.push(tHit);
+    tl.to(id, { y: 0, duration: DROP, ease: 'bounce.out' }, st);
+    tl.set(lab, { autoAlpha: 1, scale: 0.88 }, tHit).to(lab, { scale: 1, duration: 0.18, ease: 'power2.out' }, tHit);
+    tl.set(lab, { autoAlpha: 0 }, i < 5 ? FIRST + (i + 1) * STEP + DROP * HIT : FIRST + 5 * STEP + DROP);
+  });
+  var T_DONE = FIRST + 5 * STEP + DROP;                            /* 3.9 s: ostatnia warstwa siadla */
+
+  /* 3. calosc: etykieta, squash-and-bounce burgera, plakietka wbija sie pod spodem */
+  tl.set('.lab:nth-child(7)', { autoAlpha: 1, scale: 0.88 }, T_DONE)
+    .to('.lab:nth-child(7)', { scale: 1, duration: 0.18, ease: 'power2.out' }, T_DONE)
+    .to('#burger', { scaleX: 1.06, scaleY: 0.9, duration: 0.12, ease: 'power2.out' }, T_DONE)
+    .to('#burger', { scaleX: 1, scaleY: 1, duration: 0.55, ease: 'elastic.out(1,0.45)' }, T_DONE + 0.12)
+    .set('#badge', { autoAlpha: 1, scale: 2.4, rotation: -8 }, T_DONE + 0.1)
+    .to('#badge', { scale: 1, rotation: 0, duration: 0.2, ease: 'power4.in' }, T_DONE + 0.1)
+    .to('#hero', { scale: 1.04, duration: 2.2, ease: 'sine.inOut' }, T_DONE + 0.1);   /* wolny najazd w czasie przytrzymania */
+
+  /* 4. 6.2 s: wszystko wypada dolem kadru, petla zaczyna sie od pustego tla */
+  tl.to('#hero', { y: 1500, duration: 0.6, ease: 'power2.in' }, 6.2)
+    .to('#labWrap', { y: 1500, duration: 0.55, ease: 'power2.in' }, 6.25);
+  tl.set({}, {}, DUR);                       /* os trwa dokladnie 7 s */
+
+  /* ---------- haki vstudio ---------- */
+  if (CAPTURE) { tl.totalTime(DUR - 0.001, false); tl.totalTime(0, false); }
+  window.DURATION = DUR;
+  window.seek = function (t) { tl.pause(); tl.totalTime(((t % DUR) + DUR) % DUR, false); };
+  window.EV = labAt.map(function (s) { return { t: s, type: 'click' }; })
+    .concat([{ t: T_DONE, type: 'hit' }, { t: T_DONE + 0.3, type: 'impact' }, { t: 6.2, type: 'whoosh' }]);
+
+  var TXT = [['label-bun', '.lab:nth-child(1)'], ['label-patty', '.lab:nth-child(2)'], ['label-cheese', '.lab:nth-child(3)'],
+             ['label-lettuce', '.lab:nth-child(4)'], ['label-tomato', '.lab:nth-child(5)'], ['label-top-bun', '.lab:nth-child(6)'],
+             ['label-whole', '.lab:nth-child(7)'], ['badge', '#badge']];
+  function visibleBox(el) {                  /* tekst widoczny (opacity >= .5, visibility) i przyciety przez rodzicow z overflow */
+    var rg = document.createRange(); rg.selectNodeContents(el);
+    var r = rg.getBoundingClientRect(), o = 1;
+    if (getComputedStyle(el).visibility === 'hidden') return null;
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      var cs = getComputedStyle(n); o *= parseFloat(cs.opacity);
+      if (n !== el && cs.overflow !== 'visible') {
+        var c = n.getBoundingClientRect();
+        r = { left: Math.max(r.left, c.left), top: Math.max(r.top, c.top), right: Math.min(r.right, c.right), bottom: Math.min(r.bottom, c.bottom) };
+      }
+    }
+    return (o < 0.5 || r.right <= r.left || r.bottom <= r.top) ? null : r;
+  }
+  window.TEXTS = function () {
+    var out = [];
+    TXT.forEach(function (it) {
+      var el = document.querySelector(it[1]), b = visibleBox(el);
+      if (b) out.push({ id: it[0], text: el.textContent.trim(), x0: b.left, y0: b.top, x1: b.right, y1: b.bottom });
+    });
+    return out;
+  };
+  window.__ready = document.fonts.ready.then(fit);
+  fit();
+  if (!CAPTURE) addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
