@@ -13,6 +13,7 @@ from pathlib import Path
 from . import common
 
 _LOCK = threading.Lock()
+_LAST_ID = [0]
 MAX_KEEP = 2000                 # przycinamy plik, żeby nie rósł bez końca
 
 
@@ -22,9 +23,14 @@ def _file() -> Path:
 
 def record(source: str, kind: str, name: str, *, project: str | None = None, ok: bool = True, ms: int | None = None,
            summary: str = "", **extra) -> dict:
-    """Dopisuje zdarzenie. `id` to czas w ns, więc rośnie monotonicznie i nadaje się do odpytywania `since`."""
+    """Dopisuje zdarzenie. `id` to czas w mikrosekundach (rośnie monotonicznie, nadaje się do odpytywania `since`).
+
+    Musi mieścić się w 2^53: dashboard przepuszcza id przez liczbę JS, a id w nanosekundach (~1.8e18) zaokrąglałyby się i to samo
+    zdarzenie wracałoby przy każdym odpytaniu.
+    """
     with _LOCK:
-        ev = {"id": time.time_ns(), "ts": time.time(), "source": source, "kind": kind, "name": name, "project": project,
+        _LAST_ID[0] = max(time.time_ns() // 1000, _LAST_ID[0] + 1)
+        ev = {"id": _LAST_ID[0], "ts": time.time(), "source": source, "kind": kind, "name": name, "project": project,
               "ok": bool(ok), "ms": ms, "summary": summary[:300], **extra}
         f = _file()
         f.parent.mkdir(parents=True, exist_ok=True)

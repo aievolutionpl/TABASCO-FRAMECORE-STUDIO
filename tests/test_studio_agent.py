@@ -155,6 +155,76 @@ class TestWorkspace:
         with pytest.raises(CapabilityError, match="niepoprawna wersja"):
             call("scene_restore", project="b/s", version="../x.html")
 
+    def test_scene_palette_and_recolor(self, studio):
+        call("profile_set", name="M", palette={"bg": "#101820", "ink": "#FAFAFA", "accent": "#00B894", "accent2": "#6C5CE7"})
+        call("project_create", slug="pal", brand="b", template="hide-the-cut")
+        pal = call("scene_palette", project="b/pal")
+        hexes = {c["hex"] for c in pal["colors"]}
+        assert {"#0B0E24", "#F4F6FF", "#2F5BFF"} <= hexes and all(re.fullmatch(r"#[0-9A-F]{6}", h) for h in hexes)
+        assert pal["colors"] == sorted(pal["colors"], key=lambda c: -c["count"]) and pal["brand"]["accent"] == "#00B894"
+        sug = {x["role"]: x for x in pal["suggestion"]}
+        assert sug["bg"]["from"] == "#0B0E24" and sug["bg"]["to"] == "#101820" and "accent" in sug
+        # podmiana jednym przebiegiem: zamiana miejscami A<->B nie łańcuchuje się
+        before = call("scene_read", project="b/pal")["content"]
+        r = call("scene_recolor", project="b/pal", mapping={"#0b0e24": "#F4F6FF", "#F4F6FF": "#0B0E24"}, note="swap")
+        after = call("scene_read", project="b/pal")["content"]
+        assert r["replaced"]["#0B0E24"] >= 1 and r["replaced"]["#F4F6FF"] >= 1 and r["backup"]
+        assert after.count("#0B0E24") == before.count("#F4F6FF") and after.count("#F4F6FF") == before.count("#0B0E24")
+        assert call("scene_history", project="b/pal")["versions"][0]["note"] == "swap"
+        with pytest.raises(CapabilityError, match="nie występuje"):
+            call("scene_recolor", project="b/pal", mapping={"#123456": "#654321"})
+        with pytest.raises(CapabilityError, match="#RRGGBB"):
+            call("scene_recolor", project="b/pal", mapping={"#0B0E24": "czerwony"})
+        with pytest.raises(CapabilityError, match="mapping"):
+            call("scene_recolor", project="b/pal", mapping={})
+
+    def test_recolor_ignores_html_entities_and_short_hex(self, studio):
+        call("project_create", slug="ent", brand="b")
+        call("scene_write", project="b/ent", content='<style>a{color:#abcdef;b:#fff}</style>&#169; &#xabcdef; <a href="#abcdef1">x</a>')
+        assert [c["hex"] for c in call("scene_palette", project="b/ent")["colors"]] == ["#ABCDEF"]
+        call("scene_recolor", project="b/ent", mapping={"#ABCDEF": "#111111"})
+        out = call("scene_read", project="b/ent")["content"]
+        assert "color:#111111" in out and "&#xabcdef;" in out and "#abcdef1" in out and "#fff" in out
+
+    def test_restoring_the_oldest_of_30_versions_works(self, studio):
+        call("project_create", slug="h", brand="b")
+        for i in range(32):
+            call("scene_write", project="b/h", content=f"<html>wersja {i}</html>", note=f"v{i}")
+        versions = call("scene_history", project="b/h")["versions"]
+        assert len(versions) == 30
+        oldest = versions[-1]
+        r = call("scene_restore", project="b/h", version=oldest["version"])                  # kopia przycinała historię i kasowała źródło
+        assert r["restored"] == oldest["version"] and "wersja" in call("scene_read", project="b/h")["content"]
+
+    def test_task_stores_the_canonical_project_id_and_shows_up_on_the_project(self, studio):
+        call("project_create", slug="pierwszy", brand="Demo")
+        t = call("task_create", prompt="Skróć film", project="pierwszy")["task"]                # sam slug
+        assert t["project"] == "demo/pierwszy"
+        assert [x["id"] for x in call("project_get", project="demo/pierwszy")["project"]["tasks"]] == [t["id"]]
+
+    def test_renders_are_listed_newest_first_by_time_not_by_name(self, studio):
+        call("project_create", slug="r", brand="b")
+        rdir = studio / "b" / "r" / "renders"
+        rdir.mkdir(exist_ok=True)
+        import os
+        old_final, new_draft = rdir / "r_final_20260101-000000.mp4", rdir / "r_draft_20260301-000000.mp4"
+        old_final.write_bytes(b"1")
+        new_draft.write_bytes(b"2")
+        os.utime(old_final, (1_000, 1_000))
+        os.utime(new_draft, (2_000, 2_000))
+        assert [x["file"] for x in call("project_get", project="b/r")["project"]["renders"]][0].endswith("draft_20260301-000000.mp4")
+
+    def test_recolor_keeps_alpha_and_ignores_fragments_and_url_refs(self, studio):
+        call("project_create", slug="a", brand="b")
+        call("scene_write", project="b/a", content='<style>.g{box-shadow:0 0 40px #FF6B4A80;color:#ff6b4a}</style><a href="#abcdef">x</a>'
+                                                  '<svg><use fill="url(#decade)"/></svg>')
+        pal = call("scene_palette", project="b/a")["colors"]
+        assert [(c["hex"], c["count"]) for c in pal] == [("#FF6B4A", 2)]                       # alfa liczy się do koloru bazowego
+        call("scene_recolor", project="b/a", mapping={"#FF6B4A": "#00B894"})
+        out = call("scene_read", project="b/a")["content"]
+        assert "#00B89480" in out and "color:#00b894" not in out.lower().replace("#00b894", "") and out.count("#00B894") == 2
+        assert 'href="#abcdef"' in out and "url(#decade)" in out
+
     def test_gates_and_next_step(self, studio):
         call("project_create", slug="g", brand="b")
         r = call("gate_set", project="b/g", action="approve", gate="brief")
@@ -204,6 +274,82 @@ class TestSupportModules:
         with pytest.raises(common.StudioError):
             vendor.add("nie-adres")
 
+    def test_activity_ids_survive_a_javascript_number(self, studio):
+        for _ in range(5):
+            activity.record("mcp", "call", "x")
+        ids = [e["id"] for e in activity.tail(10)]
+        assert ids == sorted(set(ids)) and all(i < 2 ** 53 for i in ids)
+        assert all(int(float(i)) == i for i in ids)                                # round-trip przez double jak w JS
+        assert activity.tail(10, since=ids[-1]) == []
+
+    def test_vendor_refuses_arbitrary_local_files_and_wrong_types(self, studio, tmp_path):
+        secret = tmp_path / "id_rsa"
+        secret.write_text("PRIVATE KEY")
+        with pytest.raises(common.StudioError, match="tylko skrypty, style i fonty"):
+            vendor.add("https://x.test/a.js", file=str(secret))
+        data = tmp_path / "creds.json"
+        data.write_text("{}")
+        with pytest.raises(common.StudioError, match="tylko skrypty, style i fonty"):
+            vendor.add("https://x.test/a.js", file=str(data))
+        css = tmp_path / "a.css"
+        css.write_text("a{}")
+        with pytest.raises(common.StudioError, match="nie pasuje"):
+            vendor.add("https://x.test/lib.js", file=str(css))
+        big = tmp_path / "big.js"
+        big.write_bytes(b"x" * (vendor.MAX_BYTES + 1))
+        with pytest.raises(common.StudioError, match="większy"):
+            vendor.add("https://x.test/big.js", file=str(big))
+        assert not vendor.listing()
+        ok = tmp_path / "ok.js"
+        ok.write_text("1")
+        assert vendor.add("https://x.test/lib.js", file=str(ok))["file"].endswith(".js")
+
+    def test_vendor_derives_the_extension_from_content_type(self, studio):
+        import threading
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+
+        class H(BaseHTTPRequestHandler):
+            def do_GET(self):
+                body, ctype = (b"a{color:red}", "text/css") if self.path.startswith("/css2") else (b"x", "application/x-unknown")
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+
+        srv = HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            base = f"http://127.0.0.1:{srv.server_address[1]}"
+            res = vendor.add(f"{base}/css2?family=Inter:wght@800")                      # bez rozszerzenia w adresie
+            assert res["file"].endswith(".css") and vendor.content_type(res["file"]) == "text/css"
+            with pytest.raises(common.StudioError, match="nie rozpoznano typu"):
+                vendor.add(f"{base}/dziwne")
+        finally:
+            srv.shutdown()
+
+    def test_render_does_not_clobber_gates_approved_while_it_runs(self, studio, monkeypatch):
+        """Render trwa minuty: zatwierdzenia z tego czasu muszą przetrwać zapis wyniku (job zapisywał kopię project.json z początku)."""
+        from vstudio import project as proj
+
+        call("project_create", slug="g", brand="b")
+        pdir, stale = workspace.resolve("b/g")                                      # „kopia z początku joba”
+        assert not stale["gates"]["brief"]
+
+        def fake_run(cmd, **kw):
+            if "-o" in cmd:                                                          # wywołanie renderera (drugie to video_qa)
+                Path(cmd[cmd.index("-o") + 1]).write_bytes(b"mp4")                   # render „powstał”
+                proj.cmd_gate(*workspace.resolve("b/g"), "approve", "brief", None)   # w trakcie renderu użytkownik zatwierdza bramkę
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        monkeypatch.setattr(proj, "run", fake_run)
+        proj.render(pdir, stale, final=False, tag=None, subframes=None, audio=None, force=False)
+        _, after = workspace.resolve("b/g")
+        assert after["gates"]["brief"] and after["gates"]["draft"] and len(after["renders"]) == 1
+
     def test_activity_log_and_agent_status(self, studio):
         assert activity.agent_status()["connected"] is False
         registry.call("studio_status", {}, source="mcp")
@@ -227,6 +373,93 @@ class TestSupportModules:
         assert bad["status"] == "failed"
         with pytest.raises(common.StudioError):
             jobs.get("../../etc")
+
+    def test_cancelled_or_failed_render_leaves_no_partial_video(self, studio):
+        pdir = studio / "m" / "p"
+        (pdir / "renders").mkdir(parents=True)
+        (pdir / "renders" / "stary.mp4").write_bytes(b"ok")
+        job = {"kind": "render", "before": ["stary.mp4"]}                  # migawka renders/ z chwili startu joba
+        for name in ("nowy_final.mp4", "nowy_final.qa.json", "notatka.txt"):
+            (pdir / "renders" / name).write_bytes(b"x")
+        removed = jobs.cleanup_partial(job, pdir)
+        assert sorted(removed) == ["nowy_final.mp4", "nowy_final.qa.json"]      # tylko to, co POWSTAŁO w tym jobie
+        assert (pdir / "renders" / "stary.mp4").exists() and (pdir / "renders" / "notatka.txt").exists()
+        assert jobs.cleanup_partial({"kind": "deliver", "before": []}, pdir) == []     # inne rodzaje jobów nie są ruszane
+
+    def test_jobs_are_visible_and_cancellable_across_processes(self, studio):
+        """Agent startuje render w procesie MCP, dashboard (inny proces) widzi go i może anulować; martwy job dostaje `lost` raz, trwale."""
+        pdir = studio / "m" / "p"
+        (pdir / "renders").mkdir(parents=True)
+        child = subprocess.Popen(["sleep", "60"], start_new_session=True)
+        try:
+            job = {"id": "J-aaaaaaaa", "kind": "render", "project": "m/p", "cmd": "render", "status": "running", "progress": 0.4, "message": "x",
+                   "started": time.time(), "finished": None, "result": None, "source": "mcp", "pid": child.pid, "before": []}
+            jobs._save(job)
+            seen = jobs.get("J-aaaaaaaa")
+            assert seen["status"] == "running" and seen["progress"] == 0.4          # nie „lost”, mimo że nie ten proces go uruchomił
+            with pytest.raises(common.StudioError, match="trwa już job"):
+                jobs.start("sound", "m/p", pdir, ["tools"])                         # wyłączność: jeden job na projekt
+            assert jobs.cancel("J-aaaaaaaa")["status"] == "cancelled"
+            child.wait(timeout=10)                                                  # proces faktycznie zabity
+            assert jobs.get("J-aaaaaaaa")["status"] == "cancelled"
+        finally:
+            child.kill()
+        job.update(id="J-bbbbbbbb", status="running", pid=child.pid, finished=None)         # PID martwy
+        jobs._save(job)
+        first = jobs.get("J-bbbbbbbb")
+        time.sleep(0.05)
+        assert first["status"] == "lost" and jobs.get("J-bbbbbbbb")["finished"] == first["finished"]     # `finished` ustalone raz
+
+    def test_cancel_from_another_process_is_not_overwritten_by_the_owner(self, studio):
+        job = {"id": "J-cccccccc", "kind": "deliver", "project": "m/p", "cmd": "x", "status": "running", "progress": 0.0, "message": "m",
+               "started": time.time(), "finished": None, "result": None, "source": "mcp", "pid": 1, "before": []}
+        jobs._save({**job, "status": "cancelled", "message": "anulowano", "finished": time.time()})     # inny proces anulował
+        mine = dict(job)
+        jobs._save(mine)                                                                                 # właściciel dalej zapisuje postęp
+        assert mine["status"] == "cancelled" and jobs._read("J-cccccccc")["status"] == "cancelled"
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="grupy procesów POSIX; na Windows kill_tree używa taskkill /T")
+    def test_cancel_kills_the_whole_process_tree(self, tmp_path):
+        """Render to drzewo procesów: zabicie samego rodzica zostawiłoby ffmpeg dokańczający plik w tle."""
+        pidfile = tmp_path / "child.pid"
+        proc = subprocess.Popen(["sh", "-c", f"sleep 60 & echo $! > {pidfile}; wait"], start_new_session=True)
+        for _ in range(50):
+            if pidfile.exists() and pidfile.read_text().strip():
+                break
+            time.sleep(0.1)
+        child = int(pidfile.read_text())
+        jobs.kill_tree(proc)
+        proc.wait(timeout=10)
+        import os
+
+        def alive(pid: int) -> bool:
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                return False
+            try:                                                           # zombie (kontener bez reapera na PID 1) to już martwy proces
+                return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0] != "Z"
+            except OSError:
+                return True
+
+        for _ in range(30):
+            if not alive(child):
+                break
+            time.sleep(0.1)
+        assert not alive(child), "wnuk przeżył zabicie rodzica"
+
+    def test_ops_check_only_the_tools_they_need(self, studio, monkeypatch):
+        import shutil
+        call("project_create", slug="n", brand="b")
+        monkeypatch.setattr(shutil, "which", lambda tool: None)
+        for op in ("render_start", "sound_start", "deliver_start"):
+            with pytest.raises(CapabilityError, match="nie jest na PATH"):
+                call(op, project="b/n")
+        monkeypatch.setattr(shutil, "which", lambda tool: "/bin/x" if tool == "ffmpeg" else None)
+        with pytest.raises(CapabilityError, match="ffprobe"):
+            call("deliver_start", project="b/n")                              # wydanie potrzebuje ffprobe
+        monkeypatch.setattr(jobs, "start", lambda *a, **k: {"id": "J-00000000", "status": "running"})
+        assert call("render_start", project="b/n")["job"]["id"] == "J-00000000"   # render nie wymaga ffprobe
 
     def test_agent_install_writes_skill_and_merges_mcp_json(self, studio, tmp_path):
         (tmp_path / ".mcp.json").write_text(json.dumps({"mcpServers": {"inny": {"command": "x"}}}))
@@ -385,6 +618,18 @@ class TestDashboardServer:
         assert b"window.__CAPTURE__ = true" in dash.req("GET", "/template/hide-the-cut/")[2]
         assert dash.req("GET", "/vendor/" + vendor.listing()[0]["file"])[2] == b"window.gsapFake = 1;"
 
+    def test_preview_is_sandboxed_and_vendor_has_no_cors(self, dash, tmp_path):
+        lib = tmp_path / "g.js"
+        lib.write_text("1;")
+        vendor.add("gsap", file=str(lib))
+        call("project_create", slug="sb", brand="b", template="hide-the-cut")
+        for path in ("/preview/b/sb/", "/template/hide-the-cut/"):
+            st, h, html = dash.req("GET", path)
+            assert st == 200 and h["Content-Security-Policy"] == "sandbox allow-scripts"       # nieprzezroczysty origin: bez dostępu do tokenu
+            assert b"vstudio: 'req'" in html or b"vstudio !== 'req'" in html                # most postMessage wstrzyknięty
+        st, h, _ = dash.req("GET", "/vendor/" + vendor.listing()[0]["file"])
+        assert st == 200 and "Access-Control-Allow-Origin" not in h
+
     def test_calls_from_the_dashboard_return_image_urls(self, dash):
         res = registry.REGISTRY["studio_status"]
         assert not res.images
@@ -519,6 +764,92 @@ class TestDashboardUi:
                 pg.goto(base + "/#/agent")
                 pg.wait_for_function("document.body.innerText.includes('<img src=x')", timeout=20000)
                 assert pg.evaluate("window.__xss") is None
+                br.close()
+        finally:
+            srv.shutdown()
+        assert problems == []
+
+
+@pytest.mark.browser
+class TestPaletteUi:
+    def test_changing_a_swatch_recolors_the_scene_and_brand_modal_works(self, vendored_studio):
+        from playwright.sync_api import sync_playwright
+        from vstudio.dashboard import server
+
+        call("profile_set", name="Marka", palette={"bg": "#101820", "accent": "#00B894"})
+        call("project_create", slug="pal", brand="t", template="hide-the-cut")
+        srv, _ = server.start_background()
+        base = f"http://127.0.0.1:{srv.server_address[1]}"
+        problems: list[str] = []
+        try:
+            with sync_playwright() as pw:
+                br = pw.chromium.launch(args=["--disable-gpu-rasterization", "--disable-partial-raster"])
+                pg = br.new_context(viewport={"width": 1440, "height": 900}).new_page()
+                pg.on("pageerror", lambda e: problems.append(str(e)))
+                pg.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
+                pg.goto(base + "/#/")
+                pg.evaluate("sessionStorage.setItem('onboardSkipped','1')")
+                pg.goto(base + "/#/p/t/pal/zrodlo")
+                pg.wait_for_selector("#swatches input[type=color]", timeout=30000)
+                assert pg.locator("#swatches input[type=color]").count() >= 5
+                pg.evaluate("""() => { const i = document.querySelector('#swatches input[data-from="#2F5BFF"]'); i.value = '#ff0066'; i.dispatchEvent(new Event('change', {bubbles: true})); }""")
+                pg.wait_for_function("document.body.innerText.includes('Zmieniono kolory')", timeout=20000)
+                src = call("scene_read", project="t/pal")["content"]
+                assert "#FF0066" in src and "#2F5BFF" not in src
+                pg.wait_for_selector("#swatches input[data-from='#FF0066']", timeout=20000)          # paleta odświeżona po zmianie
+                pg.click("#brandBtn")
+                pg.wait_for_selector(".modal .map-row", timeout=10000)
+                assert "Tło" in pg.inner_text(".modal")
+                pg.click("#mApply")
+                pg.wait_for_function("!document.querySelector('.modal')", timeout=20000)
+                assert "#101820" in call("scene_read", project="t/pal")["content"]
+                br.close()
+        finally:
+            srv.shutdown()
+        assert problems == []
+
+
+@pytest.mark.browser
+class TestUxExtras:
+    def _page(self, studio_dir, pw, base, problems):
+        br = pw.chromium.launch(args=["--disable-gpu-rasterization", "--disable-partial-raster"])
+        ctx = br.new_context(viewport={"width": 1440, "height": 900}, permissions=["clipboard-read", "clipboard-write"])
+        pg = ctx.new_page()
+        pg.on("pageerror", lambda e: problems.append(str(e)))
+        pg.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
+        pg.goto(base + "/#/")
+        pg.evaluate("sessionStorage.setItem('onboardSkipped','1')")
+        return br, pg
+
+    def test_job_toast_vendor_row_and_copy_prompt(self, vendored_studio):
+        from playwright.sync_api import sync_playwright
+        from vstudio.dashboard import server
+
+        call("profile_set", name="M")
+        call("project_create", slug="ux", brand="t", template="hide-the-cut")
+        pdir = vendored_studio / "t" / "ux"
+        (pdir / "supervisor").mkdir()
+        finding = {"code": "DEAD_TIME", "severity": "warn", "title": "Martwy czas", "detail": "obraz stoi 1-3 s", "t": 1.0, "box": None, "fix": "Add a slow push-in.", "id": ""}
+        (pdir / "supervisor" / "latest.json").write_text(json.dumps({
+            "project": "t/ux", "round": 1, "depth": "quick", "at": "2026-01-01T00:00:00", "verdict": "needs_fixes", "score": 92, "counts": {"error": 0, "warn": 1, "info": 0},
+            "findings": [finding], "delta": None, "next_actions": [], "metrics": {"elapsed_s": 1.0}, "assets": None}))
+        srv, _ = server.start_background()
+        base = f"http://127.0.0.1:{srv.server_address[1]}"
+        problems: list[str] = []
+        try:
+            with sync_playwright() as pw:
+                br, pg = self._page(vendored_studio, pw, base, problems)
+                pg.wait_for_function("window.V && V.S.pulse", timeout=20000)
+                j = jobs.start("deliver", "t/ux", pdir, ["tools"])                          # job krótszy niż okres odpytywania
+                pg.wait_for_function("document.querySelector('#toasts').innerText.includes('Wydanie ux: gotowe')", timeout=20000)
+                pg.goto(base + "/#/onboarding")
+                pg.wait_for_function("document.body.innerText.includes('Biblioteki offline') && document.body.innerText.includes('lokalna kopia')", timeout=20000)
+                pg.goto(base + "/#/p/t/ux")
+                pg.wait_for_selector(".finding", timeout=20000)
+                pg.click(".finding")
+                pg.click("[data-copy]")
+                clip = pg.evaluate("navigator.clipboard.readText()")
+                assert "DEAD_TIME" in clip and "scene_patch" in clip and "Add a slow push-in." in clip and j["id"]
                 br.close()
         finally:
             srv.shutdown()

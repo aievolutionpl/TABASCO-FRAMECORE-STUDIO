@@ -46,7 +46,7 @@
     const dur = () => Pl.api && Pl.api.dur || DUR;
     const seek = (t, { keepBox = false } = {}) => {
       const d = dur(); t = Pl.loop || !Pl.playing ? ((t % d) + d) % d : Math.min(Math.max(t, 0), d); if (t > d - 1e-6 && !Pl.loop) t = d - 1e-3;
-      Pl.t = t; if (Pl.api) { try { Pl.api.seek(t); } catch (e) { veilShow('Scena zgłosiła błąd w seek(): ' + e.message); } }
+      Pl.t = t; if (Pl.api) Pl.api.seek(t);
       $('#tTime', host).textContent = V.fmtTime(t) + ' / ' + V.fmtTime(d); $('#tFrame', host).textContent = 'kl. ' + Math.round(t * FPS);
       const hd = $('#tl .head', host); if (hd) hd.style.left = (100 * t / d) + '%';
       if (!keepBox) { $('#ovl', host).innerHTML = ''; }
@@ -56,13 +56,15 @@
       if (on) { Pl.last = performance.now(); const loop = now => { const dt = (now - Pl.last) / 1000; Pl.last = now; seek(Pl.t + dt * Pl.rate); Pl.raf = requestAnimationFrame(loop); }; Pl.raf = requestAnimationFrame(loop); }
     };
     const veilShow = msg => { veil.hidden = false; veil.innerHTML = esc(msg); };
+    let bridge = null;
     const loadFrame = () => {
-      const keep = Pl.t; veil.hidden = false; veil.textContent = 'Ładowanie sceny…'; Pl.api = null;
+      const keep = Pl.t; veil.hidden = false; veil.textContent = 'Ładowanie sceny…'; Pl.api = null; if (bridge) bridge.dispose();
+      frame.setAttribute('sandbox', 'allow-scripts'); bridge = V.bridge(frame); const mine = bridge;
+      bridge.onError(msg => veilShow('Scena zgłosiła błąd w seek(): ' + msg));
       frame.onload = async () => {
-        try { await Promise.race([frame.contentWindow.__ready, new Promise(r => setTimeout(r, 6000))]); } catch (e) { /* biblioteka z CDN mogła nie wstać */ }
-        Pl.api = V.sceneApi(frame.contentWindow);
-        if (!Pl.api) { veilShow('Scena nie wystawia window.seek(t) albo nie załadowała się (np. zablokowany CDN). Uruchom nadzór: pokaże przyczynę i poprawkę.'); return; }
-        veil.hidden = true; seek(keep);
+        const inf = await mine.info(); if (mine !== bridge) return;                          // w międzyczasie załadowano nową wersję
+        if (!inf.ok || !inf.hasSeek) { veilShow('Scena nie wystawia window.seek(t) albo nie załadowała się (np. zablokowany CDN). Uruchom nadzór: pokaże przyczynę i poprawkę.'); return; }
+        Pl.api = { seek: t => mine.seek(t), dur: inf.dur || DUR }; veil.hidden = true; seek(keep);
       };
       frame.src = V.srcOf(pid, '?r=' + Date.now());
     };
@@ -115,13 +117,13 @@
       const hist = S.history.slice(-14);
       body.innerHTML = `<div class="row" style="gap:16px">${ring(rep ? rep.score : null, kind)}<div style="flex:1"><div class="chip ${kind}" style="margin-bottom:6px">${esc(label)}</div>
           <div class="muted" style="font-size:13px">${rep ? `${rep.counts.error} błędów · ${rep.counts.warn} ostrzeżeń · ${rep.counts.info} info<br>runda ${rep.round} · ${esc(rep.depth)} · ${rep.metrics.elapsed_s} s` : 'Film jeszcze nie był sprawdzany. Nadzorca obejrzy klatki, pętlę, determinizm i czytelność.'}</div></div></div>
-        <div class="row" style="margin:14px 0 4px"><select id="depth" style="width:auto"><option value="quick">szybki (0,25 s)</option><option value="standard" selected>standardowy (0,1 s)</option><option value="deep">dokładny (co klatkę)</option></select><button class="btn primary" id="runCheck" style="flex:1">${V.icon('shield')} Uruchom nadzór</button></div>
+        <div class="row" style="margin:14px 0 4px"><select id="depth" style="width:auto"><option value="quick">szybki (0,25 s)</option><option value="standard" selected>standardowy (0,1 s)</option><option value="deep">dokładny (do 240 próbek)</option></select><button class="btn primary" id="runCheck" style="flex:1">${V.icon('shield')} Uruchom nadzór</button></div>
         ${rep && rep.delta ? `<div class="row wrap" style="margin:10px 0"><span class="chip ok">naprawiono ${rep.delta.resolved.length}</span><span class="chip ${rep.delta.new.length ? 'warn' : ''}">nowe ${rep.delta.new.length}</span><span class="chip">wciąż ${rep.delta.persisting}</span><span class="chip ${rep.delta.score_change >= 0 ? 'ok' : 'err'}">${rep.delta.score_change >= 0 ? '+' : ''}${rep.delta.score_change} pkt</span><span class="dim" style="font-size:12px">vs runda ${rep.delta.since_round}</span></div>` : ''}
         ${hist.length > 1 ? `<div class="row" style="margin-top:8px"><div class="spark" title="Wynik w kolejnych rundach">${hist.map(h => `<i style="height:${Math.max(6, h.score) * 0.32}px" title="runda ${h.round}: ${h.score}"></i>`).join('')}</div><span class="dim" style="font-size:12px">wynik w ${hist.length} rundach</span></div>` : ''}
         ${rep && rep.assets ? `<div style="margin:12px 0"><img src="${assetUrl(rep, rep.assets.filmstrip)}" alt="Taśma filmowa" style="width:100%;border-radius:10px;border:1px solid var(--line);cursor:zoom-in" id="strip"></div>` : ''}
         ${rep && rep.next_actions.length ? `<div class="card pad" style="margin:10px 0"><h3 style="margin-bottom:8px">Co poprawić najpierw</h3>${rep.next_actions.map(a => `<div class="muted" style="font-size:13px;margin-bottom:6px">${esc(a)}</div>`).join('')}<button class="btn sm primary" id="askAll" style="margin-top:6px">${V.icon('send')} Wyślij do agenta</button></div>` : ''}
         <div class="col" id="findings">${rep ? (rep.findings.length ? rep.findings.map((f, i) => `<div class="finding ${f.severity}" data-f="${i}"><div class="row"><span class="ttl" style="flex:1">${esc(f.title)}</span>${f.t != null ? `<span class="chip mono">${V.fmtTime(f.t)}</span>` : ''}<span class="chip">${esc(f.code)}</span></div><div class="det">${esc(f.detail)}</div>
-          ${S.selected === i ? `<div class="fix"><b>Wskazówka dla agenta:</b> ${esc(f.fix)}</div>${f.evidence ? `<img src="${assetUrl(rep, f.evidence)}" alt="Dowód" style="width:100%;margin-top:8px;border-radius:8px;border:1px solid var(--line)">` : ''}<div class="row" style="margin-top:8px"><button class="btn sm" data-ask="${i}">${V.icon('send')} Napraw z agentem</button></div>` : ''}</div>`).join('') : `<div class="card empty" style="padding:26px"><div class="glyph">✨</div>Brak znalezisk. Film spełnia wszystkie kontrole.</div>`) : ''}</div>`;
+          ${S.selected === i ? `<div class="fix"><b>Wskazówka dla agenta:</b> ${esc(f.fix)}</div>${f.evidence ? `<img src="${assetUrl(rep, f.evidence)}" alt="Dowód" style="width:100%;margin-top:8px;border-radius:8px;border:1px solid var(--line)">` : ''}<div class="row" style="margin-top:8px"><button class="btn sm" data-ask="${i}">${V.icon('send')} Napraw z agentem</button><button class="btn sm ghost" data-copy="${i}" title="Skopiuj prompt, żeby wkleić go do dowolnego agenta">${V.icon('copy')} Kopiuj prompt</button></div>` : ''}</div>`).join('') : `<div class="card empty" style="padding:26px"><div class="glyph">✨</div>Brak znalezisk. Film spełnia wszystkie kontrole.</div>`) : ''}</div>`;
       const dsel = $('#depth', body); dsel.value = S.depth || 'standard'; dsel.onchange = () => { S.depth = dsel.value; };
       $('#runCheck', body).onclick = e => V.busy(e.currentTarget, async () => { const r = await V.api('check_run', { project: pid, depth: dsel.value }); S.report = r; S.selected = null; S.history = (await V.api('check_history', { project: pid })).rounds; renderCheck(); renderTimeline(); V.refreshProjects(); V.toast(`Nadzór: ${V.verdict(r.verdict)[1]} (wynik ${r.score})`, r.verdict === 'pass' ? 'ok' : ''); });
       const strip = $('#strip', body); if (strip) strip.onclick = () => V.modal(`<img src="${strip.src}" style="width:100%;border-radius:10px">`, { wide: true });
@@ -129,6 +131,7 @@
       $$('.finding', body).forEach(el => el.onclick = e => { if (e.target.closest('button')) return; const i = +el.dataset.f, f = rep.findings[i]; S.selected = S.selected === i ? null : i; renderCheck();
         if (f.t != null) { setPlay(false); seek(f.t, { keepBox: true }); if (f.box) { $('#ovl', host).innerHTML = `<div class="box" style="left:${100 * f.box[0] / W}%;top:${100 * f.box[1] / H}%;width:${100 * (f.box[2] - f.box[0]) / W}%;height:${100 * (f.box[3] - f.box[1]) / H}%"></div>`; } } });
       $$('[data-ask]', body).forEach(b => b.onclick = e => { e.stopPropagation(); askAgent(findingPrompt(rep.findings[+b.dataset.ask]), b); });
+      $$('[data-copy]', body).forEach(b => b.onclick = e => { e.stopPropagation(); V.copy(findingPrompt(rep.findings[+b.dataset.copy]) + `\nUżyj narzędzi vstudio: scene_patch (z check) i frames_view.`); });
     };
 
     /* ---------- źródło ---------- */
@@ -136,16 +139,36 @@
       const body = $('#pbody', host); if (tab !== 'zrodlo') return;
       body.innerHTML = '<div class="skel" style="height:320px"></div>';
       let sc, hist;
-      try { [sc, hist] = await Promise.all([V.api('scene_read', { project: pid }), V.api('scene_history', { project: pid })]); } catch (e) { body.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
+      let pal;
+      try { [sc, hist, pal] = await Promise.all([V.api('scene_read', { project: pid }), V.api('scene_history', { project: pid }), V.api('scene_palette', { project: pid })]); } catch (e) { body.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
       if (!alive || tab !== 'zrodlo') return; S.scene = sc; S.mtime = V.project(pid)?.updated;
       const v = sc.vendor, offline = v.needs_network.length && !v.vendored.length;
-      body.innerHTML = `${v.external.length ? `<div class="card pad" style="margin-bottom:12px"><div class="row"><h3 style="flex:1">Zasoby z sieci</h3><span class="chip ${v.needs_network.length ? 'warn' : 'ok'}">${v.needs_network.length ? 'wymagają sieci' : 'lokalne kopie'}</span></div>
+      body.innerHTML = `<div class="card pad" style="margin-bottom:12px"><div class="row" style="margin-bottom:10px"><h3 style="flex:1">Paleta sceny</h3><button class="btn sm" id="brandBtn" title="Podmień kolory sceny na kolory marki">${V.icon('spark')} Kolory marki</button></div>
+          ${pal.colors.length ? `<div class="row wrap" style="gap:8px" id="swatches">${pal.colors.map(c => `<label class="sw" title="${esc(c.hex)} · ${c.count}× · kliknij, żeby zmienić"><input type="color" value="${esc(c.hex.toLowerCase())}" data-from="${esc(c.hex)}"><i style="background:${esc(c.hex)}"></i><b>${c.count}</b></label>`).join('')}</div><div class="dim" style="font-size:12px;margin-top:8px">Zmiana koloru podmienia go w całej scenie i odświeża podgląd (cofniesz z historii).</div>` : '<div class="dim">Scena nie używa kolorów #RRGGBB.</div>'}</div>
+        ${v.external.length ? `<div class="card pad" style="margin-bottom:12px"><div class="row"><h3 style="flex:1">Zasoby z sieci</h3><span class="chip ${v.needs_network.length ? 'warn' : 'ok'}">${v.needs_network.length ? 'wymagają sieci' : 'lokalne kopie'}</span></div>
           ${v.external.map(u => `<div class="row" style="margin-top:8px"><span class="mono muted" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(u)}">${esc(u)}</span>${v.vendored.includes(u) ? '<span class="chip ok">offline ✓</span>' : `<button class="btn sm" data-vend="${esc(u)}">${V.icon('download')} Kopia lokalna</button>`}</div>`).join('')}</div>` : ''}
         <div class="row" style="margin-bottom:8px"><span class="chip">${sc.lines} linii</span><span class="chip mono">${esc(sc.sha)}</span><div class="spacer"></div>
           <select id="hist" style="width:auto;max-width:170px"><option value="">Historia (${hist.versions.length})</option>${hist.versions.map(h => `<option value="${esc(h.version)}">${esc(h.version.replace('.html', ''))} ${esc(h.note)}</option>`).join('')}</select></div>
         ${sc.truncated ? `<div class="card pad muted">Plik jest większy niż 60 kB, więc dashboard go nie edytuje. Zmień go w edytorze kodu albo przez agenta.</div>` : `<textarea id="editor" class="editor" spellcheck="false">${esc(sc.content)}</textarea>
         <div class="row" style="margin-top:10px"><button class="btn" id="save">Zapisz</button><button class="btn primary" id="saveCheck" style="flex:1">${V.icon('shield')} Zapisz i sprawdź</button></div>
         <div class="dim" style="font-size:12px;margin-top:8px">Zapis tworzy kopię w historii (cofniesz go z listy). <kbd>Ctrl</kbd>+<kbd>S</kbd> zapisuje. Gdy agent zmieni plik, podgląd odświeży się sam.</div>`}`;
+      const recolor = async (mapping, note) => {
+        if (S.sceneDirty && !confirm('Masz niezapisane zmiany w edytorze. Zmiana koloru zapisze scenę z dysku i je utraci. Kontynuować?')) return false;
+        const r = await V.api('scene_recolor', { project: pid, mapping, note }); S.sceneDirty = false; loadFrame(); await V.refreshProjects();
+        V.toast(`Zmieniono kolory (${Object.values(r.replaced).reduce((a, b) => a + b, 0)} wystąpień)`, 'ok'); renderSource(); return true;
+      };
+      $$('#swatches input[type=color]', body).forEach(inp => inp.onchange = () => { if (inp.value.toUpperCase() !== inp.dataset.from) V.busy(null, () => recolor({ [inp.dataset.from]: inp.value.toUpperCase() }, 'dashboard: paleta')).catch(() => renderSource()); });
+      $('#brandBtn', body).onclick = () => {
+        if (!pal.brand) { V.modal(`<h3>Brak profilu marki</h3><p class="muted">Najpierw ustaw kolory marki, a potem zastosuję je w scenie.</p><a class="btn primary" href="#/onboarding" onclick="document.querySelector('.modal-bg').remove()">Przejdź do onboardingu</a>`); return; }
+        if (!pal.suggestion.length) { V.toast('Scena już używa kolorów marki albo nie ma czego mapować', 'ok'); return; }
+        const roles = { bg: 'Tło', ink: 'Tekst', accent: 'Akcent', accent2: 'Akcent 2' };
+        const m = V.modal(`<h3>Zastosuj kolory marki</h3><p class="muted" style="margin:4px 0 14px">Propozycja dopasowania kolorów sceny do palety marki. Odznacz to, czego nie chcesz zmieniać.</p>
+          <div class="col" style="gap:8px">${pal.suggestion.map((x, i) => `<label class="map-row"><input type="checkbox" checked data-i="${i}"><span style="min-width:70px">${roles[x.role]}</span><span class="chipc" style="background:${esc(x.from)}"></span><span class="mono dim">${esc(x.from)}</span><span>→</span><span class="chipc" style="background:${esc(x.to)}"></span><span class="mono">${esc(x.to)}</span></label>`).join('')}</div>
+          <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn ghost" id="mCancel">Anuluj</button><button class="btn primary" id="mApply">Zastosuj</button></div>`);
+        $('#mCancel', m.el).onclick = m.close;
+        $('#mApply', m.el).onclick = e => V.busy(e.currentTarget, async () => { const map = {}; $$('input[data-i]', m.el).forEach(ch => { if (ch.checked) { const x = pal.suggestion[+ch.dataset.i]; map[x.from] = x.to; } });
+          if (!Object.keys(map).length) { V.toast('Nic nie zaznaczono', 'err'); return; } if (await recolor(map, 'dashboard: kolory marki')) m.close(); });
+      };
       const ed = $('#editor', body);
       if (ed) {
         ed.oninput = () => { S.sceneDirty = true; };
@@ -160,12 +183,16 @@
     };
 
     /* ---------- render ---------- */
+    const wireCancel = root => $$('[data-cancel]', root).forEach(b => b.onclick = () => V.busy(b, async () => { await V.api('job_cancel', { job: b.dataset.cancel }); renderRender(); }));
+    const jobRow = j => `<div class="card pad" style="padding:12px 14px"><div class="row"><span class="dot ${j.status === 'running' ? 'warn' : j.status === 'done' ? 'ok' : 'err'}" style="animation:none"></span><b style="flex:1">${esc(j.kind)}</b><span class="chip ${j.status === 'done' ? 'ok' : j.status === 'running' ? 'warn' : 'err'}">${esc(j.status)}</span>${j.status === 'running' ? `<button class="btn sm ghost" data-cancel="${esc(j.id)}">Anuluj</button>` : ''}</div>
+        ${j.status === 'running' ? `<div class="progress" style="margin:8px 0"><i style="width:${Math.round(j.progress * 100)}%"></i></div>` : ''}<div class="dim mono" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(j.message)}</div></div>`;
+    // aktualizacja samej listy jobów (postęp) bez ruszania odtwarzacza wideo i reszty zakładki
+    const updateJobs = jobs => { const el = $('#jobs', host); if (!el || tab !== 'render') return; el.innerHTML = jobs.slice(0, 5).map(jobRow).join(''); wireCancel(el); };
+    const offJob = V.on('job-finished', j => { if (j.project === pid && tab === 'render') renderRender(); });
     const renderRender = async () => {
       const body = $('#pbody', host); if (tab !== 'render') return;
       const [jl, det] = await Promise.all([V.api('jobs_list', { project: pid }), V.api('project_get', { project: pid })]); if (!alive || tab !== 'render') return;
       S.jobs = jl.jobs; S.detail = det.project; const R = det.project.renders;
-      const jobRow = j => `<div class="card pad" style="padding:12px 14px"><div class="row"><span class="dot ${j.status === 'running' ? 'warn' : j.status === 'done' ? 'ok' : 'err'}" style="animation:none"></span><b style="flex:1">${esc(j.kind)}</b><span class="chip ${j.status === 'done' ? 'ok' : j.status === 'running' ? 'warn' : 'err'}">${esc(j.status)}</span>${j.status === 'running' ? `<button class="btn sm ghost" data-cancel="${esc(j.id)}">Anuluj</button>` : ''}</div>
-        ${j.status === 'running' ? `<div class="progress" style="margin:8px 0"><i style="width:${Math.round(j.progress * 100)}%"></i></div>` : ''}<div class="dim mono" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(j.message)}</div></div>`;
       body.innerHTML = `<div class="grid c2" style="gap:10px"><button class="btn primary" id="rDraft">${V.icon('film')} Render roboczy</button><button class="btn" id="rFinal">Render finalny</button><button class="btn" id="rSound">Dźwięk (−14 LUFS)</button><button class="btn" id="rDeliver">Wydanie (QA + paczka)</button></div>
         <div class="dim" style="font-size:12.5px;margin:8px 0 14px">Render finalny wymaga zatwierdzonych bramek: brief, zasady wizualne, klatki (zakładka Potok). Wymaga FFmpeg.</div>
         <div class="col" id="jobs">${S.jobs.slice(0, 5).map(jobRow).join('')}</div>
@@ -174,7 +201,7 @@
           <div class="col" style="margin-top:10px">${R.map(r => `<a class="row muted" href="${V.fileUrl(pid, r.file)}" target="_blank" style="text-decoration:none"><span>${r.final ? '🎞' : '▫'}</span><span class="mono" style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(r.file.split('/').pop())}</span><span>${r.mb} MB</span></a>`).join('')}</div>` : '<div class="card empty" style="padding:24px">Jeszcze nie ma renderów.</div>'}`;
       const start = (id, name, args) => $(id, body).onclick = e => V.busy(e.currentTarget, async () => { const r = await V.api(name, { project: pid, ...args }); (r.warnings || []).forEach(w => V.toast(w, '', 6500)); V.toast('Job uruchomiony', 'ok'); renderRender(); });
       start('#rDraft', 'render_start', {}); start('#rFinal', 'render_start', { final: true }); start('#rSound', 'sound_start', {}); start('#rDeliver', 'deliver_start', {});
-      $$('[data-cancel]', body).forEach(b => b.onclick = () => V.busy(b, async () => { await V.api('job_cancel', { job: b.dataset.cancel }); renderRender(); }));
+      wireCancel(body);
     };
     const auto = $('#autoSup', host); auto.checked = !(V.S.profile && V.S.profile.auto_supervise === false);
     auto.onchange = () => V.api('profile_set', { auto_supervise: auto.checked }).then(p => { V.S.profile = p; V.toast(auto.checked ? 'Auto-nadzór włączony' : 'Auto-nadzór wyłączony', 'ok', 1800); }).catch(e => { V.toast(e.message, 'err'); auto.checked = !auto.checked; });
@@ -223,9 +250,10 @@
         else V.toast('Plik zmienił się na dysku, a masz niezapisane zmiany w edytorze', 'err', 7000);
       }
       if (prev && prev.projects[pid] && m.round !== prev.projects[pid].round && tab === 'nadzor') V.api('check_latest', { project: pid }).then(l => { S.report = l.report; renderCheck(); renderTimeline(); });
-      if (tab === 'render' && (p.jobs.length || (prev && prev.jobs.length))) renderRender();
+      if (tab === 'render') { const mine = p.jobs.filter(j => j.project === pid); if (mine.some(j => j.status === 'running')) updateJobs(mine); }
+      if (tab === 'nadzor' && prev && prev.jobs.some(j => j.status === 'running') && !p.jobs.some(j => j.status === 'running')) V.api('project_get', { project: pid }).then(r => { S.detail = r.project; });
       if (tab === 'agent' && p.events.length) renderAgent();
     });
-    return () => { alive = false; off(); ro.disconnect(); cancelAnimationFrame(Pl.raf); document.removeEventListener('keydown', onKey); };
+    return () => { alive = false; off(); offJob(); if (bridge) bridge.dispose(); ro.disconnect(); cancelAnimationFrame(Pl.raf); document.removeEventListener('keydown', onKey); };
   };
 })();

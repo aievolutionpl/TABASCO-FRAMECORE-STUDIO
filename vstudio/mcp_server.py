@@ -14,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, common, knowledge, ops, registry, skillgen, supervisor, workspace  # noqa: F401  (ops wypełnia rejestr)
+from . import __version__, common, jobs, knowledge, ops, registry, skillgen, supervisor, workspace  # noqa: F401  (ops wypełnia rejestr)
 from .common import StudioError
 
 SUPPORTED = ["2025-06-18", "2025-03-26", "2024-11-05"]
@@ -197,5 +197,8 @@ class RpcError(Exception):
 
 def main() -> int:
     common.SERVICE_MODE = True
-    McpServer().serve()
+    try:
+        McpServer().serve()
+    finally:
+        jobs.shutdown()                                   # sesja agenta się skończyła: jego joby nie zostają osierocone
     return 0

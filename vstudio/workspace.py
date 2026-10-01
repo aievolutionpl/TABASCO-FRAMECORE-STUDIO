@@ -9,14 +9,13 @@ import argparse
 import hashlib
 import json
 import re
-import threading
 import time
 from pathlib import Path
 
 from . import common, project as proj, vendor
+from .locking import atomic_write, file_lock
 from .common import GATES, OUTPUT, STUDIO, StudioError
 
-_LOCK = threading.Lock()
 FORMATS = {"9:16": (1080, 1920), "4:5": (1080, 1350), "1:1": (1080, 1080), "16:9": (1920, 1080)}
 DEFAULT_PROFILE = {
     "onboarded": False, "name": "", "palette": {"bg": "#0B0E24", "ink": "#F4F6FF", "accent": "#FF6B4A", "accent2": "#4F8CFF"},
@@ -44,10 +43,12 @@ def _read_json(name: str, default):
 
 
 def _write_json(name: str, data) -> None:
-    f = _state(name)
-    tmp = f.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    tmp.replace(f)
+    atomic_write(_state(name), json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+
+
+def _state_lock():
+    """Blokada między procesami (MCP + dashboard) dla odczytu-zmiany-zapisu plików stanu."""
+    return file_lock(common.STATE_DIR / ".lock")
 
 
 # ------------------------------------------------------------------ profil marki
@@ -63,6 +64,11 @@ def profile_set(patch: dict) -> dict:
     unknown = sorted(set(patch) - allowed)
     if unknown:
         raise StudioError(f"nieznane pola profilu {unknown}; dozwolone: {sorted(allowed)}")
+    with _state_lock():
+        return _profile_set(patch)
+
+
+def _profile_set(patch: dict) -> dict:
     p = profile_get()
     for k, v in patch.items():
         if k == "palette":
@@ -130,7 +136,7 @@ def summarize(pdir: Path, pr: dict, detail: bool = False) -> dict:
            "check": {"verdict": rep["verdict"], "score": rep["score"], "round": rep["round"], "counts": rep["counts"]} if rep else None}
     if detail:
         renders = []
-        for f in sorted((pdir / "renders").glob("*.mp4"), reverse=True):
+        for f in sorted((pdir / "renders").glob("*.mp4"), key=lambda x: x.stat().st_mtime, reverse=True):
             renders.append({"file": f"renders/{f.name}", "mb": round(f.stat().st_size / 1e6, 2), "at": f.stat().st_mtime,
                             "final": "_final_" in f.name})
         out.update(gates={g: pr["gates"].get(g) for g in GATES}, critic_score=pr.get("critic_score"), renders=renders,
@@ -251,7 +257,12 @@ def _backup(pdir: Path, note: str) -> str | None:
     src = _scene_path(pdir)
     hd = _history_dir(pdir)
     hd.mkdir(exist_ok=True)
-    name = f"{time.strftime('%Y%m%d-%H%M%S')}-{int(time.time() * 1000) % 1000:03d}.html"
+    t = time.time()
+    while True:                                               # dwa zapisy w tej samej milisekundzie nie mogą nadpisać jednej wersji
+        name = f"{time.strftime('%Y%m%d-%H%M%S', time.localtime(t))}-{int(t * 1000) % 1000:03d}.html"
+        if not (hd / name).exists():
+            break
+        t += 0.001
     (hd / name).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
     (hd / (name + ".note")).write_text(note[:200], encoding="utf-8")
     olds = sorted(hd.glob("*.html"))[:-30]                    # trzymamy 30 ostatnich wersji
@@ -301,6 +312,95 @@ def scene_patch(pdir: Path, pr: dict, edits: list[dict], note: str = "") -> dict
     return {"project": project_id(pdir), "applied": applied, "backup": backup, **scene_info(pdir, pr)}
 
 
+# ---- paleta: kolory #RRGGBB w scenie (formy 3-cyfrowe pomijamy: łatwo je pomylić z id/selektorami i encjami HTML)
+_HEX6 = re.compile(r"(?<![&\w#])(?<!url\()(?<!href=\")(?<!href=')#([0-9a-fA-F]{6})([0-9a-fA-F]{2})?(?![0-9a-zA-Z])")
+
+
+def _hls(hexcol: str) -> tuple[float, float, float]:
+    import colorsys
+
+    h = hexcol.lstrip("#")
+    r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    hh, ll, ss = colorsys.rgb_to_hls(r, g, b)
+    return hh * 360, ll, ss
+
+
+def _is_neutral(hexcol: str) -> bool:
+    _, ll, ss = _hls(hexcol)
+    return ss < 0.18 or ll < 0.22 or ll > 0.88          # prawie czarny/biały/szary i ciemny granat: tło lub tekst, nie akcent
+
+
+def brand_suggestion(colors: list[dict], palette: dict) -> list[dict]:
+    """Propozycja mapowania kolorów sceny na paletę marki (tło, tekst, akcent, akcent 2). To podpowiedź do zatwierdzenia, nie automat."""
+    by_count = sorted(colors, key=lambda c: -c["count"])
+    neutrals = [c for c in by_count if _is_neutral(c["hex"])]
+    chromatic = [c for c in by_count if not _is_neutral(c["hex"])]
+    out: list[dict] = []
+    used: set[str] = set()
+
+    def add(role: str, src: dict | None) -> None:
+        if src and src["hex"] not in used and src["hex"].upper() != palette[role].upper():
+            used.add(src["hex"])
+            out.append({"role": role, "from": src["hex"], "to": palette[role].upper()})
+
+    if neutrals:
+        dark_theme = _hls(neutrals[0]["hex"])[1] < 0.5
+        dark = [c for c in neutrals if _hls(c["hex"])[1] < 0.5]
+        light = [c for c in neutrals if _hls(c["hex"])[1] >= 0.5]
+        add("bg", (dark if dark_theme else light)[0] if (dark if dark_theme else light) else None)
+        add("ink", (light if dark_theme else dark)[0] if (light if dark_theme else dark) else None)
+    add("accent", chromatic[0] if chromatic else None)
+    if len(chromatic) > 1:
+        far = next((c for c in chromatic[1:] if abs(_hls(c["hex"])[0] - _hls(chromatic[0]["hex"])[0]) >= 40), chromatic[1])
+        add("accent2", far)
+    return out
+
+
+def scene_palette(pdir: Path, pr: dict) -> dict:
+    text = _scene_path(pdir).read_text(encoding="utf-8")
+    counts: dict[str, int] = {}
+    for m in _HEX6.finditer(text):
+        k = "#" + m.group(1).upper()
+        counts[k] = counts.get(k, 0) + 1
+    colors = []
+    for hx, n in sorted(counts.items(), key=lambda kv: -kv[1]):
+        hue, light, sat = _hls(hx)
+        colors.append({"hex": hx, "count": n, "lightness": round(light, 2), "saturation": round(sat, 2), "neutral": _is_neutral(hx)})
+    prof = profile_get()
+    return {"project": project_id(pdir), "colors": colors, "brand": prof["palette"] if prof["onboarded"] else None,
+            "suggestion": brand_suggestion(colors, prof["palette"]) if prof["onboarded"] and colors else []}
+
+
+def scene_recolor(pdir: Path, pr: dict, mapping: dict, note: str = "") -> dict:
+    """Podmienia kolory w scenie jednym przebiegiem (A->B nie łańcuchuje się z B->C), z kopią w historii."""
+    if not isinstance(mapping, dict) or not mapping:
+        raise StudioError("mapping: obiekt {\"#STARY\": \"#NOWY\"} z co najmniej jednym kolorem")
+    norm: dict[str, str] = {}
+    for old, new in mapping.items():
+        for c in (old, new):
+            if not re.fullmatch(r"#[0-9a-fA-F]{6}", str(c)):
+                raise StudioError(f"kolor '{c}' musi mieć postać #RRGGBB")
+        norm[str(old).upper()] = str(new).upper()
+    text = _scene_path(pdir).read_text(encoding="utf-8")
+    counts: dict[str, int] = {}
+
+    def swap(m: re.Match) -> str:
+        key = "#" + m.group(1).upper()
+        if key in norm:
+            counts[key] = counts.get(key, 0) + 1
+            return norm[key] + (m.group(2) or "")            # przezroczystość (#RRGGBBAA) zostaje
+        return m.group(0)
+
+    out = _HEX6.sub(swap, text)
+    missing = [k for k in norm if k not in counts]
+    if not counts:
+        raise StudioError(f"żaden z kolorów {sorted(norm)} nie występuje w scenie (scene_palette pokazuje, jakie są)")
+    backup = _backup(pdir, note or "scene_recolor")
+    (pdir / "src" / "index.html").write_text(out, encoding="utf-8")
+    common.append_log(pdir, f"scene recolored ({sum(counts.values())} replacements)")
+    return {"project": project_id(pdir), "replaced": counts, "not_found": missing, "backup": backup, **scene_info(pdir, pr)}
+
+
 def scene_history(pdir: Path) -> list[dict]:
     hd = _history_dir(pdir)
     out = []
@@ -316,8 +416,9 @@ def scene_restore(pdir: Path, pr: dict, version: str) -> dict:
     f = _history_dir(pdir) / version
     if not f.is_file():
         raise StudioError(f"brak wersji '{version}'. Zobacz scene_history.")
+    content = f.read_text(encoding="utf-8")                  # najpierw odczyt: kopia poniżej przycina historię do 30 wersji
     backup = _backup(pdir, f"before restore of {version}")
-    (pdir / "src" / "index.html").write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
+    (pdir / "src" / "index.html").write_text(content, encoding="utf-8")
     common.append_log(pdir, f"scene restored from {version}")
     return {"project": project_id(pdir), "restored": version, "backup": backup, **scene_info(pdir, pr)}
 
@@ -333,8 +434,8 @@ def task_create(prompt: str, project: str | None = None, source: str = "dashboar
     if not prompt.strip():
         raise StudioError("pusty opis zadania")
     if project:
-        resolve(project)
-    with _LOCK:
+        project = project_id(resolve(project)[0])           # zapisujemy id kanoniczne: sam slug nie pasowałby do filtrów po id
+    with _state_lock():
         rows = _read_json("tasks.json", [])
         tid = f"T-{len(rows) + 1:04d}"
         t = {"id": tid, "project": project, "prompt": prompt.strip()[:4000], "status": "open", "source": source,
@@ -345,7 +446,7 @@ def task_create(prompt: str, project: str | None = None, source: str = "dashboar
 
 
 def task_update(tid: str, status: str | None = None, note: str | None = None) -> dict:
-    with _LOCK:
+    with _state_lock():
         rows = _read_json("tasks.json", [])
         t = next((r for r in rows if r["id"] == tid), None)
         if not t:

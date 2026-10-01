@@ -35,9 +35,10 @@ V.on = (ev, fn) => { (V.listeners[ev] ||= new Set()).add(fn); return () => V.lis
 V.emit = (ev, data) => (V.listeners[ev] || []).forEach(fn => { try { fn(data); } catch (e) { console.error(e); } });
 
 /* ---------- UI: toasty, modale, formaty ---------- */
-V.toast = (msg, kind = '', ms = 4200) => {
+V.toast = (msg, kind = '', ms = 4200, onClick = null) => {
   const t = document.createElement('div'); t.className = 'toast ' + kind;
   t.innerHTML = `<span>${kind === 'err' ? V.icon('alert') : kind === 'ok' ? V.icon('check') : V.icon('spark')}</span><div>${esc(msg)}</div>`;
+  if (onClick) { t.style.cursor = 'pointer'; t.onclick = () => { onClick(); t.remove(); }; }
   $('#toasts').appendChild(t); setTimeout(() => t.remove(), ms);
 };
 V.modal = (html, { wide = false, onClose } = {}) => {
@@ -61,28 +62,48 @@ V.srcOf = (id, qs = '') => `/preview/${id}/index.html${qs}`;
 V.fileUrl = (id, rel) => `/files/${id}/${rel}`;
 
 /* ---------- miniodtwarzacz sceny (do kart i podglądu): scena sterowana przez seek ---------- */
-V.SEEKS = ['seek', 'renderFrame', 'draw', 'render'];
-V.sceneApi = win => { if (!win) return null; const name = V.SEEKS.find(n => typeof win[n] === 'function'); return name ? { seek: t => win[name](t), dur: typeof win.DURATION === 'number' ? win.DURATION : (typeof win.DUR === 'number' ? win.DUR : null), win } : null; };
+/* Scena działa w piaskownicy (CSP sandbox bez allow-same-origin): ma nieprzezroczysty origin, więc nie sięgnie do tokenu ani API dashboardu.
+   Sterujemy nią przez postMessage: info (długość, czy ma seek) i seek(t). Serwer wstrzykuje po stronie sceny odpowiedni „most”. */
+V.bridge = frame => {
+  let id = 0; const pending = new Map(); const h = {};
+  const onMsg = e => {
+    const m = e.data; if (!m || m.vstudio !== 'res' || e.source !== frame.contentWindow) return;
+    const p = pending.get(m.id); if (p) { pending.delete(m.id); p(m); } else if (m.ok === false && h.error) h.error(m.error);
+  };
+  window.addEventListener('message', onMsg);
+  const send = (op, extra = {}, wait = false) => new Promise(res => {
+    const my = ++id; if (wait) pending.set(my, res);
+    try { frame.contentWindow.postMessage({ vstudio: 'req', id: my, op, ...extra }, '*'); } catch (e) { pending.delete(my); return res({ ok: false, error: String(e) }); }
+    if (!wait) res();
+  });
+  return {
+    info: () => Promise.race([send('info', {}, true), new Promise(r => setTimeout(() => r({ ok: false, error: 'timeout' }), 9000))]),
+    seek: t => { send('seek', { t }); },
+    onError: fn => { h.error = fn; },
+    dispose: () => window.removeEventListener('message', onMsg),
+  };
+};
 V.thumb = (host, url, w, h, posterT = 0) => {
   host.classList.add('thumb'); host.style.aspectRatio = `${w} / ${h}`;
   host.innerHTML = '<div class="ph">ładowanie podglądu…</div>';
-  let frame = null, api = null, raf = 0, dur = 0;
+  let frame = null, br = null, ready = false, raf = 0, dur = 0;
   const fit = () => { if (frame) frame.style.transform = `scale(${host.clientWidth / w})`; };
   const load = () => {
-    frame = document.createElement('iframe'); frame.width = w; frame.height = h; frame.setAttribute('loading', 'lazy'); frame.setAttribute('tabindex', '-1');
+    frame = document.createElement('iframe'); frame.width = w; frame.height = h; frame.setAttribute('loading', 'lazy'); frame.setAttribute('tabindex', '-1'); frame.setAttribute('sandbox', 'allow-scripts');
+    br = V.bridge(frame);
     frame.onload = async () => {
-      try { await frame.contentWindow.__ready; } catch (e) { /* biblioteka mogła się nie załadować */ }
-      api = V.sceneApi(frame.contentWindow); if (!api) { host.querySelector('.ph') && (host.querySelector('.ph').textContent = 'scena bez window.seek'); return; }
-      dur = api.dur || 1; try { api.seek(posterT); } catch (e) { return; } host.querySelector('.ph')?.remove(); fit();
+      const inf = await br.info();
+      if (!inf.ok || !inf.hasSeek) { const ph = host.querySelector('.ph'); if (ph) ph.textContent = 'scena bez window.seek'; return; }
+      dur = inf.dur || 1; ready = true; br.seek(posterT); host.querySelector('.ph')?.remove(); fit();
     };
     frame.src = url; host.appendChild(frame); fit();
   };
   const io = new IntersectionObserver(es => { if (es[0].isIntersecting && !frame) { load(); io.disconnect(); } }, { rootMargin: '120px' }); io.observe(host);
   new ResizeObserver(fit).observe(host);
-  const play = () => { if (!api) return; const t0 = performance.now(); cancelAnimationFrame(raf); const loop = now => { try { api.seek(((now - t0) / 1000) % dur); } catch (e) { return; } raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); };
-  const stop = () => { cancelAnimationFrame(raf); if (api) try { api.seek(posterT); } catch (e) { /* noop */ } };
+  const play = () => { if (!ready) return; const t0 = performance.now(); cancelAnimationFrame(raf); const loop = now => { br.seek(((now - t0) / 1000) % dur); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); };
+  const stop = () => { cancelAnimationFrame(raf); if (ready) br.seek(posterT); };
   host.addEventListener('mouseenter', play); host.addEventListener('mouseleave', stop);
-  host._dispose = () => { cancelAnimationFrame(raf); io.disconnect(); };
+  host._dispose = () => { cancelAnimationFrame(raf); io.disconnect(); if (br) br.dispose(); };
 };
 
 /* ---------- powłoka: nawigacja, okruszki, pulse ---------- */
@@ -113,11 +134,24 @@ V.setJobPill = () => {
   const jobs = (V.S.pulse && V.S.pulse.jobs || []).filter(j => j.status === 'running'), pill = $('#jobPill');
   pill.hidden = !jobs.length; if (jobs.length) { const j = jobs[0]; pill.innerHTML = `<span class="dot warn"></span><span>${esc(j.kind)} ${Math.round(j.progress * 100)}%</span>`; pill.onclick = () => V.go(`#/p/${j.project}/render`); }
 };
+V.jobStates = {}; V.bootAt = Date.now() / 1000;
+V.notifyJobs = jobs => {                      // powiadomienie o zmianie running -> koniec (także gdy job skończył się między dwoma odczytami)
+  for (const j of jobs) {
+    const was = V.jobStates[j.id]; V.jobStates[j.id] = j.status;
+    if (j.status === 'running') continue;
+    const fresh = was === 'running' || (was === undefined && j.finished && j.finished > V.bootAt);
+    if (!fresh) continue;
+    const names = { render: 'Render', sound: 'Dźwięk', deliver: 'Wydanie' }, nm = names[j.kind] || j.kind, slug = (j.project || '').split('/').pop();
+    const ok = j.status === 'done';
+    V.toast(`${nm} ${slug}: ${ok ? 'gotowe' : j.status === 'cancelled' ? 'anulowano' : 'nie udało się'}${ok ? ' (kliknij, żeby zobaczyć)' : ''}`, ok ? 'ok' : j.status === 'cancelled' ? '' : 'err', 7000, () => V.go(`#/p/${j.project}/render`));
+    V.emit('job-finished', j);
+  }
+};
 V.pulse = async () => {
   try {
     const p = await V.get('/api/pulse?since=' + V.S.lastEvent); const prev = V.S.pulse; V.S.pulse = p;
     if (p.events.length) V.S.lastEvent = p.events[p.events.length - 1].id;
-    V.setAgentPill(); V.setJobPill();
+    V.setAgentPill(); V.setJobPill(); V.notifyJobs(p.jobs);
     let changed = false;
     for (const [id, m] of Object.entries(p.projects)) { const o = prev && prev.projects[id]; if (!o || o.updated !== m.updated || o.round !== m.round || o.verdict !== m.verdict) changed = true; }
     if (prev && Object.keys(prev.projects).length !== Object.keys(p.projects).length) changed = true;

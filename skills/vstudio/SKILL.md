@@ -115,6 +115,8 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | `scene_read` | `project`, `start_line`?, `end_line`? | Kod sceny (src/index.html) z informacją o haczykach kontraktu i zasobach z sieci. |
 | `scene_write` | `project`, `content`, `note`?, `check`? | Zapisuje całą scenę (z kopią w historii). Z `check` od razu uruchamia nadzorcę i zwraca werdykt. (zmienia pliki) (obrazy) |
 | `scene_patch` | `project`, `edits`, `note`?, `check`? | Zamienia dokładne fragmenty tekstu (każdy musi wystąpić raz, chyba że all=true). Atomowo, z historią. (zmienia pliki) (obrazy) |
+| `scene_palette` | `project` | Kolory #RRGGBB użyte w scenie (liczność, jasność) i propozycja mapowania na kolory marki z profilu. |
+| `scene_recolor` | `project`, `mapping`, `note`?, `check`? | Podmienia kolory #RRGGBB w całej scenie jednym przebiegiem (z historią). Z `check` od razu uruchamia nadzorcę. (zmienia pliki) (obrazy) |
 | `scene_history` | `project` | Ostatnie wersje sceny (do 30) z notatkami. |
 | `scene_restore` | `project`, `version` | Cofa scenę do wersji z historii (obecna trafia do historii). (zmienia pliki) |
 
@@ -195,6 +197,7 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 - `LOW_CONTRAST`: Raise contrast to at least 3:1 for large text (4.5:1 for small): darken the background behind the text or change the text colour.
 - `TEXT_TINY`: Increase the font size; on a phone, text under about 2.5% of the frame height is hard to read.
 - `SAFE_ZONE`: Keep text out of the top 10% and bottom 20% of vertical video (Reels/Shorts/TikTok UI covers them) and 5% from the edges.
+- `TEXTS_FAILED`: Fix the error thrown by window.TEXTS(t) (usually a selector that no longer exists or a read of an element before it is created). Reading time, framing and contrast cannot be checked until it works for every t.
 - `SEEK_FAILED`: Fix the error thrown by seek(t); the film cannot be sampled or rendered until it works for every t in [0, DURATION].
 - `ENGINE_UNSUPPORTED`: Deep checks need the html engine (window.seek contract). Use still/render for this engine.
 

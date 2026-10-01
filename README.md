@@ -155,7 +155,7 @@ więc niczego nie trzeba robić dwa razy:
 
 ```
 agent (MCP)  ─┐
-dashboard    ─┼─►  rejestr możliwości (41 operacji) ─► projekt na dysku
+dashboard    ─┼─►  rejestr możliwości (43 operacji) ─► projekt na dysku
 CLI          ─┘             │
                             ├─► nadzorca jakości: sprawdza każdą zmianę sceny i mówi, co poprawić
                             └─► log aktywności: dashboard pokazuje na żywo, co robi agent
@@ -190,7 +190,7 @@ aktualny nawet wtedy, gdy agent o nim nie pamięta. Pełna lista kodów i napraw
 
 `python vstudio.py mcp` uruchamia serwer MCP (stdio). Agent dostaje:
 
-- **41 narzędzi** w 10 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
+- **43 narzędzi** w 10 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
   (agent naprawdę *widzi* film), nadzór, render, zadania, diagnostyka,
 - **zasoby**: skill, wiedza (kontrakt strony, deterministyczny GSAP, pętla pracy), brief i ostatni raport każdego projektu,
 - **prompty**: `make-video`, `fix-findings`, `onboard`.
@@ -205,13 +205,19 @@ z dashboardu („Poproś agenta”), agent podejmuje ją przez `task_next`, a ca
 | --- | --- |
 | **Start** | co dalej (środowisko, marka, zadania), projekty z podglądem, „poproś agenta” |
 | **Biblioteka** | 8 szablonów z żywym podglądem (najedź, żeby odtworzyć), nowy projekt jednym kliknięciem |
-| **Warsztat projektu** | podgląd sterowany `seek` (to, co widzisz, to się wyrenderuje), klatka po klatce, oś czasu z dźwiękiem, tekstami i znaleziskami; zakładki: Nadzór, Źródło (edytor z historią), Render (jobs z postępem), Potok (bramki), Agent |
+| **Warsztat projektu** | podgląd sterowany `seek` (to, co widzisz, to się wyrenderuje), klatka po klatce, oś czasu z dźwiękiem, tekstami i znaleziskami; zakładki: Nadzór, Źródło (edytor z historią i **paleta sceny**: zmiana koloru w całej scenie albo zastosowanie kolorów marki jednym kliknięciem), Render (jobs z postępem i anulowaniem), Potok (bramki), Agent |
 | **Agent** | instalacja i test połączenia, tablica zadań, aktywność na żywo |
 | **Mapa możliwości** | wszystkie operacje z parametrami i przyciskiem „Wypróbuj” |
 | **Onboarding** | środowisko, marka (paleta, font, ton, format), agent, pierwszy film |
 
 Dashboard słucha tylko na `localhost` (zmienia pliki projektów), odrzuca obcy `Host`/`Origin`, wymaga tokenu sesji dla każdej zmiany
-i nie wychodzi poza katalog projektu. Skróty: spacja odtwarza, ←/→ krok o klatkę (z Shift o sekundę), L pętla.
+i nie wychodzi poza katalog projektu. Podglądy scen (a to kod, który może napisać agent) działają w piaskownicy
+(`Content-Security-Policy: sandbox allow-scripts`, nieprzezroczysty origin), więc scena nie ma dostępu do tokenu ani do API;
+panel steruje nią wyłącznie przez `postMessage` (`seek`, `info`). Skróty: spacja odtwarza, ←/→ krok o klatkę (z Shift o sekundę), L pętla.
+
+Joby (render, dźwięk, wydanie): w projekcie działa naraz jeden, bo dotykają tych samych plików. Stan jest w `output/.studio/jobs/`
+i jest wspólny dla agenta (MCP) i dashboardu, więc dashboard może anulować job uruchomiony przez agenta. Anulowanie zabija całe drzewo
+procesów (render → chromium → ffmpeg) i usuwa urwane pliki powstałe od startu joba; zamknięcie serwera też przerywa jego joby.
 
 ### Praca offline: vendor
 

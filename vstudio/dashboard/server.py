@@ -32,11 +32,33 @@ _HOST_OK = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$")
 MAX_BODY = 4_000_000                        # scena do ~2 MB + narzut JSON
 
 
+#: Scena (kod agenta/szablonu) jest NIEUFNA. Sandbox bez allow-same-origin daje jej nieprzezroczysty origin: skrypt sceny nie przeczyta
+#: tokenu z dashboardu, nie wywoła jego API i nie sięgnie do okna rodzica. Sterowanie odbywa się przez postMessage (most poniżej).
+PREVIEW_HEADERS = {"Content-Security-Policy": "sandbox allow-scripts"}
+
+BRIDGE = """<script>(function () {
+  var NAMES = ['seek', 'renderFrame', 'draw', 'render'];
+  function api() { var n = NAMES.find(function (x) { return typeof window[x] === 'function'; }); return n ? window[n] : null; }
+  addEventListener('message', function (e) {
+    var m = e.data; if (!m || m.vstudio !== 'req' || e.source !== parent) return;
+    var reply = function (o) { o.vstudio = 'res'; o.id = m.id; parent.postMessage(o, e.origin === 'null' ? '*' : e.origin); };
+    if (m.op === 'info') {
+      Promise.race([Promise.resolve(window.__ready), new Promise(function (r) { setTimeout(r, 6000); })]).catch(function () {}).then(function () {
+        reply({ ok: true, hasSeek: !!api(), dur: typeof window.DURATION === 'number' ? window.DURATION : (typeof window.DUR === 'number' ? window.DUR : null) });
+      });
+    } else if (m.op === 'seek') {
+      var f = api(); if (!f) return reply({ ok: false, error: 'brak window.seek' });
+      try { f(m.t); if (m.ack) reply({ ok: true }); } catch (err) { reply({ ok: false, error: String(err && err.message || err) }); }
+    }
+  });
+})();</script>"""
+
+
 def _inject(html: str, capture: bool) -> str:
     """Do podglądu: lokalne kopie bibliotek z vendora i (opcjonalnie) tryb capture, żeby scenę sterował dashboard przez seek."""
     html, _ = vendor.rewrite_html(html)
     if capture:
-        tag = "<script>window.__CAPTURE__ = true;</script>"
+        tag = "<script>window.__CAPTURE__ = true;</script>" + BRIDGE
         m = re.search(r"<head[^>]*>", html, flags=re.I)
         html = html[:m.end()] + tag + html[m.end():] if m else tag + html
     return html
@@ -112,7 +134,7 @@ class Handler(BaseHTTPRequestHandler):
                 body = vendor.read_file(path[len("/vendor/"):])
                 if body is None:
                     return self._err(404, "brak pliku vendor")
-                return self._send(200, body, vendor.content_type(path), {"Access-Control-Allow-Origin": "*"})
+                return self._send(200, body, vendor.content_type(path))         # bez CORS: podgląd ładuje to jako zwykły skrypt
         self._err(404, "nie ma takiej ścieżki")
 
     def _static(self, rel: str) -> None:
@@ -197,7 +219,7 @@ class Handler(BaseHTTPRequestHandler):
         if not f.is_file() or not f.is_relative_to(src) or any(p.startswith(".") for p in Path(rel).parts):
             return self._err(404, "brak pliku sceny")
         if f.suffix.lower() in (".html", ".htm"):
-            return self._send(200, _inject(f.read_text(encoding="utf-8"), capture=not live).encode("utf-8"), "text/html; charset=utf-8")
+            return self._send(200, _inject(f.read_text(encoding="utf-8"), capture=not live).encode("utf-8"), "text/html; charset=utf-8", PREVIEW_HEADERS)
         if f.suffix.lower() not in ALLOWED_EXT:
             return self._err(404, "niedozwolony typ pliku")
         self._file(f)
@@ -207,7 +229,7 @@ class Handler(BaseHTTPRequestHandler):
         if not re.fullmatch(r"[a-z0-9-]+", tid or ""):
             return self._err(404, "zły szablon")
         html = workspace.template_html(tid)
-        self._send(200, _inject(html, capture=not live).encode("utf-8"), "text/html; charset=utf-8")
+        self._send(200, _inject(html, capture=not live).encode("utf-8"), "text/html; charset=utf-8", PREVIEW_HEADERS)
 
     # ---- POST
     def do_POST(self) -> None:  # noqa: N802
@@ -295,5 +317,6 @@ def serve(host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) 
     except KeyboardInterrupt:
         print("\nkoniec.")
     finally:
+        jobs.shutdown()                                   # nie zostawiamy osieroconych renderów po zamknięciu dashboardu
         srv.server_close()
     return 0

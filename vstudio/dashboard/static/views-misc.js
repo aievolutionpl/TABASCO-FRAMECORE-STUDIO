@@ -37,8 +37,12 @@
     const draw = async () => {
       if (step === 0) {
         host.innerHTML = shell('<h1>Sprawdzam środowisko</h1><p class="muted">Studio potrzebuje Pythona, Chromium (render klatek) i FFmpeg (wideo i dźwięk).</p><div class="checks" id="checks"><div class="skel" style="height:200px"></div></div>' + nav(false, true));
-        wire(); const r = await V.api('doctor', {});
+        wire(); const [r, vend] = await Promise.all([V.api('doctor', {}), V.api('vendor_list', {})]);
         $('#checks', host).innerHTML = r.checks.map(c => `<div class="c"><span class="dot ${c.ok ? 'ok' : c.level === 'warn' ? 'warn' : 'err'}" style="animation:none"></span><b style="min-width:210px">${esc(c.check)}</b><span class="muted mono" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.detail)}">${esc(c.detail)}</span></div>`).join('') + (r.ok ? '<div class="chip ok" style="margin-top:10px;align-self:flex-start">Środowisko gotowe</div>' : '<div class="card pad" style="margin-top:10px;border-color:rgba(255,107,129,.4)">Brakuje wymaganych elementów (czerwone). Bez FFmpeg nadal możesz tworzyć i sprawdzać sceny; nie wyrenderujesz wideo.</div>');
+        const hasGsap = vend.items.some(i => i.url === vend.aliases.gsap);
+        $('#checks', host).insertAdjacentHTML('afterend', `<div class="card pad" style="margin-top:14px" id="vendCard"><div class="row"><span class="dot ${hasGsap ? 'ok' : 'warn'}" style="animation:none"></span><b style="flex:1">Biblioteki offline: GSAP</b>${hasGsap ? '<span class="chip ok">lokalna kopia</span>' : '<button class="btn sm" id="vendBtn">Zapisz lokalnie</button>'}</div>
+          <div class="muted" style="font-size:13px;margin-top:6px">Szablony ładują GSAP z CDN. Z lokalną kopią podgląd, nadzór i render działają także bez sieci (HTML sceny się nie zmienia).</div></div>`);
+        const vb = $('#vendBtn', host); if (vb) vb.onclick = () => V.busy(vb, async () => { try { await V.api('vendor_add', { url: 'gsap' }); V.toast('GSAP zapisany lokalnie', 'ok'); draw(); } catch (e) { V.modal(`<h3>Nie udało się pobrać</h3><p class="muted">${esc(e.message)}</p><p>Bez sieci skopiuj plik z dysku:</p><div class="code">python vstudio.py vendor add gsap --file /sciezka/do/gsap.min.js</div>`); } });
       } else if (step === 1) {
         host.innerHTML = shell(`<h1>Twoja marka</h1><p class="muted">Agent użyje tych wartości zamiast wymyślać kolory i fonty.</p>
           <div class="grid c2" style="align-items:start"><div class="col">

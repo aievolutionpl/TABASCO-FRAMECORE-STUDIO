@@ -27,6 +27,14 @@ ALIASES = {
 _MIME = {".js": "application/javascript", ".mjs": "application/javascript", ".css": "text/css", ".json": "application/json",
          ".woff2": "font/woff2", ".woff": "font/woff", ".svg": "image/svg+xml", ".png": "image/png"}
 _URL_RE = re.compile(r"https?://[^\s\"'<>)]+")
+#: typy zasobów, które w ogóle przechowujemy; rozszerzenie bierzemy z URL-a, a gdy go brak, z Content-Type odpowiedzi
+_CT_EXT = {"text/css": ".css", "application/javascript": ".js", "text/javascript": ".js", "application/x-javascript": ".js",
+           "font/woff2": ".woff2", "font/woff": ".woff", "application/font-woff2": ".woff2", "application/json": ".json",
+           "image/svg+xml": ".svg", "image/png": ".png"}
+_NET_EXT = {".js", ".mjs", ".css", ".json", ".woff2", ".woff", ".svg", ".png"}
+#: z dysku kopiujemy TYLKO skrypty, style i fonty: `vendor_add` jest narzędziem agenta, więc nie może czytać dowolnych plików (klucze, dane)
+_FILE_EXT = {".js", ".mjs", ".css", ".woff2", ".woff"}
+MAX_BYTES = 20_000_000
 
 
 def vendor_dir() -> Path:
@@ -57,26 +65,44 @@ def resolve_url(url_or_alias: str) -> str:
 
 
 def add(url_or_alias: str, file: str | None = None, timeout: int = 20) -> dict:
-    """Zapisuje kopię zasobu. `file` to lokalny plik do skopiowania (praca bez sieci); inaczej pobieramy z URL-a."""
+    """Zapisuje kopię zasobu. `file` to lokalny plik do skopiowania (praca bez sieci); inaczej pobieramy z URL-a.
+
+    Zabezpieczenia (to narzędzie dostępne dla agenta): plik z dysku musi być skryptem/stylem/fontem o rozszerzeniu zgodnym z URL-em,
+    rozmiar jest ograniczony, a typ pobranego zasobu wynika z odpowiedzi, nie tylko z końcówki adresu.
+    """
     url = resolve_url(url_or_alias)
     if not re.match(r"^https?://", url):
         raise common.StudioError(f"'{url_or_alias}' nie jest adresem http(s) ani znanym skrótem ({', '.join(ALIASES)})")
-    ext = Path(url.split("?")[0]).suffix.lower() or ".bin"
-    name = hashlib.sha256(url.encode()).hexdigest()[:12] + ext
-    dest = vendor_dir() / name
+    url_ext = Path(url.split("?")[0].split("#")[0]).suffix.lower()
     vendor_dir().mkdir(parents=True, exist_ok=True)
     if file:
         src = Path(file)
+        ext = src.suffix.lower()
         if not src.is_file():
             raise common.StudioError(f"brak pliku: {src}")
-        shutil.copyfile(src, dest)
+        if ext not in _FILE_EXT:
+            raise common.StudioError(f"z dysku kopiuję tylko skrypty, style i fonty ({', '.join(sorted(_FILE_EXT))}), a nie '{ext or 'plik bez rozszerzenia'}'")
+        if url_ext in _FILE_EXT and url_ext != ext:
+            raise common.StudioError(f"plik {ext} nie pasuje do adresu zakończonego {url_ext}")
+        if src.stat().st_size > MAX_BYTES:
+            raise common.StudioError(f"plik większy niż {MAX_BYTES // 1_000_000} MB")
+        data = src.read_bytes()
     else:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "vstudio-vendor"})
             with urllib.request.urlopen(req, timeout=timeout) as r:                      # noqa: S310 - adres podaje użytkownik
-                dest.write_bytes(r.read())
+                data = r.read(MAX_BYTES + 1)
+                ctype = r.headers.get_content_type()
         except Exception as exc:  # noqa: BLE001
             raise common.StudioError(f"nie udało się pobrać {url}: {exc}. Bez sieci podaj lokalny plik (--file).") from exc
+        if len(data) > MAX_BYTES:
+            raise common.StudioError(f"zasób większy niż {MAX_BYTES // 1_000_000} MB")
+        ext = url_ext if url_ext in _NET_EXT else _CT_EXT.get(ctype, "")
+        if not ext:
+            raise common.StudioError(f"nie rozpoznano typu zasobu (Content-Type: {ctype}); przechowuję skrypty, style, fonty i proste obrazy")
+    name = hashlib.sha256(url.encode()).hexdigest()[:12] + ext
+    dest = vendor_dir() / name
+    dest.write_bytes(data)
     idx = load_index()
     idx[url] = name
     _save_index(idx)

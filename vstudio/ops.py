@@ -190,6 +190,24 @@ def scene_patch(project: str, edits: list, note: str = "", check: str | None = N
     return _maybe_check(pdir, pr, check, res)
 
 
+@capability("scene_palette", "Paleta sceny", "Kolory #RRGGBB użyte w scenie (liczność, jasność) i propozycja mapowania na kolory marki z profilu.", "scene",
+            params={"project": PROJECT}, required=("project",), returns="colors[], brand, suggestion[]",
+            when="Before restyling a template: see which colours it uses, then apply the brand with scene_recolor instead of editing hex values by hand.")
+def scene_palette(project: str) -> dict:
+    pdir, pr = _proj(project)
+    return workspace.scene_palette(pdir, pr)
+
+
+@capability("scene_recolor", "Zmień kolory sceny", "Podmienia kolory #RRGGBB w całej scenie jednym przebiegiem (z historią). Z `check` od razu uruchamia nadzorcę.", "scene",
+            mutates=True, images=True,
+            params={"project": PROJECT, "mapping": {"type": "object", "description": "{\"#OLD\": \"#NEW\", ...}, each #RRGGBB"}, "note": {"type": "string"}, "check": _CHECK},
+            required=("project", "mapping"), returns="replaced{hex: n}, not_found[], check?",
+            when="Apply the brand palette (see `suggestion` in scene_palette) or change one colour everywhere. Contrast is re-checked by the supervisor.")
+def scene_recolor(project: str, mapping: dict, note: str = "", check: str | None = None) -> dict:
+    pdir, pr = _proj(project)
+    return _maybe_check(pdir, pr, check, workspace.scene_recolor(pdir, pr, mapping, note))
+
+
 @capability("scene_history", "Historia sceny", "Ostatnie wersje sceny (do 30) z notatkami.", "scene", params={"project": PROJECT}, required=("project",), returns="versions[]")
 def scene_history(project: str) -> dict:
     pdir, _ = _proj(project)
@@ -291,9 +309,11 @@ def check_explain(code: str) -> dict:
 
 # ============================================================ render
 
-def _need_ffmpeg() -> None:
-    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
-        raise StudioError("ffmpeg/ffprobe nie są na PATH: render wymaga FFmpeg (zobacz doctor)")
+def _need(*tools: str) -> None:
+    """Sprawdza narzędzia zewnętrzne PRZED startem joba: błąd od razu i po ludzku, a nie dopiero w logu procesu."""
+    missing = [t for t in tools if not shutil.which(t)]
+    if missing:
+        raise StudioError(f"{', '.join(missing)} nie jest na PATH: ta operacja wymaga FFmpeg (zobacz doctor)")
 
 
 @capability("render_start", "Render", "Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait.", "render", job=True,
@@ -302,7 +322,7 @@ def _need_ffmpeg() -> None:
             required=("project",), returns="job, warnings[]",
             when="Render a draft after the supervisor says pass; final only after brief, visual_rules and stills are approved.")
 def render_start(project: str, final: bool = False, audio: str | None = None, force: bool = False) -> dict:
-    _need_ffmpeg()
+    _need("ffmpeg")
     pdir, pr = _proj(project)
     warns = []
     rep = supervisor.latest(pdir)
@@ -318,7 +338,7 @@ def render_start(project: str, final: bool = False, audio: str | None = None, fo
 @capability("sound_start", "Dźwięk", "Buduje cue sheet z EV, miksuje do -14 LUFS i podkłada pod najnowszy render (job).", "render", job=True,
             params={"project": PROJECT}, required=("project",), returns="job")
 def sound_start(project: str) -> dict:
-    _need_ffmpeg()
+    _need("ffmpeg", "ffprobe")
     pdir, _ = _proj(project)
     return {"job": jobs.start("sound", workspace.project_id(pdir), pdir, ["sound", "-p", str(pdir)])}
 
@@ -326,7 +346,7 @@ def sound_start(project: str) -> dict:
 @capability("deliver_start", "Wydanie", "QA pliku, plakat, paczka wydania i DELIVERY.md (job).", "render", job=True,
             params={"project": PROJECT, "strict": {"type": "boolean", "default": False}}, required=("project",), returns="job")
 def deliver_start(project: str, strict: bool = False) -> dict:
-    _need_ffmpeg()
+    _need("ffmpeg", "ffprobe")
     pdir, _ = _proj(project)
     return {"job": jobs.start("deliver", workspace.project_id(pdir), pdir, ["deliver", "-p", str(pdir)] + (["--strict"] if strict else []))}
 

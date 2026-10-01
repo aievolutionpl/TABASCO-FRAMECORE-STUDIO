@@ -2,7 +2,7 @@
 
 > Plik generowany z rejestru możliwości (`vstudio/registry.py`, operacje w `vstudio/ops.py`). Nie edytuj ręcznie: `python vstudio.py tools --write-docs`.
 
-Studio ma **41 operacji** w 10 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
+Studio ma **43 operacji** w 10 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
 
 | Powierzchnia | Jak | Dla kogo |
 | --- | --- | --- |
@@ -207,6 +207,35 @@ Zamienia dokładne fragmenty tekstu (każdy musi wystąpić raz, chyba że all=t
 | --- | --- | --- | --- |
 | `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
 | `edits` | array | tak | [{find, replace, all?}]; find must match exactly once |
+| `note` | string | nie |  |
+| `check` | string (quick \| standard \| deep) | nie | Run the supervisor after the change and attach its verdict. |
+
+### `scene_palette`: Paleta sceny
+
+Kolory #RRGGBB użyte w scenie (liczność, jasność) i propozycja mapowania na kolory marki z profilu.
+
+**Kiedy:** Before restyling a template: see which colours it uses, then apply the brand with scene_recolor instead of editing hex values by hand.
+
+**Zwraca:** colors[], brand, suggestion[]
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+
+### `scene_recolor`: Zmień kolory sceny
+
+Podmienia kolory #RRGGBB w całej scenie jednym przebiegiem (z historią). Z `check` od razu uruchamia nadzorcę.
+
+**Kiedy:** Apply the brand palette (see `suggestion` in scene_palette) or change one colour everywhere. Contrast is re-checked by the supervisor.
+
+**Zwraca:** replaced{hex: n}, not_found[], check?
+
+**Cechy:** zmienia pliki, obrazy
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `project` | string | tak | Project id 'brand/slug' (or a unique slug). Get ids from projects_list. |
+| `mapping` | object | tak | {"#OLD": "#NEW", ...}, each #RRGGBB |
 | `note` | string | nie |  |
 | `check` | string (quick \| standard \| deep) | nie | Run the supervisor after the change and attach its verdict. |
 
@@ -563,5 +592,6 @@ _brak parametrów_
 | `LOW_CONTRAST` | Niski kontrast tekstu | Raise contrast to at least 3:1 for large text (4.5:1 for small): darken the background behind the text or change the text colour. |
 | `TEXT_TINY` | Tekst zbyt mały | Increase the font size; on a phone, text under about 2.5% of the frame height is hard to read. |
 | `SAFE_ZONE` | Tekst w strefie interfejsu platformy | Keep text out of the top 10% and bottom 20% of vertical video (Reels/Shorts/TikTok UI covers them) and 5% from the edges. |
+| `TEXTS_FAILED` | window.TEXTS rzuca wyjątek | Fix the error thrown by window.TEXTS(t) (usually a selector that no longer exists or a read of an element before it is created). Reading time, framing and contrast cannot be checked until it works for every t. |
 | `SEEK_FAILED` | window.seek rzuca wyjątek | Fix the error thrown by seek(t); the film cannot be sampled or rendered until it works for every t in [0, DURATION]. |
 | `ENGINE_UNSUPPORTED` | Silnik bez głębokich kontroli | Deep checks need the html engine (window.seek contract). Use still/render for this engine. |

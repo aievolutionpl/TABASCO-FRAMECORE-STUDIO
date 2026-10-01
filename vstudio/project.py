@@ -330,12 +330,14 @@ def render(pdir: Path, proj: dict, final: bool, tag: str | None, subframes: int 
     else:
         qa_args += ["--no-sheet"]
     run(qa_args, check=False)
-    proj["renders"].append({"file": f"renders/{name}", "final": final, "at": __import__("datetime").datetime.now().isoformat(timespec="seconds")})
-    if final:
-        proj["gates"]["final"] = today()
-    else:
-        proj["gates"]["draft"] = today()
-    save_project(pdir, proj)
+    entry = {"file": f"renders/{name}", "final": final, "at": __import__("datetime").datetime.now().isoformat(timespec="seconds")}
+    # render trwa minuty: w tym czasie ktoś mógł zatwierdzić bramki. Zapisujemy na świeżo wczytanym project.json, a nie na kopii z
+    # początku joba (inaczej render po cichu cofa zatwierdzenia i gubi wpisy innych jobów)
+    _, fresh = load_project(pdir)
+    fresh.setdefault("renders", []).append(entry)
+    fresh["gates"]["final" if final else "draft"] = today()
+    save_project(pdir, fresh)
+    proj.update(fresh)
     append_log(pdir, f"render {'final' if final else 'draft'}: renders/{name}")
     return out
 

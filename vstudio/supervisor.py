@@ -25,7 +25,7 @@ BIG, BIG_FRACTION = 32, 2e-4            # klatki „takie same”: udział pikse
 SEVERITY_ORDER = {"error": 0, "warn": 1, "info": 2}
 PENALTY = {"error": 30, "warn": 8, "info": 1}
 DEPTH_STEP = {"quick": 0.25, "standard": 0.1, "deep": None}         # None = co klatkę projektu
-MAX_SAMPLES = 400
+MAX_SAMPLES = 240                      # ~25 s: głęboki nadzór ma mieścić się w limitach czasu klientów MCP
 
 #: kod -> (tytuł dla człowieka, wskazówka naprawy dla agenta). Źródło dla raportów, skilla i docs/CAPABILITIES.md.
 REMEDIES: dict[str, tuple[str, str]] = {
@@ -51,6 +51,7 @@ REMEDIES: dict[str, tuple[str, str]] = {
     "LOW_CONTRAST": ("Niski kontrast tekstu", "Raise contrast to at least 3:1 for large text (4.5:1 for small): darken the background behind the text or change the text colour."),
     "TEXT_TINY": ("Tekst zbyt mały", "Increase the font size; on a phone, text under about 2.5% of the frame height is hard to read."),
     "SAFE_ZONE": ("Tekst w strefie interfejsu platformy", "Keep text out of the top 10% and bottom 20% of vertical video (Reels/Shorts/TikTok UI covers them) and 5% from the edges."),
+    "TEXTS_FAILED": ("window.TEXTS rzuca wyjątek", "Fix the error thrown by window.TEXTS(t) (usually a selector that no longer exists or a read of an element before it is created). Reading time, framing and contrast cannot be checked until it works for every t."),
     "SEEK_FAILED": ("window.seek rzuca wyjątek", "Fix the error thrown by seek(t); the film cannot be sampled or rendered until it works for every t in [0, DURATION]."),
     "ENGINE_UNSUPPORTED": ("Silnik bez głębokich kontroli", "Deep checks need the html engine (window.seek contract). Use still/render for this engine."),
 }
@@ -254,20 +255,28 @@ def _check(pdir: Path, pr: dict, depth: str, save: bool) -> dict:
         last_t = round(dur - 1.0 / fps, 4)
         if last_t not in times:
             times.append(last_t)
-        metrics.update(samples=len(times), step=round(step, 4), duration=dur)
+        step = float(np.median(np.diff(times))) if len(times) > 1 else step     # faktyczny odstęp po ewentualnym przerzedzeniu próbek
+        metrics.update(samples=len(times), step=round(step, 4), duration=dur, thinned=len(times) < int(dur / (DEPTH_STEP[depth] or 1.0 / fps)))
         frames_jpg: list[bytes] = []
         grays = []
         texts_at: list[list[dict]] = []
-        try:
-            for t in times:
+        texts_broken = False
+        for t in times:
+            try:
                 _seek(page, seek, t)
                 data = _jpg(page)
-                frames_jpg.append(data)
-                grays.append(_gray(_img(data)))
+            except Exception as exc:  # noqa: BLE001
+                findings.append(_new_finding("SEEK_FAILED", "error", f"t={t}: {str(exc)[:240]}", t=t))
+                return _finish(pdir, pr, n, depth, findings, metrics, None, t_start, save, round_assets)
+            frames_jpg.append(data)
+            grays.append(_gray(_img(data)))
+            try:
                 texts_at.append(page.evaluate("(t) => (typeof window.TEXTS === 'function' ? window.TEXTS(t) : [])", t) or [])
-        except Exception as exc:  # noqa: BLE001
-            findings.append(_new_finding("SEEK_FAILED", "error", f"t={times[len(frames_jpg)]}: {str(exc)[:240]}", t=times[len(frames_jpg)]))
-            return _finish(pdir, pr, n, depth, findings, metrics, None, t_start, save, round_assets)
+            except Exception as exc:  # noqa: BLE001 - błąd w TEXTS to inna usterka niż w seek: osobny kod i osobna wskazówka
+                texts_at.append([])
+                if not texts_broken:
+                    texts_broken = True
+                    findings.append(_new_finding("TEXTS_FAILED", "error", f"t={t}: {str(exc)[:240]}", t=t))
 
         # ---- puste klatki i martwy czas
         stds = [float(g.std()) for g in grays]
@@ -353,7 +362,7 @@ def _check(pdir: Path, pr: dict, depth: str, save: bool) -> dict:
         metrics["texts"] = len(pieces)
 
     # ---- czas czytania (osobna sesja, krok 0.04 s: dokładniejszy niż nasze próbkowanie)
-    if hooks["texts"]:
+    if hooks["texts"] and not texts_broken:
         try:
             rc = pages.readcheck(page_path, fps=fps, size=(w, h))
         except Exception as exc:  # noqa: BLE001 - readcheck nie może przewrócić całej rundy
