@@ -685,8 +685,18 @@ class TestSupervisorInBrowser:
         assert [h["round"] for h in call("check_history", project=pid)["rounds"]] == [1, 2]
         assert call("check_latest", project=pid)["report"]["round"] == 2
 
-    def test_missing_library_is_reported_with_the_fix(self, studio):
-        pid = self._mk(studio)                                   # bez vendora i bez sieci: GSAP z CDN się nie załaduje
+    def test_missing_library_is_reported_with_the_fix(self, studio, monkeypatch):
+        from vstudio import vendor
+
+        real = vendor.install_routes
+
+        def offline(target):                                     # bez vendora i bez sieci: CDN odrzuca żądania (CI ma dostęp do sieci)
+            real(target)
+            target.route(re.compile(r"https?://(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|unpkg\.com)/"), lambda route: route.abort())
+            return False
+
+        monkeypatch.setattr(vendor, "install_routes", offline)
+        pid = self._mk(studio)
         r = call("check_run", project=pid, depth="quick")
         assert r["verdict"] == "blocked" and {"PAGE_ERROR", "NET_FAILED"} & {f["code"] for f in r["findings"]}
         assert any("vendor_add" in a for a in r["next_actions"])

@@ -2,9 +2,22 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
+
+
+def _playwright_browsers_dir() -> Path | None:
+    """Gdzie Playwright trzyma przeglądarki w prawdziwym HOME (testy podmieniają HOME, więc bez tego nie znalazłby Chromium)."""
+    if os.environ.get("PLAYWRIGHT_BROWSERS_PATH"):
+        return None
+    home = Path.home()
+    if os.name == "nt":
+        return home / "AppData" / "Local" / "ms-playwright"
+    if sys.platform == "darwin":
+        return home / "Library" / "Caches" / "ms-playwright"
+    return home / ".cache" / "ms-playwright"
 
 
 @pytest.fixture
@@ -21,6 +34,9 @@ def studio(tmp_path, monkeypatch):
     monkeypatch.setattr(common, "SERVICE_MODE", True)
     monkeypatch.setattr(project, "ROOT", tmp_path)
     monkeypatch.setattr(agentkit, "ROOT", tmp_path)
+    browsers = _playwright_browsers_dir()
+    if browsers is not None and browsers.is_dir():
+        monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browsers))
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))
     return out
