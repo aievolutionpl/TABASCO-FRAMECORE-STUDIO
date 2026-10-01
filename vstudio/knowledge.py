@@ -23,6 +23,10 @@ Strongly recommended:
 - `EV = [{t, type}]` sound events (types: whoosh, hit/impact, pop, click, chime, tick, reveal, type). Sound is generated from these.
 - `TEXTS(t) = [{id, text, x0, y0, x1, y1}]` every visible text with its pixel box at time t, so reading time, framing, contrast and
   safe zones can be checked. Read the same source as the drawing code; if you forget a text here the check will say OK for text that is not drawn.
+  Word-by-word captions that follow a voice add `caption: true` to their entry (`VS.captions.texts(t)` does it): they are only checked for staying inside
+  the frame, not for reading time or holding still, because the viewer hears them. Never mark ordinary text as a caption.
+- `window.__ALPHA__` (boolean, set by the renderer in overlay mode, see `render_start overlay`): true when the film is rendered as a transparent layer to be placed over
+  the user's own footage. Hide full-bleed backdrops and the footage placeholder when it is set (or mark them `data-alpha="hide"`); keep cards, captions and effects.
 
 Rules: no Math.random, no timers, no CSS transitions/animations, no state carried between frames. One continuous motion beats cuts.
 Layout is relative to the viewport or a fixed stage scaled to fit, so one file exports to 16:9, 9:16 and 1:1.
@@ -105,6 +109,27 @@ Review ritual: `director_review`, then LOOK at the filmstrip and the rhythm char
 A film you would scroll past is not approved.
 """
 
+FEEL = """\
+# Physical motion: how movement gets weight
+
+Cheap motion is linear, instant or floaty. Physical motion starts fast, lands softly and has a little life in it. These rules are what `director_review` can measure
+(LINEAR_MOTION, NO_STAGGER) plus the habits that make a film feel built rather than assembled. The motion kit (`motion_kit_add`) provides the curves.
+
+1. Entrances ease OUT: fast start, long soft landing (`VS.ease.out` = cubic-bezier(.23, 1, .32, 1), or GSAP expo.out / power3.out). Exits are shorter than entrances (60-70%) and
+   leave quickly; a thing that arrives slowly and leaves slowly feels heavy for no reason. Linear is for loops, progress bars and long drifts only.
+2. One spring per beat, on the hero element (a card dropping in, a badge). `ease: VS.spring(170, 16)` (stiffness, damping) overshoots 2-6% and settles; use
+   `duration: VS.springDuration(170, 16)` so the tween lasts exactly as long as the spring needs. Stiffer and tighter (300, 21) for small pops; softer (120, 14) for big cards.
+   Critical damping (damping = 2 * sqrt(stiffness)) never overshoots: use it for things that must not bounce (text blocks, a window sliding in).
+3. Scale from .8-.95, never from 0, and fade in together (opacity 0 to 1 within the first third). Pops end at 1, not at 1.05 held.
+4. Stagger groups by .04-.09 s in reading order; six items should finish entering within about .5 s. All at once is NO_STAGGER; slower than .12 s feels like a slideshow.
+5. Duration by size: state change .15-.25 s, text and icons .35-.6 s, cards and windows .6-.9 s. Nothing over 1 s except camera moves and drifts.
+6. Distance by importance: details travel 12-40 px, cards 80-200 px. Everything in a beat travels in the same direction family (up and in), with one counter-move for contrast.
+7. Settle, then hold: an element stays still for at least 8 frames (about .27 s at 30 fps) after it lands before anything else moves it. The hold-still check enforces it.
+8. Under any hold over 1 s put a slow push-in (3-6% scale across the beat) or drift, so the picture is never dead (DEAD_TIME).
+9. Overlap: start the next move while the previous one is in its last 20%; a film where everything waits for the previous thing to finish feels sequential, not directed.
+10. Everything from time: `VS.count`, `VS.type`, `VS.blink` compute numbers, typing and cursor blink directly from t. No timers, no randomness, so seek order never matters.
+"""
+
 ASSETS = """\
 # Assets: icons, generated graphics and downloaded images
 
@@ -156,14 +181,22 @@ def _styles_text() -> str:
     return styles.library_text()
 
 
+def _formats_text() -> str:
+    from . import styles
+
+    return styles.formats_text()
+
+
 TOPICS = {
     "contract": ("Page contract: hooks the scene must expose", lambda: CONTRACT),
     "direction": ("The director's craft: hook, rhythm, variety, motion, text, assets", lambda: DIRECTION),
     "styles": ("Style library, transitions and beat layouts", _styles_text),
+    "formats": ("Reel formats with proven beat sheets (tool-drop, talking-head, listicle) and caption rules", _formats_text),
     "assets": ("Icons, generated graphics and downloaded images", lambda: ASSETS),
     "gsap": ("Deterministic GSAP recipe and pitfalls", lambda: GSAP),
     "workflow": ("The work loop with the supervisor", lambda: WORKFLOW),
     "findings": ("Finding codes and fixes", findings_text),
+    "feel": ("Physical motion: ease-out, springs, scale, stagger, settle (with the motion kit)", lambda: FEEL),
     "motion": ("Motion rules (numeric)", lambda: _template("MOTION_RULES.md")),
     "visual": ("Visual rules (palette, type, composition)", lambda: _template("VISUAL_RULES.md")),
     "brand": ("The user's brand profile", brand_text),

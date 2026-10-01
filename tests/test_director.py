@@ -174,6 +174,20 @@ class TestDscan:
         assert n == 3 and labels[0] == labels[3]
         assert [dscan.required_looks(d) for d in (3, 7, 14, 30)] == [1, 2, 3, 4]
 
+    def test_look_distance_sees_a_card_on_one_cell_but_not_a_small_shift(self):
+        import numpy as np
+
+        def frame(card=None, shift=0):
+            f = np.full((90, 90, 3), (30, 30, 40), dtype=np.uint8)
+            if card:
+                f[30:60, 30:60] = card                                   # jedna komórka 3x3 zmienia kolor
+            f[5:15, 5 + shift:25 + shift] = (200, 200, 200)             # drobny element, który się przesuwa
+            return f
+
+        base = dscan.color_layout(frame())
+        assert dscan.look_distance(base, dscan.color_layout(frame(shift=6))) < dscan.LOOK_TAU
+        assert dscan.look_distance(base, dscan.color_layout(frame(card=(250, 240, 220)))) > dscan.LOOK_TAU
+
     def test_block_change_counts_extent_not_stroke_area(self):
         import numpy as np
 

@@ -27,7 +27,7 @@ from ..common import OUTPUT, StudioError
 from .watcher import Watcher
 
 STATIC = Path(__file__).resolve().parent / "static"
-ALLOWED_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".mp4", ".webm", ".m4a", ".wav", ".json", ".md", ".txt", ".html", ".css", ".js", ".woff2"}
+ALLOWED_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".mp4", ".mov", ".webm", ".m4a", ".wav", ".json", ".md", ".txt", ".html", ".css", ".js", ".woff2"}
 _HOST_OK = re.compile(r"^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$")
 MAX_BODY = 4_000_000                        # scena do ~2 MB + narzut JSON
 

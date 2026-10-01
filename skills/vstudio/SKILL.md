@@ -53,6 +53,10 @@ Strongly recommended:
 - `EV = [{t, type}]` sound events (types: whoosh, hit/impact, pop, click, chime, tick, reveal, type). Sound is generated from these.
 - `TEXTS(t) = [{id, text, x0, y0, x1, y1}]` every visible text with its pixel box at time t, so reading time, framing, contrast and
   safe zones can be checked. Read the same source as the drawing code; if you forget a text here the check will say OK for text that is not drawn.
+  Word-by-word captions that follow a voice add `caption: true` to their entry (`VS.captions.texts(t)` does it): they are only checked for staying inside
+  the frame, not for reading time or holding still, because the viewer hears them. Never mark ordinary text as a caption.
+- `window.__ALPHA__` (boolean, set by the renderer in overlay mode, see `render_start overlay`): true when the film is rendered as a transparent layer to be placed over
+  the user's own footage. Hide full-bleed backdrops and the footage placeholder when it is set (or mark them `data-alpha="hide"`); keep cards, captions and effects.
 
 Rules: no Math.random, no timers, no CSS transitions/animations, no state carried between frames. One continuous motion beats cuts.
 Layout is relative to the viewport or a fixed stage scaled to fit, so one file exports to 16:9, 9:16 and 1:1.
@@ -156,12 +160,12 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | --- | --- | --- |
 | `styles_list` | `platform`?, `energy_min`?, `query`? | 14 stylów (kinetyczna typografia, szkło, neo-brutalizm, luksus, retro, naklejki, dane, 3D...) z tonem, energią, platformami, plus przejścia i układy bitów. |
 | `style_get` | `id` | Pełny opis jednego stylu: paleta, typografia, język ruchu, przejścia, zasady kompozycji i gotowa receptura CSS/GSAP. |
-| `director_plan` | `project`, `goal`, `tone`?, `platform`?, `pace`?, `prefer`?, `avoid`?, `cta`?, `loop`?, `write_storyboard`? | Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: bity co 2-3 s (hak, rozwinięcie, dowód, CTA) ze stylem, układem, przejściem, dźwiękiem i hasłami do assetów. (zmienia pliki) |
+| `director_plan` | `project`, `goal`, `tone`?, `platform`?, `pace`?, `prefer`?, `avoid`?, `cta`?, `loop`?, `write_storyboard`?, `format`?, `items`? | Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: bity co 2-3 s (hak, rozwinięcie, dowód, CTA) ze stylem, układem, przejściem, dźwiękiem i hasłami do assetów. (zmienia pliki) |
 | `director_review` | `project`, `depth`?, `platform`?, `pace`? | Mierzy film oczami widza: rytm (nowa sytuacja co 2-3 s), hak, różnorodność looków, ruch (przyspieszenia, stagger), widoczność i fonty tekstu (polskie znaki), obrazy, migotanie. Zwraca werdykt, znaleziska, taśmę klatek i wykres rytmu. (zmienia pliki) (obrazy) |
 | `director_signoff` | `project`, `approve`, `notes`, `checklist`?, `accept`? | Świadome zatwierdzenie (albo odrzucenie) aktualnej wersji sceny po obejrzeniu klatek: checklista, notatka, zaakceptowane ostrzeżenia z powodem. Zmiana sceny unieważnia decyzję. (zmienia pliki) |
 | `director_latest` | `project` | Ostatni raport reżysera bez uruchamiania nowego, stan zatwierdzenia (czy aktualny), zapisany plan i historia rund. |
 
-### Assety: ikony, grafiki, zdjęcia
+### Assety: ikony, grafiki, napisy, zdjęcia
 
 | Narzędzie | Parametry | Do czego |
 | --- | --- | --- |
@@ -170,13 +174,15 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | `assets_generate` | `project`, `kind`, `seed`?, `colors`?, `name`?, `width`?, `height`? | Deterministyczna grafika SVG z ziarna w kolorach marki: blob, mesh (zorza), dots, grid, rings, waves, rays, confetti, grain, starburst, squiggle, arrow. (zmienia pliki) |
 | `assets_list` | `project` | Pliki w src/assets/ z pochodzeniem i licencją oraz lista generatorów i liczba wbudowanych ikon. |
 | `assets_snippet` | `project`, `file`, `mode`? | HTML do wklejenia w scenę: SVG inline (przemalowywalny przez `color`) albo <img> z relatywną ścieżką. |
+| `captions_build` | `project`, `text`?, `srt`?, `words`?, `start`?, `end`?, `wpm`?, `style`?, `max_words`?, `highlight`?, `numbers`? | Z tekstu lektora, SRT/VTT albo znaczników słów buduje dane napisów (czasy słów, linie, podświetlenia) i zapisuje je razem z silnikiem w src/assets/. Zwraca kod do wklejenia w scenę. (zmienia pliki) |
+| `motion_kit_add` | `project` | Zapisuje src/assets/motion-kit.js: sprężyny jako ease dla GSAP, mocne krzywe Béziera, licznik, pisanie znak po znaku i silnik napisów. Wszystko deterministyczne. (zmienia pliki) |
 | `assets_remove` | `project`, `file` | Usuwa plik z src/assets/ razem z wpisem w śladzie licencji. (zmienia pliki) |
 
 ### Render, dźwięk, wydanie
 
 | Narzędzie | Parametry | Do czego |
 | --- | --- | --- |
-| `render_start` | `project`, `final`?, `audio`?, `force`?, `skip_review`? | Uruchamia render jako job (draft w połowie rozdzielczości albo final). Zwraca job; postęp przez job_get/job_wait. (job) |
+| `render_start` | `project`, `final`?, `audio`?, `overlay`?, `force`?, `skip_review`? | Uruchamia render jako job (draft w połowie rozdzielczości, final albo nakładka z przezroczystością). Zwraca job; postęp przez job_get/job_wait. (job) |
 | `sound_start` | `project` | Buduje cue sheet z EV, miksuje do -14 LUFS i podkłada pod najnowszy render (job). (job) |
 | `deliver_start` | `project`, `strict`?, `skip_review`? | QA pliku, plakat, paczka wydania i DELIVERY.md (job). (job) |
 | `jobs_list` | `project`? | Ostatnie joby (render, dźwięk, wydanie) z postępem. |

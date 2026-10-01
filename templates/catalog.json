@@ -72,6 +72,22 @@
       "technique": "CSS 3D z perspektywą na rodzicu, stos paneli dla grubości bryły",
       "file": "examples/motion-graphics/06-one-hero-one-world.html",
       "size": [1080, 1350], "fps": 30, "duration": 7.0, "poster_t": 3.2, "loop": true, "tags": ["gsap", "product", "3d"]
+    },
+    {
+      "id": "resource-drop", "title": "Polecajka narzędzia (rolka)",
+      "summary": "Rolka 9:16: napisy słowo po słowie nad nagraniem, okno przeglądarki z demo, karta zasobu z plakietką DARMOWY i komendą, trzy korzyści i CTA „skomentuj słowo”.",
+      "use_for": "Polecanie darmowego narzędzia, biblioteki lub skilla w rolce twórcy; nakładka na własne nagranie",
+      "technique": "Okno z przewijaną i najeżdżaną treścią, sprężyny z motion-kit, komenda wpisywana z t, napisy słowo po słowie, tryb nakładki z alfą",
+      "file": "examples/reel-formats/resource-drop.html",
+      "size": [1080, 1920], "fps": 30, "duration": 16.0, "poster_t": 7.6, "loop": false, "tags": ["gsap", "reel", "creator", "captions", "tool"]
+    },
+    {
+      "id": "word-captions", "title": "Mówiąca głowa z napisami (rolka)",
+      "summary": "Rolka 9:16: nagranie twórcy na dole, napisy po dwa słowa z podświetleniem, nad nimi cztery różne karty (wielka liczba, licznik, kinetyczna typografia, siatka ikon) i CTA „skomentuj słowo”.",
+      "use_for": "Poradniki i wskazówki mówione do kamery; nakładka na własne nagranie",
+      "technique": "Napisy pop z motion-kit, licznik liczony z t, tekst wjeżdżający spod maski, panele nastroju, tryb nakładki z alfą",
+      "file": "examples/reel-formats/word-captions.html",
+      "size": [1080, 1920], "fps": 30, "duration": 13.5, "poster_t": 8.6, "loop": false, "tags": ["gsap", "reel", "creator", "captions", "tips"]
     }
   ]
 }

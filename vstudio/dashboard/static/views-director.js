@@ -2,7 +2,8 @@
 'use strict';
 (() => {
   const { esc, $, $$ } = V;
-  const ROLE = { hook: 'Hak', problem: 'Problem', setup: 'Wstęp', reveal: 'Odsłonięcie', proof: 'Dowód', benefit: 'Korzyści', detail: 'Szczegół', cta: 'CTA' };
+  const ROLE = { hook: 'Hak', problem: 'Problem', setup: 'Wstęp', reveal: 'Odsłonięcie', proof: 'Dowód', benefit: 'Korzyści', detail: 'Szczegół', demo: 'Demo', card: 'Karta', point: 'Punkt', item: 'Pozycja', cta: 'CTA' };
+  const FORMATS = [['', 'dowolny (dobierz sam)'], ['tool-drop', 'Polecajka narzędzia'], ['talking-head', 'Mówiąca głowa z napisami'], ['listicle', 'Lista N rzeczy']];
   const CHECK = {
     hook: 'Pierwsza sekunda przyciąga uwagę (ruch, mocny napis albo obraz).',
     text: 'Każdy tekst jest w pełni widoczny, czytelny na telefonie i bez literówek (polskie znaki też).',
@@ -87,11 +88,13 @@
       const styleChip = (s, role) => `<span class="schip" title="${esc(s.tagline || '')}"><i style="background:${esc(s.palette.accent)}"></i><i style="background:${esc(s.palette.accent2)}"></i><i style="background:${esc(s.palette.bg)}"></i>${esc(s.name)}${role ? `<small>${role}</small>` : ''}</span>`;
       const beats = p ? p.beats.map(b => { const w = 100 * (b.t1 - b.t0) / p.duration; return `<div class="bt" style="flex:${w}" title="${esc(b.copy)}"><b>${esc(ROLE[b.role] || b.role)}</b><span>${b.t0}–${b.t1} s</span><em>${esc(b.style)}</em><small>${esc(b.layout)}${b.transition_in ? ' · ' + esc(b.transition_in) : ''}</small></div>`; }).join('') : '';
       return `<div class="card pad" style="margin:12px 0"><div class="row" style="margin-bottom:8px"><h3 style="flex:1">Plan reżyserski</h3>${p ? `<button class="btn sm" id="pSend">${V.icon('send')} Zbuduj z agentem</button>` : ''}</div>
-        ${p ? `<div class="row wrap" style="gap:6px;margin-bottom:8px">${styleChip(p.styles.main, 'główny')}${p.styles.accents.map(a => styleChip(a, 'akcent')).join('')}<span class="chip">${esc(p.platform)} · tempo ${esc(p.pace)}</span></div>
+        ${p ? `<div class="row wrap" style="gap:6px;margin-bottom:8px">${styleChip(p.styles.main, 'główny')}${p.styles.accents.map(a => styleChip(a, 'akcent')).join('')}<span class="chip">${esc(p.platform)} · tempo ${esc(p.pace)}</span>${p.format ? `<span class="chip ok">format: ${esc(p.format.name)}</span>` : ''}</div>
+          ${(p.warnings || []).map(w => `<div class="chip warn" style="margin-bottom:6px;white-space:normal">${esc(w)}</div>`).join('')}
           <div class="beats">${beats}</div><div class="dim" style="font-size:12px;margin-top:6px">Stałe: kolory i font marki. Zmienne co bit: układ, tło, język ruchu, przejście. Kliknij bit, żeby zobaczyć regułę tekstu.</div>` : '<div class="dim" style="margin-bottom:8px">Zaplanuj film zanim go zbudujesz: dobiorę styl główny i dwa akcenty o różnych układach i ułożę bity co 2-3 s.</div>'}
         <details style="margin-top:10px" ${p ? '' : 'open'}><summary class="btn sm ghost" style="display:inline-flex">${p ? 'Zaplanuj od nowa' : 'Nowy plan'}</summary><div class="col" style="gap:8px;margin-top:10px">
           <textarea id="pGoal" placeholder="O czym jest film i do czego ma skłonić? np. „Premiera aplikacji do planowania treningów, zachęć do zapisu na listę”">${esc(f.goal || (p ? p.goal : ''))}</textarea>
           <div class="row"><input id="pTone" placeholder="ton (np. premium, zabawny)" value="${esc(f.tone || '')}" style="flex:1"><select id="pPlat" style="width:auto">${PLATFORMS.map(([k, l]) => `<option value="${k}" ${f.platform === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+          <div class="row"><span class="dim" style="font-size:12.5px">Format rolki:</span><select id="pFmt" style="flex:1">${FORMATS.map(([k, l]) => `<option value="${k}" ${f.format === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
           <div class="row wrap" style="gap:6px"><span class="dim" style="font-size:12.5px">Preferowane style:</span>${D.prefer.map(id => `<span class="chip ok" data-unpref="${esc(id)}" style="cursor:pointer">${esc(id)} ✕</span>`).join('') || '<span class="dim" style="font-size:12.5px">brak (dobiorę sam)</span>'}<button class="btn sm ghost" id="pStyles">Biblioteka stylów</button></div>
           <button class="btn primary" id="pGo">${V.icon('spark')} Zaplanuj</button></div></details></div>`;
     };
@@ -139,11 +142,11 @@
       // plan
       const ps = $('#pSend', body); if (ps) ps.onclick = e => askAgent(`Projekt ${pid}: zbuduj scenę według planu reżyserskiego (director_latest). Styl główny ${D.plan.styles.main.id}, akcenty ${D.plan.styles.accents.map(a => a.id).join(', ')}; ${D.plan.beats.length} bitów, nowa sytuacja wizualna co ${D.plan.contract.visible_change_every_s} s. Dodaj ikony i grafiki (assets_search, assets_add, assets_generate). Na końcu director_review i director_signoff.`, e.currentTarget);
       $$('[data-unpref]', body).forEach(c => c.onclick = () => { D.prefer = D.prefer.filter(x => x !== c.dataset.unpref); paint(); });
-      const saveForm = () => { D.form = { goal: $('#pGoal', body).value, tone: $('#pTone', body).value, platform: $('#pPlat', body).value }; };
+      const saveForm = () => { D.form = { goal: $('#pGoal', body).value, tone: $('#pTone', body).value, platform: $('#pPlat', body).value, format: $('#pFmt', body).value }; };
       $('#pStyles', body).onclick = async () => { saveForm(); const r = await V.api('styles_list', {}); const m = V.modal(`<h3>Biblioteka stylów</h3><p class="muted" style="margin:4px 0 12px">Kliknij, żeby preferować styl w planie (maks. 2). Reszta zostanie dobrana pod cel i ton.</p><div class="sgrid">${r.styles.map(s => `<div class="scard ${D.prefer.includes(s.id) ? 'on' : ''}" data-s="${esc(s.id)}"><div class="row"><b style="flex:1">${esc(s.name)}</b><span class="dim mono" style="font-size:11px">energia ${s.energy}</span></div><div class="muted" style="font-size:12.5px;margin:4px 0 8px">${esc(s.tagline)}</div><div class="row" style="gap:4px;margin-bottom:6px">${Object.values(s.palette).map(c => `<i class="chipc" style="background:${esc(c)}"></i>`).join('')}</div><div class="dim" style="font-size:11.5px">${esc(s.tags.slice(0, 4).join(' · '))}</div></div>`).join('')}</div>`, { wide: true, onClose: paint });
         $$('.scard', m.el).forEach(c => c.onclick = () => { const id = c.dataset.s; if (D.prefer.includes(id)) D.prefer = D.prefer.filter(x => x !== id); else if (D.prefer.length < 2) D.prefer.push(id); else { V.toast('Maksymalnie 2 preferowane style', 'err'); return; } c.classList.toggle('on'); }); };
       $('#pGo', body).onclick = e => V.busy(e.currentTarget, async () => { saveForm(); const goal = D.form.goal.trim(); if (!goal) { V.toast('Opisz, o czym jest film', 'err'); return; }
-        await V.api('director_plan', { project: pid, goal, tone: D.form.tone, ...(D.form.platform ? { platform: D.form.platform } : {}), ...(D.prefer.length ? { prefer: D.prefer } : {}) });
+        await V.api('director_plan', { project: pid, goal, tone: D.form.tone, ...(D.form.platform ? { platform: D.form.platform } : {}), ...(D.form.format ? { format: D.form.format } : {}), ...(D.prefer.length ? { prefer: D.prefer } : {}) });
         await load(); paint(); V.toast('Plan gotowy', 'ok'); });
       // assety
       const q = $('#aQ', body);

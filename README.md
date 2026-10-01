@@ -27,6 +27,7 @@ Dźwięk powstaje proceduralnie, ikony i grafiki są własne albo mają ślad li
 - [Szybki start](#szybki-start)
 - [Studio: agent, nadzór jakości i dashboard](#studio-agent-nadzór-jakości-i-dashboard)
 - [Reżyser: plan, przegląd i zatwierdzenie przed wysyłką](#reżyser-plan-przegląd-i-zatwierdzenie-przed-wysyłką)
+- [Rolki: formaty, napisy słowo po słowie i nakładka](#rolki-formaty-napisy-słowo-po-słowie-i-nakładka)
 - [Assety: ikony, grafiki i obrazy](#assety-ikony-grafiki-i-obrazy)
 - [Pipeline i bramki jakości](#pipeline-i-bramki-jakości)
 - [Kontrakt strony filmowej](#kontrakt-strony-filmowej)
@@ -87,11 +88,12 @@ Plakat: [`assets/poster.jpg`](assets/poster.jpg) · Kontakt: [`assets/contact_sh
 | **Krytyka** | `compare` → `CRITIC_BRIEF.md` (render vs referencja, SSIM na klatkach) |
 | **Montaż** | `edl` — montaż z listy decyzji w JSON |
 | **Obraz** | `still` — klatki kontrolne + contact sheet; `readcheck` — czytelność i kadrowanie tekstów |
-| **Render** | `render` (roboczy, half-res) i `render --final` (1080p), `--audio`, `--subframes` |
+| **Render** | `render` (roboczy, half-res), `render --final` (1080p), `render --overlay` (przezroczysta nakładka ProRes 4444), `--audio`, `--subframes` |
 | **Dźwięk** | `cues` → `mix` → `mux`, albo `sound` jednym poleceniem; `sfx` — efekty proceduralne |
 | **Wydanie** | `qa` (audyt pliku) i `deliver` (QA + plakat + paczka) |
 | **Studio** | `dashboard`, `mcp`, `check`, `tools`, `skill`, `vendor`, `onboard`: agent, nadzór jakości i interfejs ([opis](#studio-agent-nadzór-jakości-i-dashboard)) |
-| **Reżyser** | `director plan / review / signoff / status`, `styles`: 14 stylów, storyboard co 2-3 s, przegląd rytmu, haka, tekstu i ruchu, zatwierdzenie przed wysyłką ([opis](#reżyser-plan-przegląd-i-zatwierdzenie-przed-wysyłką)) |
+| **Reżyser** | `director plan / review / signoff / status`, `styles`: 16 stylów, storyboard co 2-3 s, przegląd rytmu, haka, tekstu i ruchu, zatwierdzenie przed wysyłką ([opis](#reżyser-plan-przegląd-i-zatwierdzenie-przed-wysyłką)) |
+| **Rolki** | `director plan --format`, `assets captions / kit`, `render --overlay`: formaty z gotowym układem bitów, napisy słowo po słowie, sprężyny, nakładka z przezroczystością na własne nagranie ([opis](#rolki-formaty-napisy-słowo-po-słowie-i-nakładka)) |
 | **Assety** | `assets search / add / generate / list`: 64 ikony offline, 12 generatorów grafik, Iconify i Openverse z kontrolą licencji ([opis](#assety-ikony-grafiki-i-obrazy)) |
 | **Silniki** | `html` (domyślny, zero zależności poza przeglądarką), `remotion`, `hyperframes` |
 
@@ -163,7 +165,7 @@ więc niczego nie trzeba robić dwa razy:
 
 ```
 agent (MCP)  ─┐
-dashboard    ─┼─►  rejestr możliwości (55 operacji) ─► projekt na dysku
+dashboard    ─┼─►  rejestr możliwości (57 operacji) ─► projekt na dysku
 CLI          ─┘             │
                             ├─► nadzorca jakości: sprawdza każdą zmianę sceny i mówi, co poprawić
                             ├─► reżyser: plan, przegląd i zatwierdzenie przed wysyłką do użytkownika
@@ -199,7 +201,7 @@ aktualny nawet wtedy, gdy agent o nim nie pamięta. Pełna lista kodów i napraw
 
 `python vstudio.py mcp` uruchamia serwer MCP (stdio). Agent dostaje:
 
-- **55 narzędzi** w 12 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
+- **57 narzędzi** w 12 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
   (agent naprawdę *widzi* film), nadzór, **reżyser**, **assety**, render, zadania, diagnostyka,
 - **zasoby**: skill, wiedza (kontrakt strony, deterministyczny GSAP, pętla pracy), brief i ostatni raport każdego projektu,
 - **prompty**: `make-video`, `direct-video` (jak reżyser: plan, assety, przegląd, zatwierdzenie), `review-video`, `fix-findings`, `onboard`.
@@ -213,7 +215,7 @@ z dashboardu („Poproś agenta”), agent podejmuje ją przez `task_next`, a ca
 | Widok | Do czego |
 | --- | --- |
 | **Start** | co dalej (środowisko, marka, zadania), projekty z podglądem, „poproś agenta” |
-| **Biblioteka** | 8 szablonów z żywym podglądem (najedź, żeby odtworzyć), nowy projekt jednym kliknięciem |
+| **Biblioteka** | 10 szablonów z żywym podglądem (najedź, żeby odtworzyć), nowy projekt jednym kliknięciem |
 | **Warsztat projektu** | podgląd sterowany `seek` (to, co widzisz, to się wyrenderuje), klatka po klatce, oś czasu z dźwiękiem, tekstami i znaleziskami; zakładki: Nadzór, **Reżyser** (plan stylu i bitów, wykres rytmu, znaleziska, zatwierdzenie, assety), Źródło (edytor z historią i **paleta sceny**: zmiana koloru w całej scenie albo zastosowanie kolorów marki jednym kliknięciem), Render (jobs z postępem i anulowaniem), Potok (bramki), Agent |
 | **Agent** | instalacja i test połączenia, tablica zadań, aktywność na żywo |
 | **Mapa możliwości** | wszystkie operacje z parametrami i przyciskiem „Wypróbuj” |
@@ -283,11 +285,13 @@ wyboru), a potem układa storyboard: hak, rozwinięcie, dowód, CTA. Każdy bit 
 | `terminal-code` Terminal i kod | narzędzia dla developerów, AI | 3 |
 | `swiss-minimal` Szwajcarski minimalizm | edukacja, firma, raporty | 2 |
 | `dark-luxe` Ciemny luksus | perfumy, biżuteria, premium | 2 |
+| `creator-captions` Napisy twórcy | rolki z nagraniem twórcy: wielkie napisy słowo po słowie | 4 |
+| `tool-showcase` Polecajka narzędzia | okno przeglądarki, karta zasobu z plakietką DARMOWY | 3 |
 | `cinematic-captions` Kinowe napisy | historie, opinie, podróże | 2 |
 | `pastel-soft` Miękki pastel | uroda, zdrowie, dzieci | 2 |
 
 Każdy styl ma paletę, typografię (z uwagą o `latin-ext` dla polskich znaków), język ruchu, przejścia, zasady kompozycji i **gotową recepturę
-CSS/GSAP** (`style_get`). Do tego 12 przejść (każde deterministyczne w GSAP) i 10 układów bitów (`styles_list`).
+CSS/GSAP** (`style_get`). Do tego 13 przejść (każde deterministyczne w GSAP) i 15 układów bitów (`styles_list`).
 
 ### Przegląd: co mierzy
 
@@ -323,6 +327,47 @@ To bramka procesu, nie dowód, że recenzent patrzył: dlatego checklista, notat
 **bez narzędzi do edycji sceny** (niezależność oceny). Procedura: plan, `check_run`, `director_review`, obejrzenie taśmy i klatek w kluczowych
 chwilach, decyzja według checklisty, `director_signoff`, odpowiedź z werdyktem i listą poprawek. Agent budujący film wywołuje go przed
 powiedzeniem użytkownikowi, że film jest gotowy.
+
+## Rolki: formaty, napisy słowo po słowie i nakładka
+
+Rolka twórcy ma powtarzalny układ: mówiąca głowa na dole, karty i okno nad nią, wielkie napisy słowo po słowie na styku i CTA „skomentuj słowo”.
+Studio zna go jako **format**, a nie jako jeden szablon, więc te same klocki składają się w różne filmy:
+
+| Format | Układ bitów | Czas |
+| --- | --- | --- |
+| `tool-drop` Polecajka narzędzia | hak → okno przeglądarki z produktem → karta zasobu (plakietka DARMOWY, komenda w terminalu) → korzyści → CTA | 14-24 s |
+| `talking-head` Mówiąca głowa z napisami | hak → trzy punkty z kartą na każdy → CTA | 10-30 s |
+| `listicle` Lista | hak → N pozycji (2-7) → CTA | 10-30 s |
+
+`director plan --format tool-drop` (albo `director_plan` z `format`) układa bity z tego schematu zamiast z ogólnego szkieletu. Marka (paleta, font, ton) zostaje
+Twoja; format ustala bity, style i układy. Za krótki film jest odrzucany z podaniem minimum, a bit dłuższy niż limit tempa platformy o ponad sekundę albo krótszy niż sekunda
+dostaje ostrzeżenie w planie (`warnings`).
+
+**Napisy słowo po słowie** (`assets captions`, narzędzie `captions_build`) powstają z tekstu lektora, pliku SRT/VTT albo znaczników słów z transkrypcji.
+Trzy style: `single` (jedno wielkie słowo; słowa krótsze niż 0,2 s łączą się w parę, żeby nie migały), `pop` (słowa wskakują, linia zostaje) i `karaoke` (cała linia,
+aktywne słowo podświetlone). Liczby i wskazane słowa dostają kolor akcentu. Dane i silnik trafiają do `src/assets/` (`captions.js`, `motion-kit.js`), a w scenie wystarczą
+trzy linie (`VS.captions.mount`, `draw(t)` w `seek`, `texts(t)` w `TEXTS`). Uwaga: bez znaczników czasów słowa są rozłożone proporcjonalnie do długości i interpunkcji,
+czyli **przybliżenie**; dokładne napisy daje SRT albo `words`. Wpisy napisów mają w `TEXTS` pole `caption: true`: sprawdzamy tylko, czy mieszczą się w kadrze,
+a nie czas czytania, bo widz je słyszy.
+
+**Zestaw ruchu** (`assets kit`, `templates/motion-kit.js`): sprężyny jako ease dla GSAP (`VS.spring(170, 16)` z czasem ustalenia `VS.springDuration`), mocne krzywe
+Béziera (`VS.ease.out`), licznik, pisanie znak po znaku i miganie kursora liczone wprost z `t`. Wszystko deterministyczne, bez timerów i losowości. Zasady „ciężaru” ruchu
+(ease-out na wejściu, jedna sprężyna na bit, skala od .8-.95, stagger .04-.09 s, ruch ustala się przed następnym) są w wiedzy agenta: `knowledge_get topic=feel`.
+
+**Nakładka z przezroczystością.** Własnego nagrania nie renderujemy: `render --overlay` (`render_start` z `overlay: true`) zapisuje same animowane warstwy jako
+**ProRes 4444 `.mov` z kanałem alfa**, pełna rozdzielczość projektu, bez dźwięku. Składasz je w montażu na swoim nagraniu. Renderer ustawia `window.__ALPHA__`,
+zdejmuje tło strony i ukrywa elementy oznaczone `data-alpha="hide"`; szablony rolek chowają tło i placeholder nagrania same. Nakładka trafia do użytkownika, więc
+wymaga tego samego zatwierdzenia reżysera co finalny render. Większość przeglądarek (Chrome, Firefox) nie odtwarza ProRes, więc dashboard pokazuje plik na liście do pobrania, bez odtwarzacza.
+
+Dwa szablony do startu (Biblioteka): `resource-drop` (16 s, polecajka narzędzia) i `word-captions` (13,5 s, mówiąca głowa). Oba przechodzą nadzorcę i reżysera bez ostrzeżeń.
+Szablon może zawierać znacznik `<!--@motion-kit-->`: przy tworzeniu projektu wchodzi w jego miejsce zestaw ruchu, więc kod sprężyn i napisów jest w jednym miejscu.
+
+```bash
+python vstudio.py director plan -p moj-film --goal "Darmowy skill do animacji" --format tool-drop --cta "Skomentuj ANIMACJA"
+python vstudio.py assets captions -p moj-film --text "Ten skill zmienia 3 rzeczy w Twoich filmach" --style pop --highlight skill
+python vstudio.py assets captions -p moj-film --srt napisy.srt --style karaoke        # dokładne czasy
+python vstudio.py render -p moj-film --overlay                                         # renders/moj-film_overlay_*.mov
+```
 
 ## Assety: ikony, grafiki i obrazy
 
@@ -396,6 +441,9 @@ Silnik `html` renderuje Twoją stronę przez Playwright/Chromium. Strona musi wy
 | `window.__ready` | `Promise` | fonty i obrazy gotowe do zrzutu klatki |
 | `window.__CAPTURE__` | `boolean` | flaga renderera — gdy `true`, nie odpalaj pętli `requestAnimationFrame` |
 
+Opcjonalnie: wpis `TEXTS` z `caption: true` oznacza napis słowo po słowie (sprawdzany tylko pod kątem kadru), a `window.__ALPHA__` (ustawiane w trybie nakładki)
+mówi scenie, żeby schowała tło i placeholder nagrania.
+
 Minimalny szkielet (pełny wzorzec: `templates/html-video-starter.html`):
 
 ```html
@@ -453,7 +501,7 @@ vstudio list      projekty i ich następny krok
 vstudio doctor    sprawdzenie środowiska (uruchom pierwszy)
 vstudio status    stan bramek i następny krok
 vstudio still     klatki kontrolne + contact sheet
-vstudio render    render roboczy (--final = 1080p, --audio, --subframes)
+vstudio render    render roboczy (--final = 1080p, --overlay = przezroczysta nakładka .mov, --audio, --subframes)
 vstudio gate      approve | reset | score  (brief…final)
 vstudio cues      cue sheet z window.EV
 vstudio mix       miks do -14 LUFS
@@ -473,9 +521,9 @@ vstudio tools     mapa wszystkich możliwości (--write-docs generuje docs/CAPAB
 vstudio skill     skill dla agenta (--write, --install)
 vstudio vendor    lokalne kopie bibliotek z CDN: add | list | remove
 vstudio onboard   stan studia i co zrobić dalej
-vstudio director  reżyser: plan | review | signoff | status (zatwierdzenie przed wysyłką)
+vstudio director  reżyser: plan (--format) | review | signoff | status (zatwierdzenie przed wysyłką)
 vstudio styles    biblioteka stylów reżysera (z id: pełny opis i receptura)
-vstudio assets    ikony, grafiki i obrazy: search | add | generate | list
+vstudio assets    ikony, grafiki i obrazy: search | add | generate | list | captions | kit
 ```
 
 Każda komenda przyjmuje `--json`, więc da się je zagnieżdzić w skryptach i CI.
@@ -494,7 +542,7 @@ output/<brand>/<slug>/
 ├── supervisor/           # rundy nadzoru: round-NNN.json, taśma filmowa, klatki-dowody
 ├── director/             # plan.json, rundy przeglądu (review-NNN.json, taśma, rhythm.png), signoff.json
 ├── audio/                # cues.json, mix.m4a
-├── renders/              # draft / final (.mp4 + .qa.json)
+├── renders/              # draft / final (.mp4 + .qa.json), nakładki (.mov, ProRes 4444 z alfą)
 └── final/                # plakat, contact sheet, qa.json, DELIVERY.md (z creditsami assetów)
 ```
 
