@@ -165,7 +165,7 @@ więc niczego nie trzeba robić dwa razy:
 
 ```
 agent (MCP)  ─┐
-dashboard    ─┼─►  rejestr możliwości (57 operacji) ─► projekt na dysku
+dashboard    ─┼─►  rejestr możliwości (63 operacji) ─► projekt na dysku
 CLI          ─┘             │
                             ├─► nadzorca jakości: sprawdza każdą zmianę sceny i mówi, co poprawić
                             ├─► reżyser: plan, przegląd i zatwierdzenie przed wysyłką do użytkownika
@@ -201,7 +201,7 @@ aktualny nawet wtedy, gdy agent o nim nie pamięta. Pełna lista kodów i napraw
 
 `python vstudio.py mcp` uruchamia serwer MCP (stdio). Agent dostaje:
 
-- **57 narzędzi** w 12 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
+- **63 narzędzi** w 12 kategoriach: onboarding, szablony, projekty, edycja sceny (z historią i cofaniem), **podgląd klatek jako obrazy**
   (agent naprawdę *widzi* film), nadzór, **reżyser**, **assety**, render, zadania, diagnostyka,
 - **zasoby**: skill, wiedza (kontrakt strony, deterministyczny GSAP, pętla pracy), brief i ostatni raport każdego projektu,
 - **prompty**: `make-video`, `direct-video` (jak reżyser: plan, assety, przegląd, zatwierdzenie), `review-video`, `fix-findings`, `onboard`.

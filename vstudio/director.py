@@ -21,7 +21,7 @@ import re
 import time
 from pathlib import Path
 
-from . import common, dscan, pages, styles, supervisor
+from . import brands, common, dscan, pages, styles, supervisor
 from .common import StudioError
 
 SEVERITY_ORDER = {"error": 0, "warn": 1, "info": 2}
@@ -273,10 +273,11 @@ def _format_beats(fmt: dict, dur: float, items: int) -> list[dict]:
 
 def plan(pdir: Path, pr: dict, goal: str, tone: str = "", platform: str | None = None, pace: str | None = None, prefer: list[str] | None = None,
          avoid: list[str] | None = None, cta: str = "", loop: bool = False, write_storyboard: bool = False, format: str | None = None,  # noqa: A002
-         items: int = 3) -> dict:
+         items: int = 3, creative_profile: str | None = None, text_mode: str | None = None) -> dict:
     """Storyboard z bitami co 2-3 s: styl główny + dwa akcenty (różne układy), przejścia, dźwięk, hasła do assetów. Deterministycznie.
 
     Z `format` (tool-drop, talking-head, listicle) bity pochodzą ze sprawdzonego układu rolki zamiast z ogólnego szkieletu.
+    Obsługuje profile kreatywne (premium_minimal, cinematic, social_fast, educational) oraz tryby tekstu (none, headline_only, full).
     """
     from . import workspace
 
@@ -286,17 +287,29 @@ def plan(pdir: Path, pr: dict, goal: str, tone: str = "", platform: str | None =
         raise StudioError(f"format: {', '.join(styles.FORMATS)}")
     if not 2 <= int(items) <= 7:
         raise StudioError("items: 2-7")
+
+    c_profile = creative_profile or pr.get("creative_profile") or "social_fast"
+    t_mode = text_mode or pr.get("text_mode") or "full"
+    profile_cfg = brands.CREATIVE_PROFILES.get(c_profile, brands.CREATIVE_PROFILES["social_fast"])
+
     platform = platform or (styles.FORMATS[format]["platform"] if format else platform_for(pr))
     if platform not in PLATFORM_PACE:
         raise StudioError(f"platform: {', '.join(PLATFORMS)}")
-    pace = pace or PLATFORM_PACE[platform]
+
+    pace = pace or (profile_cfg["default_pace"] if c_profile in ("premium_minimal", "cinematic") else PLATFORM_PACE[platform])
     if pace not in PACE_GAP:
         raise StudioError(f"pace: {', '.join(PACE_GAP)}")
+
     prof = workspace.profile_get()
     tone_all = " ".join(x for x in (tone, prof.get("tone") if prof.get("onboarded") else "") if x)
     dur = float(pr["duration"])
     prof_brand = {"palette": prof["palette"], "font": prof["font"]} if prof.get("onboarded") else None
     kws = styles.tokens(goal)[:3]
+
+    if c_profile == "premium_minimal":
+        prefer = list(prefer or []) + [s for s in profile_cfg["preferred_styles"] if s not in (avoid or [])]
+        avoid = list(avoid or []) + profile_cfg["avoid_styles"]
+
     if format:
         fmt = styles.FORMATS[format]
         specs = _format_beats(fmt, dur, int(items))
@@ -313,34 +326,50 @@ def plan(pdir: Path, pr: dict, goal: str, tone: str = "", platform: str | None =
             if i:
                 tr = b.get("transition") or next((x for x in st["transitions"] if x not in used_tr[-2:]), st["transitions"][0])
                 used_tr.append(tr)
+            sound_fx = b.get("sound") or (styles.TRANSITIONS[tr]["sound"] if tr else "hit")
+            if c_profile == "premium_minimal":
+                sound_fx = "reveal" if sound_fx == "hit" else sound_fx
+            icons_list = [] if c_profile == "premium_minimal" or profile_cfg.get("allowed_no_visual_assets") else b.get("icons", ROLE_ICONS.get(b["role"], []))
+            copy_text = b["copy"]
+            if t_mode == "none":
+                copy_text = "Czysty kadr wizualny, brak napisów."
+            elif t_mode == "headline_only":
+                copy_text = "Zwięzły nagłówek (maks. 4 słowa), dużo światła."
+            elif b["role"] == "cta" and cta:
+                copy_text = f"{cta}. " + copy_text
             beats.append({"n": i + 1, "role": b["role"], "t0": b["t0"], "t1": b["t1"], "style": b["style"], "layout": b["layout"], "transition_in": tr,
-                          "sound": b.get("sound") or (styles.TRANSITIONS[tr]["sound"] if tr else "hit"),
+                          "sound": sound_fx,
                           "motion": {"ease": st["motion"]["ease"], "duration": st["motion"]["duration"], "camera": st["motion"]["camera"]},
-                          "copy": b["copy"] if b["role"] != "cta" or not cta else f"{cta}. " + b["copy"],
-                          "icons": b.get("icons", ROLE_ICONS.get(b["role"], [])), "asset_queries": kws[:2] if b["role"] in ("hook", "demo", "card", "item") else []})
+                          "copy": copy_text,
+                          "icons": icons_list, "asset_queries": kws[:2] if (icons_list and b["role"] in ("hook", "demo", "card", "item")) else []})
         brand = prof_brand or {"palette": main["palette"], "font": main["type"]["stack"]}
     else:
         rec = styles.recommend(goal, tone_all, platform, pace, prefer, avoid)
         main, accents = styles.get(rec["main"]["id"]), [styles.get(a["id"]) for a in rec["accents"]]
-        target = {"fast": 2.0, "standard": 2.8, "calm": 4.0}[pace]
-        hook = min({"fast": 1.4, "standard": 1.8, "calm": 2.2}[pace], dur * 0.3)
-        end = min({"fast": 2.2, "standard": 2.6, "calm": 3.2}[pace], dur * 0.3)
+        target = {"fast": 2.0, "standard": 2.8, "calm": 4.5}[pace]
+        hook = min({"fast": 1.4, "standard": 1.8, "calm": 2.6}[pace], dur * 0.3)
+        end = min({"fast": 2.2, "standard": 2.6, "calm": 3.4}[pace], dur * 0.3)
         mid_total = max(0.0, dur - hook - end)
         n_mid = max(0, round(mid_total / target)) if mid_total >= 0.8 * target else 0
         if mid_total > 0 and n_mid == 0:
             n_mid = 1
         roles = ["hook"] + (SEQUENCES.get(n_mid) or (SEQUENCES[5] + ["proof", "benefit", "detail"] * 4)[:n_mid]) + ["cta"]
         mid_len = mid_total / n_mid if n_mid else 0.0
-        # style: hak i CTA w stylu głównym (spójność marki), środek na przemian z akcentami; dwa sąsiednie bity nigdy w tym samym stylu
-        pool = [accents[0] if accents else main, accents[1] if len(accents) > 1 else main, main]
-        seq: list[dict] = [main]
-        for i in range(n_mid):
-            pick = pool[i % len(pool)]
-            if pick["id"] == seq[-1]["id"]:
-                pick = next((c for c in pool if c["id"] != seq[-1]["id"]), pick)
-            seq.append(pick)
-        last = main if seq[-1]["id"] != main["id"] else (accents[0] if accents else main)
-        seq.append(last)
+
+        if c_profile == "premium_minimal":
+            # W profilu premium_minimal jeden spójny styl dominuje w całym filmie, bez wymuszonego mieszania
+            seq = [main] * len(roles)
+        else:
+            pool = [accents[0] if accents else main, accents[1] if len(accents) > 1 else main, main]
+            seq = [main]
+            for i in range(n_mid):
+                pick = pool[i % len(pool)]
+                if pick["id"] == seq[-1]["id"]:
+                    pick = next((c for c in pool if c["id"] != seq[-1]["id"]), pick)
+                seq.append(pick)
+            last = main if seq[-1]["id"] != main["id"] else (accents[0] if accents else main)
+            seq.append(last)
+
         brand = prof_brand or {"palette": main["palette"], "font": main["type"]["stack"]}
         beats, t, prev_layout, used_tr = [], 0.0, None, []
         for i, (role, st) in enumerate(zip(roles, seq)):
@@ -350,23 +379,40 @@ def plan(pdir: Path, pr: dict, goal: str, tone: str = "", platform: str | None =
             if i:
                 tr = next((x for x in st["transitions"] if x not in used_tr[-2:]), st["transitions"][0])
                 used_tr.append(tr)
+            sound_fx = styles.TRANSITIONS[tr]["sound"] if tr else "hit"
+            if c_profile == "premium_minimal":
+                sound_fx = "reveal" if sound_fx == "hit" else sound_fx
+            icons_list = [] if (c_profile == "premium_minimal" or profile_cfg.get("allowed_no_visual_assets")) else ROLE_ICONS.get(role, [])
+            copy_text = ROLE_COPY[role]
+            if t_mode == "none":
+                copy_text = "Czysty kadr wizualny, brak napisów."
+            elif t_mode == "headline_only":
+                copy_text = "Krótki nagłówek (maks. 4 słowa), dużo przestrzeni i światła."
+            elif role == "cta" and cta:
+                copy_text = f"{cta} (max 5 words) + handle or URL. Holds still for at least 1.5 s."
+
             beats.append({"n": i + 1, "role": role, "t0": round(t, 2), "t1": round(t + length, 2), "style": st["id"], "layout": layout,
-                          "transition_in": tr, "sound": styles.TRANSITIONS[tr]["sound"] if tr else "hit",
+                          "transition_in": tr, "sound": sound_fx,
                           "motion": {"ease": st["motion"]["ease"], "duration": st["motion"]["duration"], "camera": st["motion"]["camera"]},
-                          "copy": ROLE_COPY[role] if role != "cta" or not cta else f"{cta} (max 5 words) + handle or URL. Holds still for at least 1.5 s.",
-                          "icons": ROLE_ICONS[role], "asset_queries": kws[:2] if role in ("hook", "reveal", "proof") else []})
+                          "copy": copy_text,
+                          "icons": icons_list, "asset_queries": kws[:2] if (icons_list and role in ("hook", "reveal", "proof")) else []})
             prev_layout = layout
             t += length
         beats[-1]["t1"] = round(dur, 2)
+
+    max_pace_gap = profile_cfg.get("max_pace_gap", PACE_GAP[pace])
     p = {"created": time.strftime("%Y-%m-%dT%H:%M:%S"), "goal": goal.strip(), "tone": tone_all, "platform": platform, "pace": pace, "duration": dur, "loop": loop,
+         "creative_profile": c_profile, "text_mode": t_mode,
+         "creative_profile_rules": profile_cfg,
          "format": {"id": format, "name": styles.FORMATS[format]["name"]} if format else None,
          "warnings": [f"beat {b['n']} ({b['role']}) lasts {b['t1'] - b['t0']:.1f} s: add a visible change inside it (zoom, new card or layout)"
-                      for b in beats if b["t1"] - b["t0"] > PACE_GAP[pace] + 1.0]
+                      for b in beats if b["t1"] - b["t0"] > max_pace_gap + 1.0]
                      + [f"beat {b['n']} ({b['role']}) lasts only {b['t1'] - b['t0']:.1f} s: too short to read, lengthen the film or drop items"
                         for b in beats if b["t1"] - b["t0"] < 1.0],
          "styles": {"main": rec["main"], "main_why": rec["main_why"], "accents": rec["accents"], "accent_why": rec["accent_why"]},
          "brand": brand, "beats": beats,
-         "contract": {"visible_change_every_s": PACE_GAP[pace], "hook_by_s": 1.0, "max_words_per_beat": 6, "styles_used": sorted({b["style"] for b in beats}),
+         "contract": {"visible_change_every_s": max_pace_gap, "hook_by_s": 1.0, "max_words_per_beat": profile_cfg.get("max_words_per_beat", 6),
+                      "styles_used": sorted({b["style"] for b in beats}),
                       "layouts_used": sorted({b["layout"] for b in beats}),
                       "rule": "Brand colours and font stay constant; layout, background treatment, motion language and transition change between beats."},
          "font_note": styles.font_note()}
@@ -574,28 +620,41 @@ def review(pdir: Path, pr: dict, platform: str | None = None, pace: str | None =
 
         lap("ink")
     # ============================================================ analiza (bez przeglądarki)
+    pl = load_plan(pdir)
+    c_profile = pr.get("creative_profile") or (pl or {}).get("creative_profile") or "social_fast"
+    t_mode = pr.get("text_mode") or (pl or {}).get("text_mode") or "full"
+    profile_cfg = brands.CREATIVE_PROFILES.get(c_profile, brands.CREATIVE_PROFILES["social_fast"])
+
     # ---- rytm: nowe sytuacje wizualne i luki
     D = dscan.shift_series(thumbs, step)
     events = dscan.find_events(times, D)
-    gaps = dscan.slow_gaps(events, dur, PACE_GAP[pace])
-    metrics.update(events=events, gaps=[list(g) for g in gaps], shift_series=[round(x, 3) for x in D])
+    gap_limit = profile_cfg.get("max_pace_gap", PACE_GAP[pace])
+    gaps = dscan.slow_gaps(events, dur, gap_limit)
+    metrics.update(events=events, gaps=[list(g) for g in gaps], shift_series=[round(x, 3) for x in D], creative_profile=c_profile, text_mode=t_mode)
     for a, b in sorted(gaps, key=lambda g: g[0] - g[1])[:3]:
-        findings.append(_finding("SLOW_PACE", "warn", f"od {a:.1f} do {b:.1f} s ({b - a:.1f} s) nic nowego nie dzieje się w kadrze (limit dla {platform}: {PACE_GAP[pace]:g} s)", t=a))
+        findings.append(_finding("SLOW_PACE", "warn", f"od {a:.1f} do {b:.1f} s ({b - a:.1f} s) nic nowego nie dzieje się w kadrze (limit dla {c_profile}/{platform}: {gap_limit:g} s)", t=a))
     # ---- hak
     hook = dscan.hook_strength(thumbs, times)
     metrics["hook"] = round(hook, 3)
     if dur >= 3 and hook < dscan.HOOK_THR:
-        findings.append(_finding("WEAK_HOOK", "warn", f"w pierwszych 1,5 s zmienia się tylko {hook:.0%} kadru", t=0.0))
+        if c_profile not in ("premium_minimal", "cinematic"):
+            findings.append(_finding("WEAK_HOOK", "warn", f"w pierwszych 1,5 s zmienia się tylko {hook:.0%} kadru", t=0.0))
+        else:
+            metrics["subtle_hook_allowed"] = True
     early = [it for sc, t in zip(scans, times) if t <= 1.2 for it in sc if it["op"] >= 0.6]
     early_assets = any(a for t, a in asset_scans.items() if t <= 1.2)
     if dur >= 3 and not early and not early_assets:
-        findings.append(_finding("NO_HOOK_TEXT", "info", "do 1,2 s nie ma ani tekstu, ani obrazu", t=0.0))
+        if t_mode != "none" and not profile_cfg.get("allow_empty_text"):
+            findings.append(_finding("NO_HOOK_TEXT", "info", "do 1,2 s nie ma ani tekstu, ani obrazu", t=0.0))
     # ---- różnorodność looków
     labels, n_looks, _centers = dscan.look_clusters(thumbs, times)
     need = dscan.required_looks(dur)
     metrics.update(looks=n_looks, looks_required=need, look_labels=labels)
     if n_looks < need:
-        findings.append(_finding("MONOTONE_STYLE", "warn", f"film ma {n_looks} look(i), a przy {dur:g} s powinien mieć co najmniej {need}: wygląda tak samo od początku do końca", t=0.0))
+        if not profile_cfg.get("allowed_monotone"):
+            findings.append(_finding("MONOTONE_STYLE", "warn", f"film ma {n_looks} look(i), a przy {dur:g} s powinien mieć co najmniej {need}: wygląda tak samo od początku do końca", t=0.0))
+        else:
+            metrics["monotone_style_justified"] = f"Profil {c_profile}: jednolity spójny motyw jest zamierzony."
     # ---- migotanie
     for a, b in dscan.flash_windows(lums, step)[:2]:
         findings.append(_finding("FLASH_RISK", "error", f"jasność kadru skacze w górę i w dół >= 6 razy w {a:.1f}-{b:.1f} s", t=a))
@@ -625,6 +684,12 @@ def review(pdir: Path, pr: dict, platform: str | None = None, pace: str | None =
         if p["key"] in ink and ink[p["key"]] < 0.01 and it["vis"] >= 0.6:
             findings.append(_finding("TEXT_HIDDEN", "error", f"„{p['text'][:36]}” jest „widoczny” w DOM, ale po jego ukryciu obraz się nie zmienia ({ink[p['key']]:.1%} pikseli)",
                                      t=p.get("ink_t", best[1]), box=p.get("ink_box", box), ident=p["key"][-40:]))
+        # edukacyjny: kontrola czasu czytania
+        if c_profile == "educational" and t_mode != "none":
+            vis_dur = len(vis_s) * step
+            min_read = len(p["text"].split()) * 0.35 + 1.2
+            if vis_dur < min_read:
+                findings.append(_finding("TEXT_CLIPPED", "warn", f"W trybie edukacyjnym tekst „{p['text'][:28]}” jest widoczny za krótko ({vis_dur:.1f} s, zalecane min. {min_read:.1f} s na przeczytanie)", t=best[1], box=box, ident=p["key"][-40:]))
     pair_hits: dict[tuple, list] = {}
     for si, (t, sc) in enumerate(zip(times, scans)):
         vis = [it for it in sc if it["op"] >= 0.6 and it["vis"] >= 0.6]
@@ -642,7 +707,7 @@ def review(pdir: Path, pr: dict, platform: str | None = None, pace: str | None =
                                      box=[min(a["x0"], b["x0"]), min(a["y0"], b["y0"]), max(a["x1"], b["x1"]), max(a["y1"], b["y1"])], ident=(ka + kb)[-40:]))
     wall = max(((sum(_words(it["text"]) for it in sc if it["op"] >= 0.6 and it["vis"] >= 0.6), t) for sc, t in zip(scans, times)), default=(0, 0.0))
     metrics["max_words"] = wall[0]
-    if wall[0] > 28:
+    if wall[0] > (profile_cfg.get("max_words_per_beat", 6) * 4 if c_profile == "premium_minimal" else 28):
         findings.append(_finding("TEXT_WALL", "info", f"{wall[0]} słów naraz na ekranie (przy {wall[1]:.1f} s)", t=wall[1]))
     if hooks["texts"]:
         blind: list[str] = []
@@ -679,9 +744,11 @@ def review(pdir: Path, pr: dict, platform: str | None = None, pace: str | None =
     n_assets = len({(a["tag"], a["src"], round(a["w"]), round(a["h"])) for a in all_assets})
     metrics["assets_visible"] = n_assets
     if dur >= 5 and n_assets == 0:
-        findings.append(_finding("NO_VISUAL_ASSETS", "info", "w całym filmie nie ma ikon, ilustracji ani obrazów"))
+        if not profile_cfg.get("allowed_no_visual_assets"):
+            findings.append(_finding("NO_VISUAL_ASSETS", "info", "w całym filmie nie ma ikon, ilustracji ani obrazów"))
+        else:
+            metrics["no_assets_justification"] = f"Profil {c_profile}: brak ikon i ozdobników jest zamierzony."
     # ---- zgodność z planem
-    pl = load_plan(pdir)
     if pl:
         if abs(float(pl["duration"]) - dur) > 0.5:
             findings.append(_finding("PLAN_STALE", "info", f"plan zakłada {pl['duration']:g} s, film trwa {dur:g} s"))

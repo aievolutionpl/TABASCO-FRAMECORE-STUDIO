@@ -127,7 +127,12 @@ def new_project(a) -> Path:
         (pdir / name).write_text(_fill((STUDIO / "templates" / name).read_text(encoding="utf-8"), vals), encoding="utf-8")
     (pdir / "STORYBOARD.md").write_text(f"# Storyboard: {slug}\n\nOne row per shot: framing, duration, what moves, transition in, sound.\nRender key stills before anything else (`vstudio still`).\n", encoding="utf-8")
     proj = {"slug": slug, "brand": brand, "brand_config": cfg, "engine": a.engine, "kind": a.kind, "size": [w, h], "fps": a.fps, "duration": a.duration,
-            "composition": "Main", "created": today(), "ref": a.ref, "gates": {g: None for g in GATES}, "critic_score": None, "renders": []}
+            "composition": "Main", "created": today(), "ref": a.ref, "gates": {g: None for g in GATES}, "critic_score": None, "renders": [],
+            "brand_id": getattr(a, "brand_id", None) or brand,
+            "brand_version": getattr(a, "brand_version", 1),
+            "creative_profile": getattr(a, "creative_profile", "social_fast"),
+            "text_mode": getattr(a, "text_mode", "full"),
+            "brand_snapshot": getattr(a, "brand_snapshot", None)}
     if a.ref:
         rp = Path(a.ref)
         if rp.exists():

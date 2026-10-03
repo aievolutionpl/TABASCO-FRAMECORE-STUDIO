@@ -82,20 +82,48 @@
     return () => $$('.thumb', host).forEach(el => el._dispose && el._dispose());
   };
 
-  V.newProjectModal = (tpl, opts = {}) => {
+  V.newProjectModal = async (tpl, opts = {}) => {
+    let brandsRes = { brands: [], active_brand_id: '' };
+    try { brandsRes = await V.api('brands_list'); } catch (e) {}
+    const bList = brandsRes.brands || [];
     const prof = V.S.profile || {};
+    const curBrand = opts.brand || brandsRes.active_brand_id || prof.name || '';
     const m = V.modal(`<h2>${tpl ? 'Nowy film z szablonu' : 'Nowy film'}</h2><p class="muted" style="margin:4px 0 16px">${tpl ? esc(tpl.title) + ': ' + esc(tpl.summary) : 'Pusty projekt ze startowym szablonem.'}</p>
       <div class="col">
-        <label class="f">Nazwa projektu<input type="text" id="np_slug" placeholder="np. promocja-wiosna" value="${esc(opts.slug || (tpl ? tpl.id : ''))}"></label>
-        <label class="f">Marka<input type="text" id="np_brand" value="${esc(opts.brand || prof.name || '')}" placeholder="np. Moja Marka"></label>
+        <label class="f">Nazwa projektu (slug)<input type="text" id="np_slug" placeholder="np. promocja-wiosna" value="${esc(opts.slug || (tpl ? tpl.id : ''))}"></label>
+        <label class="f">Marka
+          <select id="np_brand">
+            ${bList.map(b => `<option value="${esc(b.id)}" ${b.id === curBrand ? 'selected' : ''}>${esc(b.name || b.id)} (v${b.version || 1})</option>`).join('')}
+            ${!bList.some(b => b.id === curBrand) && curBrand ? `<option value="${esc(curBrand)}" selected>${esc(curBrand)}</option>` : ''}
+          </select>
+        </label>
+        <div class="row" style="gap:10px">
+          <label class="f" style="flex:1">Profil kreatywny
+            <select id="np_profile">
+              <option value="premium_minimal">Premium Minimal</option>
+              <option value="cinematic">Cinematic</option>
+              <option value="social_fast" selected>Social Fast</option>
+              <option value="educational">Educational</option>
+            </select>
+          </label>
+          <label class="f" style="flex:1">Tryb tekstu
+            <select id="np_text_mode">
+              <option value="full" selected>Pełny (full)</option>
+              <option value="headline_only">Tylko nagłówki (headline_only)</option>
+              <option value="none">Bez tekstu (none)</option>
+            </select>
+          </label>
+        </div>
         <label class="f">Brief (po co ten film, dla kogo)<textarea id="np_brief" placeholder="Jednym zdaniem: cel i odbiorca."></textarea></label>
         <div class="row" style="justify-content:flex-end;margin-top:6px"><button class="btn ghost" id="np_cancel">Anuluj</button><button class="btn primary" id="np_ok">Utwórz projekt</button></div>
       </div>`);
     $('#np_cancel', m.el).onclick = m.close;
     $('#np_ok', m.el).onclick = e => V.busy(e.currentTarget, async () => {
       const slug = $('#np_slug', m.el).value.trim(), brand = $('#np_brand', m.el).value.trim(), brief = $('#np_brief', m.el).value.trim();
+      const creative_profile = $('#np_profile', m.el).value;
+      const text_mode = $('#np_text_mode', m.el).value;
       if (!slug) { V.toast('Podaj nazwę projektu', 'err'); return; }
-      const r = await V.api('project_create', { slug, brand: brand || undefined, template: tpl ? tpl.id : undefined, brief: brief || undefined });
+      const r = await V.api('project_create', { slug, brand: brand || undefined, template: tpl ? tpl.id : undefined, brief: brief || undefined, creative_profile, text_mode });
       m.close(); await V.refreshProjects(); V.toast('Projekt utworzony', 'ok'); V.go(`#/p/${r.project.id}`);
     });
     setTimeout(() => $('#np_slug', m.el).focus(), 30);

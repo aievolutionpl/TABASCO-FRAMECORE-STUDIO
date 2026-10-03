@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import time
+import unicodedata
 from pathlib import Path
 
 PKG = Path(__file__).resolve().parent
@@ -50,7 +51,10 @@ def today() -> str:
 
 
 def slugify(text: str) -> str:
-    s = re.sub(r"[^a-zA-Z0-9]+", "-", text.strip().lower()).strip("-")
+    cleaned = text.strip().replace("ł", "l").replace("Ł", "L")
+    norm = unicodedata.normalize("NFKD", cleaned)
+    ascii_text = norm.encode("ascii", "ignore").decode("ascii")
+    s = re.sub(r"[^a-zA-Z0-9]+", "-", ascii_text.strip().lower()).strip("-")
     return s or "untitled"
 
 

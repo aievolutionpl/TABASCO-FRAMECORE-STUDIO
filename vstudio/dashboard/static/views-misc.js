@@ -72,4 +72,134 @@
     };
     draw(); return () => $$('.thumb', host).forEach(el => el._dispose && el._dispose());
   };
+
+  /* ---------- Biblioteka marek i profile kreatywne ---------- */
+  V.views.brands = async host => {
+    V.crumbs(['Marki i profile']);
+    const [bRes, profRes] = await Promise.all([V.api('brands_list', {}), V.api('creative_profiles_list', {})]);
+    const brands = bRes.brands || [], activeId = bRes.active_brand_id, profiles = profRes.profiles || [];
+
+    const draw = () => {
+      host.innerHTML = `<div class="page">
+        <div class="page-head">
+          <div style="flex:1">
+            <h1>Biblioteka marek i profile kreatywne</h1>
+            <p>Każda marka ma niezależną paletę, fonty, zasady logo i ograniczenia. Nowe projekty zapisują nienaruszalną migawkę marki.</p>
+          </div>
+          <button class="btn primary" id="bNewBrand">${V.icon('plus')} Nowa marka</button>
+        </div>
+
+        <h2 style="margin:20px 0 12px">Marki studia (${brands.length})</h2>
+        <div class="grid auto" id="bGrid">
+          ${brands.map(b => {
+            const pal = b.palette || {};
+            const isActive = b.id === activeId;
+            return `<div class="card pad" style="display:flex;flex-direction:column;gap:10px">
+              <div class="row">
+                <h3 style="flex:1">${esc(b.name || b.id)}</h3>
+                <span class="chip mono">v${b.version || 1}</span>
+                ${isActive ? '<span class="chip ok">aktywna</span>' : ''}
+              </div>
+              <div class="dim mono" style="font-size:12px">${esc(b.id)}</div>
+              <div class="row" style="gap:6px">
+                ${Object.entries(pal).map(([k, c]) => `<span class="chipc" style="background:${esc(c)}" title="${k}: ${esc(c)}"></span>`).join('')}
+                <span class="dim" style="font-size:12px;margin-left:4px">${esc(b.font || 'Inter')}</span>
+              </div>
+              ${b.tone ? `<div class="muted" style="font-size:13px"><b>Ton:</b> ${esc(b.tone)}</div>` : ''}
+              ${b.audience ? `<div class="muted" style="font-size:13px"><b>Odbiorcy:</b> ${esc(b.audience)}</div>` : ''}
+              ${b.creative_restrictions && b.creative_restrictions.length ? `<div class="dim" style="font-size:12px"><b>Ograniczenia:</b> ${esc(b.creative_restrictions.join(', '))}</div>` : ''}
+              <div style="flex:1"></div>
+              <div class="row" style="gap:8px;margin-top:8px">
+                ${!isActive ? `<button class="btn sm" data-act="${esc(b.id)}">Aktywuj</button>` : ''}
+                <button class="btn sm ghost" data-edit="${esc(b.id)}">Edytuj</button>
+                ${brands.length > 1 ? `<button class="btn sm ghost" data-del="${esc(b.id)}">Usuń</button>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <h2 style="margin:36px 0 12px">Profile kreatywne (${profiles.length})</h2>
+        <div class="grid auto">
+          ${profiles.map(p => `<div class="card pad" style="display:flex;flex-direction:column;gap:8px">
+            <div class="row"><h3 style="flex:1">${esc(p.name)}</h3><span class="chip grad">${esc(p.id)}</span></div>
+            <div class="muted" style="font-size:13px">${esc(p.description)}</div>
+            <div class="dim" style="font-size:12px"><b>Tempo domyślne:</b> ${esc(p.default_pace)} (maks. luka: ${p.max_pace_gap}s)</div>
+            ${p.allow_calm_holds ? '<div class="chip ok" style="align-self:flex-start">Dozwolone spokojne zatrzymania</div>' : ''}
+            ${p.suppress_auto_icons ? '<div class="chip info" style="align-self:flex-start">Bez automatycznych ikon</div>' : ''}
+            <div class="dim" style="font-size:12px"><b>Preferowane:</b> ${esc((p.preferred_styles || []).join(', ') || 'brak')}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+
+      $('#bNewBrand', host).onclick = () => V.brandModal(null, async () => { const r = await V.api('brands_list', {}); bRes.brands = r.brands; bRes.active_brand_id = r.active_brand_id; draw(); });
+      $$('[data-act]', host).forEach(btn => btn.onclick = () => V.busy(btn, async () => {
+        await V.api('brand_activate', { brand_id: btn.dataset.act });
+        bRes.active_brand_id = btn.dataset.act;
+        await V.refreshStatus();
+        V.toast('Aktywowano markę', 'ok');
+        draw();
+      }));
+      $$('[data-edit]', host).forEach(btn => btn.onclick = () => {
+        const b = brands.find(x => x.id === btn.dataset.edit);
+        if (b) V.brandModal(b, async () => { const r = await V.api('brands_list', {}); bRes.brands = r.brands; bRes.active_brand_id = r.active_brand_id; draw(); });
+      });
+      $$('[data-del]', host).forEach(btn => btn.onclick = () => {
+        if (!confirm(`Usunąć markę ${btn.dataset.del}? Projekty zachowają swoje migawki.`)) return;
+        V.busy(btn, async () => {
+          await V.api('brand_delete', { brand_id: btn.dataset.del });
+          const r = await V.api('brands_list', {});
+          bRes.brands = r.brands; bRes.active_brand_id = r.active_brand_id;
+          V.toast('Usunięto markę', 'ok');
+          draw();
+        });
+      });
+    };
+
+    draw();
+  };
+
+  V.brandModal = (brand, onSaved) => {
+    const isEdit = !!brand;
+    const b = brand || { id: '', name: '', palette: { bg: '#0B0E24', ink: '#F4F6FF', accent: '#FF6B4A', accent2: '#4F8CFF' }, font: 'Inter', tone: '', audience: '', creative_restrictions: [] };
+    const pal = { ...(b.palette || {}) };
+    const m = V.modal(`<h2>${isEdit ? 'Edycja marki: ' + esc(b.name || b.id) : 'Nowa marka'}</h2>
+      <p class="muted" style="margin:4px 0 16px">${isEdit ? 'Edycja zwiększa wersję marki. Istniejące projekty nie ulegną zmianie.' : 'Zdefiniuj profil nowej niezależnej marki.'}</p>
+      <div class="col" style="gap:10px">
+        ${!isEdit ? '<label class="f">Identyfikator (slug)<input type="text" id="bm_id" placeholder="np. acme-corp"></label>' : ''}
+        <label class="f">Nazwa marki<input type="text" id="bm_name" value="${esc(b.name || '')}" placeholder="np. Acme Corporation"></label>
+        <div class="row wrap" style="gap:10px">
+          ${[['bg', 'Tło'], ['ink', 'Tekst'], ['accent', 'Akcent'], ['accent2', 'Akcent 2']].map(([k, l]) => `<label class="f" style="align-items:flex-start">${l}<input type="color" data-bpal="${k}" value="${esc(pal[k] || '#000000')}"></label>`).join('')}
+        </div>
+        <label class="f">Font<select id="bm_font">${FONTS.map(f => `<option ${f === (b.font || 'Inter') ? 'selected' : ''}>${f}</option>`).join('')}</select></label>
+        <label class="f">Ton komunikacji<input type="text" id="bm_tone" value="${esc(b.tone || '')}" placeholder="np. techniczny, zwięzły, premium"></label>
+        <label class="f">Odbiorcy<input type="text" id="bm_aud" value="${esc(b.audience || '')}" placeholder="np. dyrektorzy IT, B2B"></label>
+        <label class="f">Ograniczenia kreatywne (oddzielone przecinkami)<textarea id="bm_restr" placeholder="np. bez naklejek, bez memów, tylko stonowany ruch">${esc((b.creative_restrictions || []).join(', '))}</textarea></label>
+        <div class="row" style="justify-content:flex-end;margin-top:10px">
+          <button class="btn ghost" id="bm_cancel">Anuluj</button>
+          <button class="btn primary" id="bm_ok">${isEdit ? 'Zapisz zmiany (nowa wersja)' : 'Utwórz markę'}</button>
+        </div>
+      </div>`);
+    $$('[data-bpal]', m.el).forEach(input => input.oninput = () => { pal[input.dataset.bpal] = input.value; });
+    $('#bm_cancel', m.el).onclick = m.close;
+    $('#bm_ok', m.el).onclick = e => V.busy(e.currentTarget, async () => {
+      const brand_id = isEdit ? b.id : ($('#bm_id', m.el).value || '').trim().toLowerCase();
+      const name = $('#bm_name', m.el).value.trim();
+      if (!brand_id) { V.toast('Podaj identyfikator marki', 'err'); return; }
+      if (!name) { V.toast('Podaj nazwę marki', 'err'); return; }
+      const restrStr = $('#bm_restr', m.el).value.trim();
+      const creative_restrictions = restrStr ? restrStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+      await V.api('brand_set', {
+        brand_id,
+        name,
+        palette: pal,
+        font: $('#bm_font', m.el).value,
+        tone: $('#bm_tone', m.el).value || undefined,
+        audience: $('#bm_aud', m.el).value || undefined,
+        creative_restrictions
+      });
+      m.close();
+      V.toast('Marka zapisana', 'ok');
+      if (onSaved) await onSaved();
+    });
+  };
 })();

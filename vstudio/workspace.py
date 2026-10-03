@@ -12,17 +12,12 @@ import re
 import time
 from pathlib import Path
 
-from . import common, project as proj, vendor
+from . import brands, common, project as proj, vendor
 from .locking import atomic_write, file_lock
 from .common import GATES, OUTPUT, STUDIO, StudioError
 
-FORMATS = {"9:16": (1080, 1920), "4:5": (1080, 1350), "1:1": (1080, 1080), "16:9": (1920, 1080)}
-DEFAULT_PROFILE = {
-    "onboarded": False, "name": "", "palette": {"bg": "#0B0E24", "ink": "#F4F6FF", "accent": "#FF6B4A", "accent2": "#4F8CFF"},
-    "font": "Inter", "tone": "konkretny, spokojny, bez przesady", "audience": "", "default_format": "4:5", "fps": 30,
-    "auto_supervise": True,          # dashboard sprawdza scenę w tle, gdy zmieni się na dysku (agent, edytor)
-    "require_director": True,         # finalny render i wydanie wymagają zatwierdzenia reżysera dla aktualnej wersji sceny
-}
+FORMATS = brands.FORMATS
+DEFAULT_PROFILE = brands.DEFAULT_BRAND_TEMPLATE
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)?$")
 
 
@@ -52,48 +47,38 @@ def _state_lock():
     return file_lock(common.STATE_DIR / ".lock")
 
 
-# ------------------------------------------------------------------ profil marki
+# ------------------------------------------------------------------ marki i profile
 
-def profile_get() -> dict:
-    p = _read_json("profile.json", {})
-    merged = {**DEFAULT_PROFILE, **p, "palette": {**DEFAULT_PROFILE["palette"], **p.get("palette", {})}}
-    return merged
+def profile_get(brand_id: str | None = None) -> dict:
+    return brands.get_brand(brand_id)
 
 
-def profile_set(patch: dict) -> dict:
-    allowed = set(DEFAULT_PROFILE) - {"onboarded"}
-    unknown = sorted(set(patch) - allowed)
-    if unknown:
-        raise StudioError(f"nieznane pola profilu {unknown}; dozwolone: {sorted(allowed)}")
-    with _state_lock():
-        return _profile_set(patch)
+def profile_set(patch: dict, brand_id: str | None = None) -> dict:
+    return brands.set_brand(patch, brand_id)
 
 
-def _profile_set(patch: dict) -> dict:
-    p = profile_get()
-    for k, v in patch.items():
-        if k == "palette":
-            if not isinstance(v, dict) or set(v) - set(DEFAULT_PROFILE["palette"]):
-                raise StudioError(f"palette: klucze {sorted(DEFAULT_PROFILE['palette'])}")
-            for ck, cv in v.items():
-                if not re.fullmatch(r"#[0-9a-fA-F]{6}", str(cv)):
-                    raise StudioError(f"palette.{ck}: kolor musi mieć postać #RRGGBB")
-            p["palette"] = {**p["palette"], **v}
-        elif k == "default_format":
-            if v not in FORMATS:
-                raise StudioError(f"default_format: jedno z {list(FORMATS)}")
-            p[k] = v
-        elif k in ("auto_supervise", "require_director"):
-            p[k] = bool(v)
-        elif k == "fps":
-            if not isinstance(v, int) or not 12 <= v <= 120:
-                raise StudioError("fps: liczba całkowita 12-120")
-            p[k] = v
-        else:
-            p[k] = str(v)[:200]
-    p["onboarded"] = bool(p["name"].strip())
-    _write_json("profile.json", p)
-    return p
+def brands_list() -> dict:
+    return brands.list_brands()
+
+
+def brand_get(brand_id: str | None = None) -> dict:
+    return brands.get_brand(brand_id)
+
+
+def brand_set(brand_id: str | dict, patch: dict | None = None) -> dict:
+    return brands.set_brand(brand_id, patch)
+
+
+def brand_activate(brand_id: str) -> dict:
+    return brands.activate_brand(brand_id)
+
+
+def brand_delete(brand_id: str) -> dict:
+    return brands.delete_brand(brand_id)
+
+
+def creative_profiles_list() -> list[dict]:
+    return list(brands.CREATIVE_PROFILES.values())
 
 
 # ------------------------------------------------------------------ projekty
@@ -131,7 +116,13 @@ def summarize(pdir: Path, pr: dict, detail: bool = False) -> dict:
     done, total = _gates_done(pr)
     src = pdir / "src" / "index.html"
     rep = supervisor.latest(pdir)
-    out = {"id": project_id(pdir), "slug": pr["slug"], "brand": pr["brand"], "engine": pr["engine"], "size": pr["size"], "fps": pr["fps"],
+    out = {"id": project_id(pdir), "slug": pr["slug"], "brand": pr["brand"],
+           "brand_id": pr.get("brand_id", pr["brand"]),
+           "brand_version": pr.get("brand_version", 1),
+           "creative_profile": pr.get("creative_profile", "social_fast"),
+           "text_mode": pr.get("text_mode", "full"),
+           "brand_snapshot": pr.get("brand_snapshot"),
+           "engine": pr["engine"], "size": pr["size"], "fps": pr["fps"],
            "duration": pr["duration"], "gates_done": done, "gates_total": total, "next": proj.next_step(pr),
            "updated": src.stat().st_mtime if src.exists() else None,
            "check": {"verdict": rep["verdict"], "score": rep["score"], "round": rep["round"], "counts": rep["counts"]} if rep else None}
@@ -146,6 +137,7 @@ def summarize(pdir: Path, pr: dict, detail: bool = False) -> dict:
                    has_source=src.exists(), status=proj.cmd_status(pdir, pr),
                    vendor=vendor.status_for_html(src.read_text(encoding="utf-8")) if src.exists() else None,
                    tasks=[t for t in tasks_list() if t["project"] == out["id"]],
+                   brand_snapshot=pr.get("brand_snapshot"),
                    finals=[f"final/{f.name}" for f in sorted((pdir / "final").glob("*")) if f.is_file()] if (pdir / "final").exists() else [])
     return out
 
@@ -203,9 +195,15 @@ def template_html(tid: str) -> str:
 
 def create_project(slug: str, brand: str | None = None, template: str | None = None, format: str | None = None,
                    size: str | None = None, fps: int | None = None, duration: float | None = None, brief: str | None = None,
-                   kind: str = "promo") -> dict:
-    prof = profile_get()
-    brand = (brand or prof["name"] or "studio").strip()
+                   kind: str = "promo", creative_profile: str | None = None, text_mode: str | None = None) -> dict:
+    active_b = brands.get_brand(brand if brand and "/" not in brand else None)
+    brand_name = (brand or active_b.get("name") or "studio").strip()
+    c_profile = creative_profile or active_b.get("creative_profile", "social_fast")
+    t_mode = text_mode or active_b.get("text_mode", "full")
+    snapshot = brands.brand_snapshot_for_project(active_b["id"])
+    snapshot["creative_profile"] = c_profile
+    snapshot["text_mode"] = t_mode
+
     tpl = get_template(template) if template else None
     if size:
         if not re.fullmatch(r"\d{3,4}x\d{3,4}", size.lower()):
@@ -218,9 +216,11 @@ def create_project(slug: str, brand: str | None = None, template: str | None = N
     elif tpl:
         wh = "{}x{}".format(*tpl["size"])
     else:
-        wh = "{}x{}".format(*FORMATS[prof["default_format"]])
-    ns = argparse.Namespace(slug=slug, brand=brand, engine="html", size=wh, fps=fps or (tpl["fps"] if tpl else prof["fps"]),
-                            duration=float(duration or (tpl["duration"] if tpl else 10.0)), kind=kind, ref=None, install=False)
+        wh = "{}x{}".format(*FORMATS[active_b.get("default_format", "4:5")])
+    ns = argparse.Namespace(slug=slug, brand=brand_name, engine="html", size=wh, fps=fps or (tpl["fps"] if tpl else active_b.get("fps", 30)),
+                            duration=float(duration or (tpl["duration"] if tpl else 10.0)), kind=kind, ref=None, install=False,
+                            brand_id=active_b["id"], brand_version=active_b.get("version", 1),
+                            creative_profile=c_profile, text_mode=t_mode, brand_snapshot=snapshot)
     pdir = proj.new_project(ns)
     src = pdir / "src" / "index.html"
     if tpl:
@@ -230,7 +230,7 @@ def create_project(slug: str, brand: str | None = None, template: str | None = N
     if brief:
         with open(pdir / "BRIEF.md", "a", encoding="utf-8") as fh:
             fh.write(f"\n\n## Request\n\n{brief.strip()}\n")
-    common.append_log(pdir, f"created from {'template ' + tpl['id'] if tpl else 'starter'}")
+    common.append_log(pdir, f"created ({c_profile}, {t_mode}) from {'template ' + tpl['id'] if tpl else 'starter'}")
     _, pr = common.load_project(pdir)
     return summarize(pdir, pr, detail=True)
 

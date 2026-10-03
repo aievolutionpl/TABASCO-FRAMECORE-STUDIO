@@ -18,7 +18,7 @@
 
     host.innerHTML = `<div class="ws">
       <section class="stage-col">
-        <div class="ws-head"><h2>${esc(proj.slug)}</h2><span class="chip" title="${esc(proj.brand)}">${W}×${H} · ${FPS} fps · ${DUR} s</span><div class="spacer"></div>
+        <div class="ws-head"><h2>${esc(proj.slug)}</h2><span class="chip" title="${esc(proj.brand)}">${W}×${H} · ${FPS} fps · ${DUR} s</span>${proj.creative_profile ? `<span class="chip grad" title="Profil kreatywny">${esc(proj.creative_profile)}</span>` : ''}${proj.text_mode ? `<span class="chip" title="Tryb tekstu">${esc(proj.text_mode)}</span>` : ''}<div class="spacer"></div>
           <label class="pill" id="autoPill" title="Gdy scena zmieni się na dysku (agent, edytor), serwer sam robi szybki nadzór"><input type="checkbox" id="autoSup" style="accent-color:#7c8cff"> auto-nadzór</label>
           <button class="btn sm" id="bCheck">${V.icon('shield')} Sprawdź</button><button class="btn sm primary" id="bDraft" title="Render roboczy (połowa rozdzielczości)">${V.icon('film')} Render</button></div>
         <div class="stage-wrap" id="stageWrap"><div class="device" id="device"><iframe id="frame" title="Podgląd sceny"></iframe><div class="ovl" id="ovl"></div><div class="veil" id="veil">Ładowanie sceny…</div></div></div>
