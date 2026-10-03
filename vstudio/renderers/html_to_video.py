@@ -142,6 +142,8 @@ def serve_directory(directory: Path) -> tuple[http.server.ThreadingHTTPServer, i
     """Local pages need http:// (not file://) so ES modules and importmaps work."""
 
     class Quiet(http.server.SimpleHTTPRequestHandler):
+        protocol_version = "HTTP/1.1"
+
         def log_message(self, *args):  # noqa: D102
             pass
 
