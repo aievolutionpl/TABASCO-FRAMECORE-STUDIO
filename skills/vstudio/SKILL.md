@@ -99,7 +99,12 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | --- | --- | --- |
 | `studio_status` | - | Jedno wywołanie: środowisko, profil marki, agent, projekty, zadania i co zrobić dalej. |
 | `profile_get` | - | Nazwa, paleta, font, ton, odbiorcy i domyślny format użytkownika. |
-| `profile_set` | `name`?, `palette`?, `font`?, `tone`?, `audience`?, `default_format`?, `fps`?, `auto_supervise`?, `require_director`? | Ustawia profil marki (częściowo). Uzupełnienie nazwy kończy onboarding. (zmienia pliki) |
+| `profile_set` | `name`?, `palette`?, `font`?, `tone`?, `audience`?, `default_format`?, `fps`?, `auto_supervise`?, `require_director`?, `creative_profile`?, `text_mode`? | Ustawia profil marki (częściowo). Uzupełnienie nazwy kończy onboarding. (zmienia pliki) |
+| `brands_list` | - | Wszystkie zdefiniowane marki w studiu oraz identyfikator marki aktywnej. |
+| `brand_get` | `brand_id` | Pobiera dane konkretnej marki: logo, paleta, fonty, reguły, ograniczenia kreatywne. |
+| `brand_set` | `brand_id`, `name`?, `palette`?, `font`?, `tone`?, `audience`?, `logo`?, `creative_restrictions`?, `references`?, `creative_profile`?, `text_mode`?, `default_format`?, `fps`? | Zapisuje lub aktualizuje profil marki (z inkrementacją wersji). Zmiana nie wpływa na stare projekty. (zmienia pliki) |
+| `brand_activate` | `brand_id` | Zmienia domyślną/aktywną markę studia dla nowych projektów. (zmienia pliki) |
+| `brand_delete` | `brand_id` | Usuwa markę z biblioteki (o ile nie jest jedyną). Istniejące projekty zachowują swoje migawki. (zmienia pliki) |
 | `agent_connect_info` | - | Polecenie MCP, fragment .mcp.json, ścieżki skilla i stan połączenia agenta. |
 | `agent_selftest` | - | Uruchamia serwer MCP i robi handshake jak prawdziwy klient: dowód, że agent się połączy. |
 | `agent_install` | `skill`?, `director`?, `mcp_config`?, `scope`? | Zapisuje skill (SKILL.md), subagenta `vstudio-director` (recenzent przed wysyłką) i wpis vstudio w .mcp.json. (zmienia pliki) |
@@ -109,7 +114,8 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | Narzędzie | Parametry | Do czego |
 | --- | --- | --- |
 | `templates_list` | - | Katalog szablonów: opis, technika, format, czas, tagi i czy wymagają sieci. |
-| `project_create` | `slug`, `brand`?, `template`?, `format`?, `size`?, `fps`?, `duration`?, `brief`? | Tworzy projekt (opcjonalnie z szablonu) z briefem; format z szablonu lub profilu marki. (zmienia pliki) |
+| `creative_profiles_list` | - | Katalog profili kreatywnych (premium_minimal, cinematic, social_fast, educational) wraz z regułami rytmu, dozwolonymi stylami i ograniczeniami. |
+| `project_create` | `slug`, `brand`?, `template`?, `format`?, `size`?, `fps`?, `duration`?, `brief`?, `creative_profile`?, `text_mode`? | Tworzy projekt (opcjonalnie z szablonu) z briefem; format z szablonu lub profilu marki. (zmienia pliki) |
 
 ### Projekty i bramki jakości
 
@@ -160,7 +166,7 @@ Każde narzędzie jest zarejestrowane w jednym miejscu (`vstudio/registry.py`); 
 | --- | --- | --- |
 | `styles_list` | `platform`?, `energy_min`?, `query`? | 14 stylów (kinetyczna typografia, szkło, neo-brutalizm, luksus, retro, naklejki, dane, 3D...) z tonem, energią, platformami, plus przejścia i układy bitów. |
 | `style_get` | `id` | Pełny opis jednego stylu: paleta, typografia, język ruchu, przejścia, zasady kompozycji i gotowa receptura CSS/GSAP. |
-| `director_plan` | `project`, `goal`, `tone`?, `platform`?, `pace`?, `prefer`?, `avoid`?, `cta`?, `loop`?, `write_storyboard`?, `format`?, `items`? | Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: bity co 2-3 s (hak, rozwinięcie, dowód, CTA) ze stylem, układem, przejściem, dźwiękiem i hasłami do assetów. (zmienia pliki) |
+| `director_plan` | `project`, `goal`, `tone`?, `platform`?, `pace`?, `prefer`?, `avoid`?, `cta`?, `loop`?, `write_storyboard`?, `format`?, `items`?, `creative_profile`?, `text_mode`? | Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: bity co 2-3 s (hak, rozwinięcie, dowód, CTA) ze stylem, układem, przejściem, dźwiękiem i hasłami do assetów. (zmienia pliki) |
 | `director_review` | `project`, `depth`?, `platform`?, `pace`? | Mierzy film oczami widza: rytm (nowa sytuacja co 2-3 s), hak, różnorodność looków, ruch (przyspieszenia, stagger), widoczność i fonty tekstu (polskie znaki), obrazy, migotanie. Zwraca werdykt, znaleziska, taśmę klatek i wykres rytmu. (zmienia pliki) (obrazy) |
 | `director_signoff` | `project`, `approve`, `notes`, `checklist`?, `accept`? | Świadome zatwierdzenie (albo odrzucenie) aktualnej wersji sceny po obejrzeniu klatek: checklista, notatka, zaakceptowane ostrzeżenia z powodem. Zmiana sceny unieważnia decyzję. (zmienia pliki) |
 | `director_latest` | `project` | Ostatni raport reżysera bez uruchamiania nowego, stan zatwierdzenia (czy aktualny), zapisany plan i historia rund. |
@@ -220,25 +226,33 @@ subagentowi `vstudio-director` (świeże oczy, bez narzędzi do edycji). Assety 
 
 # The director's craft (read before building; director_review measures it)
 
-A film that is technically correct can still be boring. You are the director: decide what the viewer sees every 2-3 seconds.
+A film that is technically correct can still be boring. You are the director: decide what the viewer sees every 2-3 seconds,
+respecting the project's creative profile (premium_minimal, cinematic, social_fast, educational) and text mode (none, headline_only, full).
 
-1. Hook, 0-1.5 s. Frame 1 is the thumbnail. Something moves or a bold line is on screen by 1 s: the promise in at most 6 words. Never open on a logo or a fade from black.
-2. Rhythm. A visibly NEW situation every 2-3 s on reels/tiktok/shorts (3.5 s on feed/linkedin, 5 s for calm explainers). "New" means layout, background, subject or camera
-   changes, not a word swap. Let the CTA hold still for 1.5-2.5 s. WEAK_HOOK, SLOW_PACE and BEAT_MISSING measure this.
-3. Variety inside a system. Constant: palette, font, tone, logo position. Variable per beat: layout, background treatment (dark / light / gradient / photo), motion
-   language, transition, sound. `director_plan` picks a main style and two accents with different layouts. At least 2 looks in 7 s, 3 from 12 s, 4 from 20 s (MONOTONE_STYLE).
-4. Motion with weight. Ease everything: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops. Constant speed only for long drifts
-   (LINEAR_MOTION). Stagger groups by 0.05-0.1 s (NO_STAGGER). Overlap the end of one move with the start of the next. Put a slow push-in or drift under static holds.
-   One hero motion per beat.
-5. Text. At most 6 words per beat and 2 sizes; the key word in the accent colour. Fully visible, never clipped (TEXT_CLIPPED), never hidden behind another layer (TEXT_HIDDEN),
-   never colliding (TEXT_OVERLAP). Polish letters must come from the chosen font (GLYPH_MISSING): load latin-ext. Stay inside platform safe zones. Reading time is at least chars/15 + 1.5 s.
-6. Assets. Pair every text-only beat with an icon, sticker or small image. One stroke weight and corner style across the film. Colour icons through CSS `color` so the
-   brand palette applies. Prefer built-in icons and generated graphics (no licence questions); downloaded files get credits in DELIVERY.md automatically.
-7. Sound. Every transition has a cue in EV: hit for cuts, whoosh for moves, pop for stickers, chime for success.
+1. Hook, 0-1.5 s. Frame 1 is the thumbnail. In social reels, something moves or a bold line is on screen by 1 s. In text_mode="none",
+   a captivating visual hero or opening move replaces hook copy.
+2. Rhythm. A visibly NEW situation every 2-3 s on reels/tiktok/shorts (3.5 s on feed/linkedin, up to 7 s in premium_minimal / cinematic
+   for intentional calm holds). "New" means layout, background, subject or camera changes, not just a word swap. Let the CTA hold still
+   for 1.5-2.5 s.
+3. Variety inside a system. Constant: palette, font, tone, logo position.
+   - In social_fast: vary layout and style accents across beats (at least 2 looks in 7 s, 3 from 12 s).
+   - In premium_minimal: a single dominant look and coherent world are intentional; forced multi-style hopping is avoided.
+4. Motion with weight. Ease everything: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops.
+   Constant speed only for long drifts (LINEAR_MOTION). In premium_minimal, motion is subtle and deliberate, without bouncy cartoon physics.
+5. Text. Dependent on text_mode:
+   - "none": no on-screen text required; purely visual film.
+   - "headline_only": bold titles only; no micro-copy or cluttered paragraphs.
+   - "full": at most 6 words per beat and 2 sizes; key word in accent colour.
+   In all text modes with copy: text must be fully visible, never clipped (TEXT_CLIPPED), never overlapping (TEXT_OVERLAP).
+   Polish letters must come from the chosen font (GLYPH_MISSING). Reading time must satisfy chars/15 + 1.5 s (educational requires generous reading time).
+6. Assets.
+   - In social_fast: pair text beats with an icon, sticker or generated graphic.
+   - In premium_minimal: NEVER add automatic icons or clutter; leave generous whitespace around the single hero focus.
+7. Sound. Every intentional transition has a cue in EV: hit for cuts, whoosh for moves, pop for stickers, chime for success.
+   In premium_minimal, avoid aggressive sound effects on gentle ambient cuts.
 8. Restraint. If a beat has two ideas, split it. If an element does not help the message, remove it.
 
-Review ritual: `director_review`, then LOOK at the filmstrip and the rhythm chart (green lines = new situations, red areas = gaps). Check each checklist item honestly.
-A film you would scroll past is not approved.
+Review ritual: `director_review`, then LOOK at the filmstrip and the rhythm chart. Check each checklist item honestly.
 
 ## Kody znalezisk nadzorcy
 

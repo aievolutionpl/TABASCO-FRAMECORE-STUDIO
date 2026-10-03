@@ -115,6 +115,7 @@ V.renderNav = () => {
   $('#nav').innerHTML = `
     ${item('#/', 'home', 'Start', cur === 'home')}
     ${item('#/library', 'grid', 'Biblioteka szablonów', cur === 'library')}
+    ${item('#/brands', 'spark', 'Marki i profile', cur === 'brands')}
     ${item('#/agent', 'bot', 'Agent', cur === 'agent', tasks ? `<span class="badge">${tasks}</span>` : '')}
     ${item('#/map', 'map', 'Mapa możliwości', cur === 'map')}
     <h6>Projekty</h6>

@@ -2,7 +2,7 @@
 
 > Plik generowany z rejestru możliwości (`vstudio/registry.py`, operacje w `vstudio/ops.py`). Nie edytuj ręcznie: `python vstudio.py tools --write-docs`.
 
-Studio ma **57 operacji** w 12 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
+Studio ma **63 operacji** w 12 kategoriach. Każda z nich jest dostępna tą samą drogą z trzech powierzchni, bo wszystkie czytają jeden rejestr:
 
 | Powierzchnia | Jak | Dla kogo |
 | --- | --- | --- |
@@ -62,6 +62,74 @@ Ustawia profil marki (częściowo). Uzupełnienie nazwy kończy onboarding.
 | `fps` | integer | nie |  |
 | `auto_supervise` | boolean | nie | run a quick supervisor check in the background whenever a scene changes on disk (dashboard) |
 | `require_director` | boolean | nie | final render and delivery need the director's sign-off for the current scene (default true) |
+| `creative_profile` | string (premium_minimal \| cinematic \| social_fast \| educational) | nie |  |
+| `text_mode` | string (none \| headline_only \| full) | nie |  |
+
+### `brands_list`: Lista marek
+
+Wszystkie zdefiniowane marki w studiu oraz identyfikator marki aktywnej.
+
+**Zwraca:** brands[], active_brand_id
+
+_brak parametrów_
+
+### `brand_get`: Szczegóły marki
+
+Pobiera dane konkretnej marki: logo, paleta, fonty, reguły, ograniczenia kreatywne.
+
+**Zwraca:** brand
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `brand_id` | string | tak | brand id (slug) |
+
+### `brand_set`: Utwórz lub zmodyfikuj markę
+
+Zapisuje lub aktualizuje profil marki (z inkrementacją wersji). Zmiana nie wpływa na stare projekty.
+
+**Zwraca:** brand
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `brand_id` | string | tak | brand id (slug) |
+| `name` | string | nie |  |
+| `palette` | object | nie | bg, ink, accent, accent2 as #RRGGBB |
+| `font` | string | nie |  |
+| `tone` | string | nie |  |
+| `audience` | string | nie |  |
+| `logo` | object | nie | logo path and rules |
+| `creative_restrictions` | array | nie |  |
+| `references` | array | nie |  |
+| `creative_profile` | string (premium_minimal \| cinematic \| social_fast \| educational) | nie |  |
+| `text_mode` | string (none \| headline_only \| full) | nie |  |
+| `default_format` | string (9:16 \| 4:5 \| 1:1 \| 16:9) | nie |  |
+| `fps` | integer | nie |  |
+
+### `brand_activate`: Ustaw aktywną markę
+
+Zmienia domyślną/aktywną markę studia dla nowych projektów.
+
+**Zwraca:** active_brand_id
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `brand_id` | string | tak | brand id (slug) |
+
+### `brand_delete`: Usuń markę
+
+Usuwa markę z biblioteki (o ile nie jest jedyną). Istniejące projekty zachowują swoje migawki.
+
+**Zwraca:** deleted, active_brand_id
+
+**Cechy:** zmienia pliki
+
+| Parametr | Typ | Wymagany | Opis |
+| --- | --- | --- | --- |
+| `brand_id` | string | tak | brand id (slug) |
 
 ### `agent_connect_info`: Jak podłączyć agenta
 
@@ -106,6 +174,14 @@ Katalog szablonów: opis, technika, format, czas, tagi i czy wymagają sieci.
 
 _brak parametrów_
 
+### `creative_profiles_list`: Profile kreatywne
+
+Katalog profili kreatywnych (premium_minimal, cinematic, social_fast, educational) wraz z regułami rytmu, dozwolonymi stylami i ograniczeniami.
+
+**Zwraca:** profiles[]
+
+_brak parametrów_
+
 ### `project_create`: Nowy projekt
 
 Tworzy projekt (opcjonalnie z szablonu) z briefem; format z szablonu lub profilu marki.
@@ -124,6 +200,8 @@ Tworzy projekt (opcjonalnie z szablonu) z briefem; format z szablonu lub profilu
 | `fps` | integer | nie |  |
 | `duration` | number | nie |  |
 | `brief` | string | nie | what the film is for; written into BRIEF.md |
+| `creative_profile` | string (premium_minimal \| cinematic \| social_fast \| educational) | nie | creative profile: premium_minimal, cinematic, social_fast, educational |
+| `text_mode` | string (none \| headline_only \| full) | nie | text mode: none, headline_only, full |
 
 ## Projekty i bramki jakości
 
@@ -276,7 +354,7 @@ Zasady: kontrakt strony, deterministyczny GSAP, pętla pracy, kody znalezisk, ru
 
 | Parametr | Typ | Wymagany | Opis |
 | --- | --- | --- | --- |
-| `topic` | string (contract \| direction \| styles \| formats \| assets \| gsap \| workflow \| findings \| feel \| motion \| visual \| brand) | tak |  |
+| `topic` | string (contract \| direction \| creative_profiles \| styles \| formats \| assets \| gsap \| workflow \| findings \| feel \| motion \| visual \| brand) | tak |  |
 
 ## Podgląd klatek i osi czasu
 
@@ -419,6 +497,8 @@ Dobiera styl główny i dwa akcenty o różnych układach i układa storyboard: 
 | `write_storyboard` | boolean | nie | also write STORYBOARD.md (the previous one is kept as STORYBOARD.previous.md) Domyślnie: `False`. |
 | `format` | string (tool-drop \| talking-head \| listicle) | nie | reel format with a proven beat sheet: tool-drop (recommend a free tool), talking-head (captions over footage), listicle (N things) |
 | `items` | integer | nie | number of items for the listicle format Domyślnie: `3`. |
+| `creative_profile` | string (premium_minimal \| cinematic \| social_fast \| educational) | nie | creative profile: premium_minimal, cinematic, social_fast, educational |
+| `text_mode` | string (none \| headline_only \| full) | nie | text mode: none, headline_only, full |
 
 ### `director_review`: Przegląd reżysera
 

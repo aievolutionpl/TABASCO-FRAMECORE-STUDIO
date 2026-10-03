@@ -76,10 +76,54 @@ def profile_get() -> dict:
                     "font": {"type": "string"}, "tone": {"type": "string"}, "audience": {"type": "string"},
                     "default_format": {"type": "string", "enum": list(workspace.FORMATS)}, "fps": {"type": "integer", "minimum": 12, "maximum": 120},
                     "auto_supervise": {"type": "boolean", "description": "run a quick supervisor check in the background whenever a scene changes on disk (dashboard)"},
-                    "require_director": {"type": "boolean", "description": "final render and delivery need the director's sign-off for the current scene (default true)"}},
+                    "require_director": {"type": "boolean", "description": "final render and delivery need the director's sign-off for the current scene (default true)"},
+                    "creative_profile": {"type": "string", "enum": ["premium_minimal", "cinematic", "social_fast", "educational"]},
+                    "text_mode": {"type": "string", "enum": ["none", "headline_only", "full"]}},
             returns="profile", when="During onboarding, after asking the user for their brand.")
 def profile_set(**patch) -> dict:
     return workspace.profile_set(patch)
+
+
+@capability("brands_list", "Lista marek", "Wszystkie zdefiniowane marki w studiu oraz identyfikator marki aktywnej.", "onboarding",
+            returns="brands[], active_brand_id")
+def brands_list() -> dict:
+    return workspace.brands_list()
+
+
+@capability("brand_get", "Szczegóły marki", "Pobiera dane konkretnej marki: logo, paleta, fonty, reguły, ograniczenia kreatywne.", "onboarding",
+            params={"brand_id": {"type": "string", "description": "brand id (slug)"}},
+            required=("brand_id",), returns="brand")
+def brand_get(brand_id: str) -> dict:
+    return {"brand": workspace.brand_get(brand_id)}
+
+
+@capability("brand_set", "Utwórz lub zmodyfikuj markę", "Zapisuje lub aktualizuje profil marki (z inkrementacją wersji). Zmiana nie wpływa na stare projekty.", "onboarding", mutates=True,
+            params={"brand_id": {"type": "string", "description": "brand id (slug)"},
+                    "name": {"type": "string"}, "palette": {"type": "object", "description": "bg, ink, accent, accent2 as #RRGGBB"},
+                    "font": {"type": "string"}, "tone": {"type": "string"}, "audience": {"type": "string"},
+                    "logo": {"type": "object", "description": "logo path and rules"},
+                    "creative_restrictions": {"type": "array", "items": {"type": "string"}},
+                    "references": {"type": "array", "items": {"type": "string"}},
+                    "creative_profile": {"type": "string", "enum": ["premium_minimal", "cinematic", "social_fast", "educational"]},
+                    "text_mode": {"type": "string", "enum": ["none", "headline_only", "full"]},
+                    "default_format": {"type": "string", "enum": list(workspace.FORMATS)}, "fps": {"type": "integer", "minimum": 12, "maximum": 120}},
+            required=("brand_id",), returns="brand")
+def brand_set(brand_id: str, **patch) -> dict:
+    return {"brand": workspace.brand_set(brand_id, patch)}
+
+
+@capability("brand_activate", "Ustaw aktywną markę", "Zmienia domyślną/aktywną markę studia dla nowych projektów.", "onboarding", mutates=True,
+            params={"brand_id": {"type": "string", "description": "brand id (slug)"}},
+            required=("brand_id",), returns="active_brand_id")
+def brand_activate(brand_id: str) -> dict:
+    return workspace.brand_activate(brand_id)
+
+
+@capability("brand_delete", "Usuń markę", "Usuwa markę z biblioteki (o ile nie jest jedyną). Istniejące projekty zachowują swoje migawki.", "onboarding", mutates=True,
+            params={"brand_id": {"type": "string", "description": "brand id (slug)"}},
+            required=("brand_id",), returns="deleted, active_brand_id")
+def brand_delete(brand_id: str) -> dict:
+    return workspace.brand_delete(brand_id)
 
 
 @capability("agent_connect_info", "Jak podłączyć agenta", "Polecenie MCP, fragment .mcp.json, ścieżki skilla i stan połączenia agenta.", "onboarding",
@@ -110,12 +154,20 @@ def templates_list() -> dict:
     return {"templates": workspace.templates()}
 
 
+@capability("creative_profiles_list", "Profile kreatywne", "Katalog profili kreatywnych (premium_minimal, cinematic, social_fast, educational) wraz z regułami rytmu, dozwolonymi stylami i ograniczeniami.", "library",
+            returns="profiles[]")
+def creative_profiles_list() -> dict:
+    return {"profiles": workspace.creative_profiles_list()}
+
+
 @capability("project_create", "Nowy projekt", "Tworzy projekt (opcjonalnie z szablonu) z briefem; format z szablonu lub profilu marki.", "library", mutates=True,
             params={"slug": {"type": "string", "description": "short-kebab-name"}, "brand": {"type": "string", "description": "defaults to the profile name"},
                     "template": {"type": "string", "description": "template id from templates_list"},
                     "format": {"type": "string", "enum": list(workspace.FORMATS)}, "size": {"type": "string", "description": "WxH, overrides format"},
                     "fps": {"type": "integer", "minimum": 12, "maximum": 120}, "duration": {"type": "number", "minimum": 1, "maximum": 600},
-                    "brief": {"type": "string", "description": "what the film is for; written into BRIEF.md"}},
+                    "brief": {"type": "string", "description": "what the film is for; written into BRIEF.md"},
+                    "creative_profile": {"type": "string", "enum": ["premium_minimal", "cinematic", "social_fast", "educational"], "description": "creative profile: premium_minimal, cinematic, social_fast, educational"},
+                    "text_mode": {"type": "string", "enum": ["none", "headline_only", "full"], "description": "text mode: none, headline_only, full"}},
             required=("slug",), returns="project summary (id, size, gates, next)")
 def project_create(**kw) -> dict:
     return {"project": workspace.create_project(**kw)}
@@ -349,14 +401,16 @@ def style_get(id: str) -> dict:  # noqa: A002 - nazwa parametru jest częścią 
                     "cta": {"type": "string", "description": "the call to action line"}, "loop": {"type": "boolean", "default": False},
                     "write_storyboard": {"type": "boolean", "default": False, "description": "also write STORYBOARD.md (the previous one is kept as STORYBOARD.previous.md)"},
                     "format": {"type": "string", "enum": list(styles.FORMATS), "description": "reel format with a proven beat sheet: tool-drop (recommend a free tool), talking-head (captions over footage), listicle (N things)"},
-                    "items": {"type": "integer", "minimum": 2, "maximum": 7, "default": 3, "description": "number of items for the listicle format"}},
+                    "items": {"type": "integer", "minimum": 2, "maximum": 7, "default": 3, "description": "number of items for the listicle format"},
+                    "creative_profile": {"type": "string", "enum": ["premium_minimal", "cinematic", "social_fast", "educational"], "description": "creative profile: premium_minimal, cinematic, social_fast, educational"},
+                    "text_mode": {"type": "string", "enum": ["none", "headline_only", "full"], "description": "text mode: none, headline_only, full"}},
             required=("project", "goal"), returns="styles{main, accents, why}, beats[], contract, brand, format, warnings[]",
             when="BEFORE building the scene: the plan is what director_review later checks the film against.")
 def director_plan(project: str, goal: str, tone: str = "", platform: str | None = None, pace: str | None = None, prefer: list | None = None,
                   avoid: list | None = None, cta: str = "", loop: bool = False, write_storyboard: bool = False, format: str | None = None,  # noqa: A002
-                  items: int = 3) -> dict:
+                  items: int = 3, creative_profile: str | None = None, text_mode: str | None = None) -> dict:
     pdir, pr = _proj(project)
-    return {"project": workspace.project_id(pdir), "plan": director.plan(pdir, pr, goal, tone, platform, pace, prefer, avoid, cta, loop, write_storyboard, format, items)}
+    return {"project": workspace.project_id(pdir), "plan": director.plan(pdir, pr, goal, tone, platform, pace, prefer, avoid, cta, loop, write_storyboard, format, items, creative_profile=creative_profile, text_mode=text_mode)}
 
 
 @capability("director_review", "Przegląd reżysera", "Mierzy film oczami widza: rytm (nowa sytuacja co 2-3 s), hak, różnorodność looków, ruch (przyspieszenia, stagger), widoczność i fonty tekstu (polskie znaki), obrazy, migotanie. Zwraca werdykt, znaleziska, taśmę klatek i wykres rytmu.", "direct",

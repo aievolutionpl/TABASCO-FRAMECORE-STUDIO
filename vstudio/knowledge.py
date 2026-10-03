@@ -88,25 +88,33 @@ ask the user. Never overwrite a scene without `scene_write` (it keeps history; `
 DIRECTION = """\
 # The director's craft (read before building; director_review measures it)
 
-A film that is technically correct can still be boring. You are the director: decide what the viewer sees every 2-3 seconds.
+A film that is technically correct can still be boring. You are the director: decide what the viewer sees every 2-3 seconds,
+respecting the project's creative profile (premium_minimal, cinematic, social_fast, educational) and text mode (none, headline_only, full).
 
-1. Hook, 0-1.5 s. Frame 1 is the thumbnail. Something moves or a bold line is on screen by 1 s: the promise in at most 6 words. Never open on a logo or a fade from black.
-2. Rhythm. A visibly NEW situation every 2-3 s on reels/tiktok/shorts (3.5 s on feed/linkedin, 5 s for calm explainers). "New" means layout, background, subject or camera
-   changes, not a word swap. Let the CTA hold still for 1.5-2.5 s. WEAK_HOOK, SLOW_PACE and BEAT_MISSING measure this.
-3. Variety inside a system. Constant: palette, font, tone, logo position. Variable per beat: layout, background treatment (dark / light / gradient / photo), motion
-   language, transition, sound. `director_plan` picks a main style and two accents with different layouts. At least 2 looks in 7 s, 3 from 12 s, 4 from 20 s (MONOTONE_STYLE).
-4. Motion with weight. Ease everything: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops. Constant speed only for long drifts
-   (LINEAR_MOTION). Stagger groups by 0.05-0.1 s (NO_STAGGER). Overlap the end of one move with the start of the next. Put a slow push-in or drift under static holds.
-   One hero motion per beat.
-5. Text. At most 6 words per beat and 2 sizes; the key word in the accent colour. Fully visible, never clipped (TEXT_CLIPPED), never hidden behind another layer (TEXT_HIDDEN),
-   never colliding (TEXT_OVERLAP). Polish letters must come from the chosen font (GLYPH_MISSING): load latin-ext. Stay inside platform safe zones. Reading time is at least chars/15 + 1.5 s.
-6. Assets. Pair every text-only beat with an icon, sticker or small image. One stroke weight and corner style across the film. Colour icons through CSS `color` so the
-   brand palette applies. Prefer built-in icons and generated graphics (no licence questions); downloaded files get credits in DELIVERY.md automatically.
-7. Sound. Every transition has a cue in EV: hit for cuts, whoosh for moves, pop for stickers, chime for success.
+1. Hook, 0-1.5 s. Frame 1 is the thumbnail. In social reels, something moves or a bold line is on screen by 1 s. In text_mode="none",
+   a captivating visual hero or opening move replaces hook copy.
+2. Rhythm. A visibly NEW situation every 2-3 s on reels/tiktok/shorts (3.5 s on feed/linkedin, up to 7 s in premium_minimal / cinematic
+   for intentional calm holds). "New" means layout, background, subject or camera changes, not just a word swap. Let the CTA hold still
+   for 1.5-2.5 s.
+3. Variety inside a system. Constant: palette, font, tone, logo position.
+   - In social_fast: vary layout and style accents across beats (at least 2 looks in 7 s, 3 from 12 s).
+   - In premium_minimal: a single dominant look and coherent world are intentional; forced multi-style hopping is avoided.
+4. Motion with weight. Ease everything: expo.out or power3.out for entrances, power2.inOut for moves, back.out(1.4) for pops.
+   Constant speed only for long drifts (LINEAR_MOTION). In premium_minimal, motion is subtle and deliberate, without bouncy cartoon physics.
+5. Text. Dependent on text_mode:
+   - "none": no on-screen text required; purely visual film.
+   - "headline_only": bold titles only; no micro-copy or cluttered paragraphs.
+   - "full": at most 6 words per beat and 2 sizes; key word in accent colour.
+   In all text modes with copy: text must be fully visible, never clipped (TEXT_CLIPPED), never overlapping (TEXT_OVERLAP).
+   Polish letters must come from the chosen font (GLYPH_MISSING). Reading time must satisfy chars/15 + 1.5 s (educational requires generous reading time).
+6. Assets.
+   - In social_fast: pair text beats with an icon, sticker or generated graphic.
+   - In premium_minimal: NEVER add automatic icons or clutter; leave generous whitespace around the single hero focus.
+7. Sound. Every intentional transition has a cue in EV: hit for cuts, whoosh for moves, pop for stickers, chime for success.
+   In premium_minimal, avoid aggressive sound effects on gentle ambient cuts.
 8. Restraint. If a beat has two ideas, split it. If an element does not help the message, remove it.
 
-Review ritual: `director_review`, then LOOK at the filmstrip and the rhythm chart (green lines = new situations, red areas = gaps). Check each checklist item honestly.
-A film you would scroll past is not approved.
+Review ritual: `director_review`, then LOOK at the filmstrip and the rhythm chart. Check each checklist item honestly.
 """
 
 FEEL = """\
@@ -187,9 +195,30 @@ def _formats_text() -> str:
     return styles.formats_text()
 
 
+def _creative_profiles_text() -> str:
+    from . import brands
+
+    lines = ["# Creative profiles and text modes", "", "## Profiles", ""]
+    for pid, p in brands.CREATIVE_PROFILES.items():
+        lines.append(f"### {p['name']} (`{pid}`)")
+        lines.append(f"- **Description:** {p['description']}")
+        lines.append(f"- **Default pace:** {p['default_pace']} (max allowable pace gap: {p['max_pace_gap']}s)")
+        lines.append(f"- **Calm holds allowed:** {p['allow_calm_holds']}")
+        lines.append(f"- **Suppress auto icons:** {p['suppress_auto_icons']}")
+        lines.append(f"- **Preferred styles:** {', '.join(p['preferred_styles']) or 'none'}")
+        lines.append(f"- **Avoid styles:** {', '.join(p['avoid_styles']) or 'none'}")
+        lines.append("")
+    lines.append("## Text Modes")
+    lines.append("- `none`: Purely visual film without on-screen copy. Hook text warning is suppressed.")
+    lines.append("- `headline_only`: Strong, concise titles. Avoid clutter, micro-text, or multi-sentence paragraphs.")
+    lines.append("- `full`: Standard storytelling copy with headlines and supporting lines.")
+    return "\n".join(lines) + "\n"
+
+
 TOPICS = {
     "contract": ("Page contract: hooks the scene must expose", lambda: CONTRACT),
     "direction": ("The director's craft: hook, rhythm, variety, motion, text, assets", lambda: DIRECTION),
+    "creative_profiles": ("Creative profiles (premium_minimal, cinematic, social_fast, educational) and text modes", _creative_profiles_text),
     "styles": ("Style library, transitions and beat layouts", _styles_text),
     "formats": ("Reel formats with proven beat sheets (tool-drop, talking-head, listicle) and caption rules", _formats_text),
     "assets": ("Icons, generated graphics and downloaded images", lambda: ASSETS),

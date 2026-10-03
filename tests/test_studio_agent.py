@@ -389,8 +389,9 @@ class TestSupportModules:
     def test_jobs_are_visible_and_cancellable_across_processes(self, studio):
         """Agent startuje render w procesie MCP, dashboard (inny proces) widzi go i może anulować; martwy job dostaje `lost` raz, trwale."""
         pdir = studio / "m" / "p"
-        (pdir / "renders").mkdir(parents=True)
-        child = subprocess.Popen(["sleep", "60"], start_new_session=True)
+        cmd = [sys.executable, "-c", "import time; time.sleep(60)"]
+        group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if sys.platform == "win32" else {"start_new_session": True}
+        child = subprocess.Popen(cmd, **group)
         try:
             job = {"id": "J-aaaaaaaa", "kind": "render", "project": "m/p", "cmd": "render", "status": "running", "progress": 0.4, "message": "x",
                    "started": time.time(), "finished": None, "result": None, "source": "mcp", "pid": child.pid, "before": []}
@@ -653,12 +654,12 @@ class TestWatcher:
         assert w.tick() == []                                   # nic się nie zmieniło
         src = studio / "b" / "w" / "src" / "index.html"
         time.sleep(0.05)
-        src.write_text(src.read_text(encoding="utf-8") + "\n<!-- zmiana -->")
+        src.write_text(src.read_text(encoding="utf-8") + "\n<!-- zmiana -->", encoding="utf-8")
         assert w.tick() == ["b/w"] and ran == ["quick"]
         assert w.tick() == []                                   # ta sama zmiana nie wyzwala drugi raz
         call("profile_set", name="M", auto_supervise=False)
         time.sleep(0.05)
-        src.write_text(src.read_text(encoding="utf-8") + "\n<!-- druga -->")
+        src.write_text(src.read_text(encoding="utf-8") + "\n<!-- druga -->", encoding="utf-8")
         assert w.tick() == [] and ran == ["quick"]              # wyłączone w profilu
 
 

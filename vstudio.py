@@ -40,7 +40,7 @@ def resolve_project(value: str | None) -> tuple[Path, dict]:
         p = Path(value)
         if (p / "project.json").exists():
             return load_project(p)
-        hits = sorted(q.parent for q in OUTPUT.rglob("project.json") if value in str(q.parent))
+        hits = sorted(q.parent for q in OUTPUT.rglob("project.json") if value in q.parent.as_posix() or value in str(q.parent))
         if len(hits) == 1:
             return load_project(hits[0])
         if not hits:
