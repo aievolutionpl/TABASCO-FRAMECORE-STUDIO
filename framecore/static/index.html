@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TABASCO CREATIVES + FRAMECORE — STUDIO</title><link rel="icon" href="/static/brand/mark-orange.svg"><meta name="theme-color" content="#151719"><link rel="stylesheet" href="/static/studio.css"></head>
+<body>
+<header class="topbar">
+  <a class="wordmark" href="/" aria-label="FrameCore Studio"><img class="wordmark-symbol" src="/static/brand/mark-light.svg" alt="Wspólna rama"><span>FRAMECORE<small>TABASCO CREATIVES + FRAMECORE</small></span></a>
+  <div class="top-divider"></div><button id="projectMenu" class="project-name">Wczytywanie studia…</button><span class="project-kind">Rolka</span>
+  <span id="saveState" class="save-state"><i></i> Wszystkie zmiany zapisane</span>
+  <div class="top-actions"><button id="undo" class="icon-button" title="Cofnij · Ctrl Z" aria-label="Cofnij"></button><button id="redo" class="icon-button" title="Ponów · Ctrl Shift Z" aria-label="Ponów"></button><div class="top-divider"></div><button id="newProject" class="quiet-button">Nowy projekt</button><button id="export" class="primary-button">Eksport</button><div class="avatar" title="Lokalne środowisko">T</div></div>
+</header>
+<main class="editor">
+  <nav class="creation-rail" aria-label="Narzędzia tworzenia" id="rail"></nav>
+  <aside class="library"><div id="libraryContent"></div><div class="library-foot"><span class="status-dot"></span> LOKALNE STUDIO <span class="workspace-mark">↗</span></div></aside>
+  <section class="workspace">
+    <div class="canvas-toolbar"><div><span class="breadcrumb">PROJEKT</span><span class="crumb-slash">/</span><span id="sceneName">Kompozycja</span></div><div class="canvas-tools"><button id="formatButton" class="quiet-button">9:16 <span>⌄</span></button><span class="canvas-size" id="canvasSize">1080 × 1920</span><button id="fitCanvas" class="icon-button" title="Dopasuj podgląd" aria-label="Dopasuj podgląd"></button></div></div>
+    <div class="canvas-area"><div class="canvas-grid"></div><div class="canvas-wrap" id="canvasWrap"><hyperframes-player id="player" disable-click-to-play width="1080" height="1920"></hyperframes-player><div id="canvasOverlay" aria-label="Edytowalny podgląd"></div><span class="canvas-badge">FRAMECORE / PODGLĄD</span></div></div>
+    <div class="transport"><div class="transport-left"><span class="preview-dot"></span> PODGLĄD <span id="previewState">Pełna jakość</span></div><div class="transport-center"><button id="previous" class="icon-button" title="Poprzednia klatka" aria-label="Poprzednia klatka"></button><button id="play" class="play-button" title="Odtwarzaj · Spacja" aria-label="Odtwarzaj"></button><button id="next" class="icon-button" title="Następna klatka" aria-label="Następna klatka"></button><span class="timecode"><strong id="timeNow">00:00.00</strong><span>/</span><span id="timeEnd">00:15.00</span></span></div><span class="zoom-label">Dopasuj <span>⌄</span></span></div>
+  </section>
+  <aside class="inspector"><div class="inspector-tabs"><button id="propertiesTab" class="active">Właściwości</button><button id="agentTab">Agent <span class="agent-dot"></span></button></div><div id="inspectorContent"></div></aside>
+  <section class="timeline"><div class="timeline-toolbar"><div class="timeline-tabs"><button class="active" id="timelineTab">Oś czasu</button><button id="storyboardTab">Plan scen</button></div><div class="timeline-actions"><button id="split" class="icon-button" title="Podziel przy wskaźniku · S" aria-label="Podziel klip"></button><button id="delete" class="icon-button" title="Usuń zaznaczony klip" aria-label="Usuń klip"></button><span class="thin-divider"></span><label class="snap-label"><input type="checkbox" id="snap" checked> Przyciąganie</label><span class="timeline-counter" id="clipCount">0 klipów</span><button id="zoomOut" class="icon-button" title="Oddal" aria-label="Oddal">−</button><input type="range" id="timelineZoom" min="1" max="4" step=".25" value="1" aria-label="Powiększenie osi czasu"><button id="zoomIn" class="icon-button" title="Przybliż" aria-label="Przybliż">+</button></div></div><div id="timelineContent"></div></section>
+</main>
+<footer class="statusbar"><span><span class="status-dot"></span> Studio połączone <span class="status-divider">|</span><span id="revision">Rewizja 0</span></span><span>Jeden projekt. Człowiek + agent. <span class="status-divider">|</span><button id="shortcuts">Skróty klawiaturowe</button></span></footer>
+<dialog id="modal"><div id="modalContent"></div></dialog><div id="toast" role="status" aria-live="polite"></div><input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime,audio/wav,audio/mpeg,audio/mp4" multiple hidden>
+<script>window.STUDIO_TOKEN='__TOKEN__';</script><script src="/static/vendor/hyperframes-player-0.8.124.js"></script><script type="module" src="/static/studio.js"></script>
+</body></html>

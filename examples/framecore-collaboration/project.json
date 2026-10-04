@@ -1,0 +1,1134 @@
+{
+  "schemaVersion": 1,
+  "id": "fc_aa46aae875a7",
+  "revision": 48,
+  "metadata": {
+    "name": "TABASCO CREATIVES + FRAMECORE — wspólny film",
+    "brief": "Film o współpracy człowieka z agentem.",
+    "workflow": "Współpraca z AI",
+    "createdAt": "2026-10-04T20:47:35.915239+00:00",
+    "updatedAt": "2026-10-04T20:47:37.820620+00:00"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "background": "#111315"
+  },
+  "duration": 15,
+  "assets": [
+    {
+      "id": "asset_a32b28cfc7e7",
+      "name": "Rytm współpracy · własny podkład.wav",
+      "kind": "audio",
+      "file": "assets/asset_a32b28cfc7e7.wav",
+      "mime": "audio/wav",
+      "duration": 15.0,
+      "hasAudio": true,
+      "role": "audio",
+      "provenance": {
+        "source": "user_upload"
+      },
+      "license": "user_provided"
+    },
+    {
+      "id": "asset_a38f09e8b4b6",
+      "name": "Energia",
+      "kind": "image",
+      "file": "assets/asset_a38f09e8b4b6.svg",
+      "mime": "image/svg+xml",
+      "duration": null,
+      "role": "icon",
+      "license": "MIT",
+      "provenance": {
+        "source": "phosphor_builtin",
+        "icon_id": "lightning",
+        "version": "2.1.1"
+      }
+    },
+    {
+      "id": "asset_5f83d9b79def",
+      "name": "Film",
+      "kind": "image",
+      "file": "assets/asset_5f83d9b79def.svg",
+      "mime": "image/svg+xml",
+      "duration": null,
+      "role": "icon",
+      "license": "MIT",
+      "provenance": {
+        "source": "phosphor_builtin",
+        "icon_id": "film-strip",
+        "version": "2.1.1"
+      }
+    },
+    {
+      "id": "asset_03c31ecbc8ae",
+      "name": "Kształty",
+      "kind": "image",
+      "file": "assets/asset_03c31ecbc8ae.svg",
+      "mime": "image/svg+xml",
+      "duration": null,
+      "role": "icon",
+      "license": "MIT",
+      "provenance": {
+        "source": "phosphor_builtin",
+        "icon_id": "shapes",
+        "version": "2.1.1"
+      }
+    },
+    {
+      "id": "asset_3687f2832591",
+      "name": "Gotowe",
+      "kind": "image",
+      "file": "assets/asset_3687f2832591.svg",
+      "mime": "image/svg+xml",
+      "duration": null,
+      "role": "icon",
+      "license": "MIT",
+      "provenance": {
+        "source": "phosphor_builtin",
+        "icon_id": "check",
+        "version": "2.1.1"
+      }
+    },
+    {
+      "id": "asset_463f3188b618",
+      "name": "Agent AI",
+      "kind": "image",
+      "file": "assets/asset_463f3188b618.svg",
+      "mime": "image/svg+xml",
+      "duration": null,
+      "role": "icon",
+      "license": "MIT",
+      "provenance": {
+        "source": "phosphor_builtin",
+        "icon_id": "robot",
+        "version": "2.1.1"
+      }
+    },
+    {
+      "id": "asset_e3d383e0463a",
+      "name": "tabasco-framecore-collaboration.jpg",
+      "kind": "image",
+      "file": "assets/asset_e3d383e0463a.jpg",
+      "mime": "image/jpeg",
+      "duration": null,
+      "hasAudio": false,
+      "role": "brand",
+      "provenance": {
+        "source": "user_upload"
+      },
+      "license": "user_provided"
+    },
+    {
+      "id": "asset_1003aaf6bd08",
+      "name": "FrameCore — Wspólna rama.png",
+      "kind": "image",
+      "file": "assets/asset_1003aaf6bd08.png",
+      "mime": "image/png",
+      "duration": null,
+      "hasAudio": false,
+      "role": "logo",
+      "provenance": {
+        "source": "user_upload"
+      },
+      "license": "user_provided"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene_130570f3da10",
+      "name": "OTWARCIE",
+      "start": 0,
+      "duration": 2.0,
+      "message": "Masz pomysł?",
+      "visualPurpose": "Współpraca człowieka z AI: otwarcie",
+      "motionIntent": "headline_impact",
+      "audioIntent": "delikatny akcent"
+    },
+    {
+      "id": "scene_039d2699547a",
+      "name": "PROBLEM",
+      "start": 2.0,
+      "duration": 2.0,
+      "message": "Nadaj mu historię.",
+      "visualPurpose": "Współpraca człowieka z AI: problem",
+      "motionIntent": "title_reveal",
+      "audioIntent": "delikatny akcent"
+    },
+    {
+      "id": "scene_b4bdef98a551",
+      "name": "ODKRYCIE",
+      "start": 4.0,
+      "duration": 3.0,
+      "message": "FRAMECORE\nSTUDIO",
+      "visualPurpose": "Współpraca człowieka z AI: odkrycie",
+      "motionIntent": "title_reveal",
+      "audioIntent": "delikatny akcent"
+    },
+    {
+      "id": "scene_739d2d3aeb0d",
+      "name": "PRODUKT",
+      "start": 7.0,
+      "duration": 3.0,
+      "message": "Ty wybierasz kierunek.",
+      "visualPurpose": "Współpraca człowieka z AI: produkt",
+      "motionIntent": "title_reveal",
+      "audioIntent": "delikatny akcent"
+    },
+    {
+      "id": "scene_3fadbae3c743",
+      "name": "KORZYŚĆ",
+      "start": 10.0,
+      "duration": 3.0,
+      "message": "Agent pomaga w montażu.",
+      "visualPurpose": "Współpraca człowieka z AI: korzyść",
+      "motionIntent": "title_reveal",
+      "audioIntent": "delikatny akcent"
+    },
+    {
+      "id": "scene_78dd9531c2cc",
+      "name": "DZIAŁANIE",
+      "start": 13.0,
+      "duration": 2.0,
+      "message": "Stwórzmy film razem.",
+      "visualPurpose": "Współpraca człowieka z AI: działanie",
+      "motionIntent": "title_reveal",
+      "audioIntent": "delikatny akcent"
+    }
+  ],
+  "elements": [
+    {
+      "id": "el_6eb5a5b18f53",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": "scene_130570f3da10",
+      "assetId": null,
+      "text": "Masz pomysł?",
+      "start": 0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 180,
+      "width": 1680,
+      "height": 240,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 92,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "impact-rise",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_f77e0c481d38",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": "scene_130570f3da10",
+      "assetId": null,
+      "text": "OTWARCIE / 01",
+      "start": 0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 153.6,
+      "y": 928.8,
+      "width": 1612.8,
+      "height": 54.0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 46.08,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.4
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_1cebaf06c440",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": "scene_039d2699547a",
+      "assetId": null,
+      "text": "Nadaj mu historię.",
+      "start": 2.0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 180,
+      "width": 1680,
+      "height": 240,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 92,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_a592f91e2947",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": "scene_039d2699547a",
+      "assetId": null,
+      "text": "PROBLEM / 02",
+      "start": 2.0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 153.6,
+      "y": 928.8,
+      "width": 1612.8,
+      "height": 54.0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 46.08,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.4
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_15c8cbf8819d",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": "scene_b4bdef98a551",
+      "assetId": null,
+      "text": "FRAMECORE\nSTUDIO",
+      "start": 4.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 180,
+      "width": 1680,
+      "height": 240,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 104,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_9c5f5a94102b",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": "scene_b4bdef98a551",
+      "assetId": null,
+      "text": "ODKRYCIE / 03",
+      "start": 4.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 153.6,
+      "y": 928.8,
+      "width": 1612.8,
+      "height": 54.0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 46.08,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.4
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_9eb293b8224b",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": "scene_739d2d3aeb0d",
+      "assetId": null,
+      "text": "Ty wybierasz kierunek.",
+      "start": 7.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 180,
+      "width": 1680,
+      "height": 240,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 92,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_d15f818f33cc",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": "scene_739d2d3aeb0d",
+      "assetId": null,
+      "text": "PRODUKT / 04",
+      "start": 7.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 153.6,
+      "y": 928.8,
+      "width": 1612.8,
+      "height": 54.0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 46.08,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.4
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_9bad5778059b",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": "scene_3fadbae3c743",
+      "assetId": null,
+      "text": "Agent pomaga w montażu.",
+      "start": 10.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 180,
+      "width": 1680,
+      "height": 240,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 92,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_d4fbf9d63348",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": "scene_3fadbae3c743",
+      "assetId": null,
+      "text": "KORZYŚĆ / 05",
+      "start": 10.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 153.6,
+      "y": 928.8,
+      "width": 1612.8,
+      "height": 54.0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 46.08,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.4
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_4da25f1f6d39",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": "scene_78dd9531c2cc",
+      "assetId": null,
+      "text": "Stwórzmy film razem.",
+      "start": 13.0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 180,
+      "width": 1680,
+      "height": 240,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 92,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_6e072d4d174b",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": "scene_78dd9531c2cc",
+      "assetId": null,
+      "text": "DZIAŁANIE / 06",
+      "start": 13.0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 153.6,
+      "y": 928.8,
+      "width": 1612.8,
+      "height": 54.0,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 46.08,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.4
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_d8fec8bfba27",
+      "type": "audio",
+      "trackId": "audio",
+      "sceneId": null,
+      "assetId": "asset_a32b28cfc7e7",
+      "text": "Twój nagłówek",
+      "start": 0,
+      "duration": 15,
+      "sourceStart": 0,
+      "x": 153.6,
+      "y": 172.8,
+      "width": 1612.8,
+      "height": 237.6,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.6
+      },
+      "effects": [],
+      "keyframes": [],
+      "audio": {
+        "gain": 0.8,
+        "fadeIn": 0.3,
+        "fadeOut": 1
+      }
+    },
+    {
+      "id": "el_3de1e2df1303",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_a38f09e8b4b6",
+      "text": "Twój nagłówek",
+      "start": 0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 525,
+      "width": 225,
+      "height": 225,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "elastic-pop",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_0a04ec422f1c",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "IDEA",
+      "start": 0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 440,
+      "y": 570,
+      "width": 1150,
+      "height": 100,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 44,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#b7b6b0",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "slide-left",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_17890bddd39d",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_5f83d9b79def",
+      "text": "Twój nagłówek",
+      "start": 2.0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 525,
+      "width": 225,
+      "height": 225,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "wipe-up",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_8975c6cbda46",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "HISTORIA",
+      "start": 2.0,
+      "duration": 2.0,
+      "sourceStart": 0,
+      "x": 440,
+      "y": 570,
+      "width": 1150,
+      "height": 100,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 44,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#b7b6b0",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "slide-left",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_4cabcd11231f",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_03c31ecbc8ae",
+      "text": "Twój nagłówek",
+      "start": 4.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 525,
+      "width": 225,
+      "height": 225,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "rotate-in",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_b71ea7764880",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "NARZĘDZIA",
+      "start": 4.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 440,
+      "y": 570,
+      "width": 1150,
+      "height": 100,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 44,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#b7b6b0",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "slide-left",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_5cb38b67c325",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_3687f2832591",
+      "text": "Twój nagłówek",
+      "start": 7.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 525,
+      "width": 225,
+      "height": 225,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "float",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_9ba578efa121",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "CZŁOWIEK",
+      "start": 7.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 440,
+      "y": 570,
+      "width": 1150,
+      "height": 100,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 44,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#b7b6b0",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "slide-left",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_162973804ef1",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_463f3188b618",
+      "text": "Twój nagłówek",
+      "start": 10.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 525,
+      "width": 225,
+      "height": 225,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#ef421b",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "cinema-rise",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_c7348d6f60c0",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "AGENT AI",
+      "start": 10.0,
+      "duration": 3.0,
+      "sourceStart": 0,
+      "x": 440,
+      "y": 570,
+      "width": 1150,
+      "height": 100,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 44,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#b7b6b0",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "slide-left",
+        "duration": 0.8
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_fbc0ec83d98c",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_e3d383e0463a",
+      "text": "Twój nagłówek",
+      "start": 13,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 510,
+      "y": 440,
+      "width": 900,
+      "height": 506,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "focus-in",
+        "duration": 0.5
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_f68c0db9be05",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "TABASCO CREATIVES + FRAMECORE — STUDIO",
+      "start": 0,
+      "duration": 15,
+      "sourceStart": 0,
+      "x": 120,
+      "y": 70,
+      "width": 1680,
+      "height": 50,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 24,
+        "fontFamily": "Arial",
+        "fontWeight": 400,
+        "color": "#b7b6b0",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.6
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_6e6209448e6c",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_1003aaf6bd08",
+      "text": "Twój nagłówek",
+      "start": 0,
+      "duration": 15,
+      "sourceStart": 0,
+      "x": 1730,
+      "y": 45,
+      "width": 90,
+      "height": 90,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 124.80000000000001,
+        "fontFamily": "Arial",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "logo-settle",
+        "duration": 0.6
+      },
+      "effects": [],
+      "keyframes": []
+    }
+  ],
+  "tracks": [
+    {
+      "id": "video",
+      "name": "Nagrania",
+      "kind": "video",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "image",
+      "name": "Obrazy i logo",
+      "kind": "image",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "shape",
+      "name": "Kształty",
+      "kind": "shape",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "text",
+      "name": "Teksty",
+      "kind": "text",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "caption",
+      "name": "Napisy",
+      "kind": "caption",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "audio",
+      "name": "Dźwięk",
+      "kind": "audio",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    }
+  ],
+  "brand": {
+    "name": "TABASCO CREATIVES + FRAMECORE",
+    "colors": {
+      "background": "#111315",
+      "text": "#f5f3ec",
+      "accent": "#ef421b"
+    },
+    "font": "Arial",
+    "logoAssetId": "asset_1003aaf6bd08",
+    "captionStyle": "minimal",
+    "motionStyle": "premium",
+    "ctaStyle": "pill"
+  },
+  "exportProfiles": [
+    "9:16",
+    "4:5",
+    "1:1",
+    "16:9"
+  ]
+}

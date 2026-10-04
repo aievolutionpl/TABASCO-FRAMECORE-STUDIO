@@ -61,10 +61,10 @@ class TestRegistry:
         assert (REPO / "docs" / "CAPABILITIES.md").read_text(encoding="utf-8") == docgen.render(), "odśwież: python vstudio.py tools --write-docs"
         assert (REPO / "skills" / "vstudio" / "SKILL.md").read_text(encoding="utf-8") == skillgen.render(), "odśwież: python vstudio.py skill --write"
 
-    def test_readme_numbers_match_the_registry(self):
+    def test_readme_links_the_generated_capability_map(self):
         readme = (REPO / "README.md").read_text(encoding="utf-8")
-        n, cats = len(registry.REGISTRY), len({c.category for c in registry.REGISTRY.values()})
-        assert f"({n} operacji)" in readme and f"**{n} narzędzi** w {cats} kategoriach" in readme, "zaktualizuj liczby w README (sekcja Studio)"
+        assert "(docs/CAPABILITIES.md)" in readme
+        assert (REPO / "docs" / "CAPABILITIES.md").read_text(encoding="utf-8") == docgen.render()
 
     def test_every_capability_is_in_the_docs_and_the_skill(self):
         doc, skill = docgen.render(), skillgen.render()

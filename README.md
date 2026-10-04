@@ -1,218 +1,109 @@
 <div align="center">
 
-# vstudio
+# TABASCO CREATIVES + FRAMECORE — STUDIO
 
-![vstudio: od pomysłu, przez plan scen, obraz, montaż i dźwięk, do gotowego wideo](assets/vstudio-banner.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/framecore-logo-reversed.svg">
+  <img alt="FrameCore — Wspólna rama" src="assets/framecore-logo.svg" width="640">
+</picture>
 
-**Twoje studio do tworzenia filmów z pomocą AI.**
+**Projekt współpracy: człowiek, agent AI i jeden wspólny montaż.**
 
-Od pomysłu do gotowego wideo.
+Lokalne studio do tworzenia filmów, animacji i rolek. Ty układasz historię i poprawiasz sceny; agent korzysta z tych samych materiałów, zaznaczenia, osi czasu i historii cofania.
 
-[Szybki start](#szybki-start) · [Przykłady](#przykłady) · [Praca z AI](#praca-z-agentem-ai) · [Dokumentacja techniczna](REFERENCE.md)
+![Edytor FrameCore: podgląd filmu, materiały, oś czasu i panel właściwości](assets/framecore-editor.png)
 
-Python 3.11+ · Lokalny render · CLI, dashboard i integracja z agentem · [MIT](LICENSE)
+Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek](THIRD_PARTY_NOTICES.md)
 
 </div>
 
-> Baner jest wizualizacją koncepcji pracy, nie zrzutem aktualnego interfejsu. Podgląd dashboardu znajdziesz niżej.
+## Jak działa projekt
 
-## Co to jest
+**Pomysł → materiały → plan scen → wspólny montaż → podgląd → MP4.**
 
-**vstudio to lokalny zestaw narzędzi do tworzenia filmów, animacji i rolek.** Łączy planowanie scen, przygotowanie grafik i animacji, montaż, dźwięk oraz kontrolę jakości w jeden proces.
+Projekt ma jeden zapis JSON. Interfejs, API i serwer MCP czytają ten sam stan. Zmiana agenta pojawia się w edytorze, a przycisk cofania działa również dla jego operacji. Numer rewizji chroni przed nadpisaniem nowszego montażu. Większe zmiany można przygotować jako propozycję, obejrzeć i zastosować jednym krokiem.
 
-Możesz obsługiwać go poleceniami w terminalu, korzystać z dashboardu w przeglądarce lub udostępnić narzędzia agentowi AI. Agent pomaga przygotować kod scen i wykonać kolejne etapy pracy. Model i agenta podłączasz osobno.
+Podgląd korzysta z lokalnej biblioteki HyperFrames Player. Render zapisuje klatki przez Chromium i składa film oraz dźwięk za pomocą FFmpeg. Do uruchomienia podstawowego studia nie potrzebujesz serwera Node ani CDN.
 
-To warsztat do budowania wideo krok po kroku, **nie generator, który sam tworzy dowolny film z jednego zdania**. W podstawowym trybie sceny są zapisane jako HTML, CSS i JavaScript, a vstudio zamienia je w klatki i plik wideo.
+## Uruchom na swoim komputerze
 
-### Jak to działa
-
-**Pomysł → Plan scen → Obraz i animacje → Montaż → Dźwięk → Gotowy film**
-
-| Etap | Co robisz |
-| --- | --- |
-| **Pomysł** | Określasz odbiorcę, cel, główny przekaz i długość filmu. |
-| **Plan scen** | Rozpisujesz kolejność ujęć, teksty i momenty zmian. |
-| **Obraz i animacje** | Tworzysz sceny z grafik, napisów i własnych materiałów. |
-| **Montaż** | Układasz materiał w czasie, dobierasz przejścia i sprawdzasz tempo. |
-| **Dźwięk** | Dodajesz efekty i przygotowujesz miks zsynchronizowany z obrazem. |
-| **Gotowy film** | Sprawdzasz wynik i przygotowujesz plik oraz paczkę materiałów do publikacji. |
-
-Eksport to przygotowanie plików. Nie oznacza automatycznego opublikowania filmu w social mediach.
-
-## Możliwości
-
-| Zastosowanie | Narzędzia w projekcie |
-| --- | --- |
-| **Animacje i krótkie materiały promocyjne** | Sceny HTML, szablon startowy i przykłady animacji. |
-| **Rolki z napisami** | Formaty rolek, napisy słowo po słowie i przezroczyste nakładki na własne nagrania. |
-| **Grafiki do scen** | Biblioteka ikon, generowanie grafik i rejestr źródeł materiałów. |
-| **Planowanie i kontrola jakości** | Plan scen, klatki kontrolne, sprawdzanie tekstów i przegląd przed finalnym eksportem. |
-| **Dźwięk** | Generowane efekty, synchronizacja zdarzeń i miks audio. |
-| **Automatyzacja pracy** | Polecenia CLI oraz serwer MCP, przez który agent może korzystać z narzędzi studia. |
-
-Kontrole techniczne pomagają wykrywać błędy, ale nie zastępują obejrzenia filmu. Przed eksportem sprawdź klatki, napisy i dźwięk.
-
-## Showreel
-
-Przykładowy materiał trwa **25 sekund** i pokazuje pięć scen: typografię, analizę obrazu, montaż, dźwięk i wydanie filmu.
-
-[![Klatka z demonstracyjnego filmu vstudio](assets/poster.jpg)](assets/showreel.mp4)
-
-[Obejrzyj wideo](assets/showreel.mp4) · [Zobacz kod sceny](examples/showreel/index.html) · [Zobacz zestaw klatek](assets/contact_sheet.png)
-
-## Szybki start
-
-Potrzebujesz **Pythona 3.11 lub nowszego**, Gita oraz **FFmpeg i FFprobe dostępnych w PATH**. Podstawowy silnik HTML nie wymaga Node.js. Opcjonalne silniki mają dodatkowe wymagania opisane w [dokumentacji technicznej](REFERENCE.md#wymagania).
-
-### 1. Pobierz projekt
+Zainstaluj Python 3.11 lub nowszy, Git oraz FFmpeg z FFprobe dostępnymi w PATH.
 
 ```bash
 git clone https://github.com/aievolutionpl/vstudio.git
 cd vstudio
-```
-
-### 2. Przygotuj osobne środowisko Pythona
-
-**Windows, PowerShell:**
-
-```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-**macOS lub Linux:**
-
-```bash
 python3 -m venv .venv
 source .venv/bin/activate
-```
-
-### 3. Zainstaluj zależności i sprawdź konfigurację
-
-W aktywnym środowisku wykonaj:
-
-```bash
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.txt pytest
 python -m playwright install chromium
-python vstudio.py doctor
+python framecore.py editor
 ```
 
-`doctor` sprawdza wymagane narzędzia. Uzupełnij brakujące elementy przed renderowaniem. Instalacja pakietów Pythona nie instaluje FFmpeg.
+Na Windows aktywuj środowisko poleceniem `.venv\Scripts\Activate.ps1`. Instrukcja i skrypty instalacji: [Uruchomienie lokalne](docs/URUCHOMIENIE_LOKALNE.md).
 
-### 4. Otwórz studio
+`python framecore.py editor` uruchamia studio na porcie 8877. `python vstudio.py dashboard` otwiera tę samą aplikację na porcie 8765. Starszy dashboard jest dostępny przez `python vstudio.py dashboard --legacy`.
 
-```bash
-python vstudio.py dashboard
-```
+## Pierwszy film
 
-Otwórz lokalny adres pokazany w terminalu. Dashboard służy do pracy z projektami, podglądu scen, kontroli jakości i śledzenia zadań.
+1. Otwórz projekt przykładowy lub utwórz własny.
+2. Dodaj zdjęcie produktu, logo, nagranie i dźwięk.
+3. W panelu **Szablony** wybierz strukturę filmu i przejrzyj plan scen.
+4. Zbuduj montaż, popraw teksty i dobierz animacje.
+5. Przesuwaj, przycinaj i dziel klipy na osi czasu. Sprawdź podgląd i dźwięk.
+6. Wyeksportuj film do MP4.
 
-![Dashboard vstudio: podgląd sceny, oś czasu i panel kontroli jakości](assets/dashboard.png)
+Przykład FORM zawiera własną ilustrację produktu i proceduralnie przygotowany podkład. Materiały przykładowe nie są przedstawiane jako wyniki generatora AI.
 
-<details>
-<summary>Problemy z pierwszym uruchomieniem</summary>
+## Przykład współpracy
 
-- **Brak FFmpeg lub FFprobe:** zainstaluj oba narzędzia, dodaj je do PATH i ponownie uruchom terminal.
-- **Brak Chromium:** wykonaj `python -m playwright install chromium` w tym samym środowisku Pythona.
-- **PowerShell blokuje aktywację środowiska:** używaj `.\.venv\Scripts\python.exe` zamiast `python` w kolejnych poleceniach. Nie musisz zmieniać zasad wykonywania skryptów.
-- **Nie wiesz, co dalej:** uruchom `python vstudio.py --help` albo `python vstudio.py status -p nazwa-projektu`.
+[![Klatka polskiego filmu przykładowego FrameCore](assets/framecore-collaboration-poster.jpg)](assets/framecore-collaboration.mp4)
 
-</details>
+[Obejrzyj film 15 sekund](assets/framecore-collaboration.mp4) · [Klatki kontrolne](assets/framecore-collaboration-frames.jpg) · [Edytowalny zapis projektu](examples/framecore-collaboration/project.json)
 
-## Przykładowa scena
+Film 1920 × 1080 pokazuje sześć scen z polskimi tekstami, ikonami MIT i własnym podkładem. Utwórz jego lokalną wersję poleceniem `python framecore.py sample`, następnie wybierz projekt w menu studia.
 
-Zacznij od istniejącego showreela, zamiast budować wszystko od zera. Poniższy przykład tworzy nowy projekt i przygotowuje **robocze wideo bez dźwięku**.
+## Edycja i narzędzia agenta
 
-Uruchom polecenia w katalogu repozytorium, po konfiguracji środowiska:
+Studio obsługuje tekst, obrazy, wideo, kształty, napisy i dźwięk na osobnych ścieżkach. Możesz zmieniać geometrię, typografię, czas, markę i format: 9:16, 4:5, 1:1 lub 16:9. Materiały pozostają lokalnie w katalogu projektu. Biblioteka zawiera 20 animacji, cztery struktury filmu i 12 ikon do wykorzystania w kompozycji. Nowe narzędzia obejmują duplikowanie klipów, liniowe klatki kluczowe, głośność oraz narastanie i wyciszenie dźwięku. Agent może przeprowadzić kontrolę struktury i obejrzeć rzeczywistą klatkę filmu.
 
-```bash
-python vstudio.py new moje-demo --brand demo --engine html --size 1920x1080 --fps 30 --duration 25
-python -c "from shutil import copyfile; copyfile('examples/showreel/index.html', 'output/demo/moje-demo/src/index.html')"
-python vstudio.py readcheck -p moje-demo
-python vstudio.py still -p moje-demo --times 1,6,11,16,21
-python vstudio.py render -p moje-demo
-python vstudio.py status -p moje-demo
-```
+Uruchom `.venv/bin/python framecore.py mcp` z katalogiem repozytorium ustawionym jako katalog pracy klienta MCP. Na Windows użyj `.venv\Scripts\python.exe`. [Konfiguracja MCP](MCP_SPEC.md) i [instrukcja pracy agenta](skills/framecore/SKILL.md) opisują odczyt kontekstu, zmiany, propozycje i kontrolę jakości.
 
-Obejrzyj klatki w `output/demo/moje-demo/stills/` i roboczy render w `output/demo/moje-demo/renders/`. Polecenie kopiowania zastępuje scenę startową tylko w nowo utworzonym projekcie `moje-demo`.
+Przykładowe polecenie:
 
-Finalny eksport to osobny etap: przygotuj dźwięk, przejrzyj materiał i zatwierdź go zgodnie z [procedurą przeglądu](REFERENCE.md#reżyser-plan-przegląd-i-zatwierdzenie-przed-wysyłką). Nie traktuj udanego renderu roboczego jako potwierdzenia jakości gotowego filmu.
+> Przeczytaj instrukcję FrameCore. Sprawdź zaznaczenie i bieżącą rewizję. Przesuń zaznaczony nagłówek o 0,4 sekundy wcześniej, dodaj mocniejsze wejście i pokaż propozycję. Następnie sprawdź klatkę i oś czasu.
 
-## Przykłady
+Lokalny asystent rozpoznaje konkretne polecenia czasu i animacji. Swobodne polecenia twórcze wymagają podłączonego agenta. Generowanie obrazów, wideo, głosu i automatyczna transkrypcja mają interfejsy dostawców; bez skonfigurowanej integracji nie działają. Napisy można edytować ręcznie.
 
-W repozytorium znajdziesz kod, który możesz przeglądać, zmieniać i wykorzystać jako punkt wyjścia:
+## Dokumentacja i licencje
 
-| Materiał | Czego możesz się nauczyć |
+| Temat | Dokument |
 | --- | --- |
-| [Showreel: pięć scen w 25 sekund](examples/showreel/index.html) | Łączenie typografii, przejść, osi czasu i wizualizacji dźwięku. |
-| [Sześć krótkich animacji](examples/motion-graphics/README.md) | Budowanie ruchu, ukrywanie cięć, praca z ograniczoną paletą i jednym głównym obiektem. |
-| [Napisy słowo po słowie](examples/reel-formats/word-captions.html) | Animowane napisy do krótkich materiałów. |
-| [Rolka prezentująca zasób](examples/reel-formats/resource-drop.html) | Przykładowa struktura krótkiej prezentacji materiału. |
-| [Scena startowa HTML](templates/html-video-starter.html) | Przygotowanie własnej sceny zgodnej z wymaganiami vstudio. |
+| Architektura i wspólny zapis projektu | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Format projektu | [FRAMECORE_PROJECT_SPEC.md](FRAMECORE_PROJECT_SPEC.md) |
+| Integracja agenta | [MCP_SPEC.md](MCP_SPEC.md) |
+| Przegląd projektów źródłowych | [THIRD_PARTY_RESEARCH.md](THIRD_PARTY_RESEARCH.md) |
+| Biblioteki, ikony i licencje | [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [LICENSES.json](LICENSES.json) |
+| Wyniki sprawdzeń | [Walidacja](docs/FRAMECORE_VALIDATION.md) |
+| Dotychczasowe narzędzia vstudio | [REFERENCE.md](REFERENCE.md), [mapa możliwości](docs/CAPABILITIES.md) |
 
-Przykłady w `motion-graphics` pobierają GSAP z CDN. Do pracy offline potrzebna jest lokalna kopia biblioteki.
+Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apache-2.0, a ikony Phosphor — MIT. Teksty licencji zachowujemy w oryginale. Własne zdjęcia, nagrania, fonty i ilustracje podlegają prawom ich autorów. Przesłana ilustracja poniżej jest materiałem identyfikacji projektu; licencja kodu nie przenosi praw do niej.
 
-### Pomysły na własne materiały
-
-Poniższe briefy to propozycje do wykonania z agentem, nie dodatkowe gotowe filmy w repozytorium.
-
-**Prezentacja narzędzia AI**
-
-> Przygotuj 15-sekundową rolkę 9:16. Pokaż jeden problem, trzy kroki rozwiązania i prostą planszę końcową. Użyj dużych napisów i moich zrzutów ekranu. Najpierw przedstaw plan scen i klatki do oceny.
-
-**Animowana reklama usługi**
-
-> Przygotuj 20-sekundowe wideo 4:5 na podstawie mojego briefu i materiałów marki. Jeden główny komunikat, czytelna oferta i jedno wezwanie do działania. Bez drobnego tekstu i wymyślonych wyników. Zacznij od planu, nie od finalnego renderu.
-
-**Nakładka na własne nagranie**
-
-> Zaprojektuj animowane napisy i proste wyróżnienia do mojego nagrania. Dopasuj czas do dostarczonej transkrypcji. Przygotuj przezroczystą nakładkę, sprawdź marginesy i pokaż klatki kontrolne przed eksportem.
-
-## Praca z agentem AI
-
-Agent musi mieć dostęp do repozytorium i skonfigurowanego środowiska. vstudio udostępnia **MCP**, czyli sposób przekazania agentowi narzędzi do obsługi studia, oraz [instrukcję pracy](skills/vstudio/SKILL.md).
+## Testy
 
 ```bash
-python vstudio.py mcp
+python -m pytest tests/test_framecore.py tests/test_framecore_browser.py -q
 ```
 
-To polecenie uruchamia serwer MCP. Połączenie skonfiguruj w swoim kliencie agenta zgodnie z jego ustawieniami. Szczegóły instalacji skilla, nadzoru i pracy przez dashboard są w [instrukcji technicznej](REFERENCE.md#studio-agent-nadzór-jakości-i-dashboard).
+Test przeglądarkowy importuje materiały, uruchamia osobny proces agenta MCP, sprawdza wspólną historię i eksportuje rzeczywisty film 15 sekund w rozdzielczości 1080 × 1920 z dźwiękiem. Wyniki dotyczą wykonanego przebiegu i są opisane w dokumencie walidacji.
 
-Przykładowe polecenie na początek:
+## Logo — Wspólna rama
 
-```text
-Pracuj w repozytorium vstudio. Przeczytaj skills/vstudio/SKILL.md
-oraz mój brief. Sprawdź środowisko poleceniem doctor.
-Najpierw przygotuj plan scen, a potem roboczą wersję filmu.
-Pokaż klatki kontrolne i wyniki sprawdzeń. Popraw wykryte błędy.
-Przed finalnym eksportem poproś mnie o ocenę materiału.
-Nie pomijaj kontroli jakości i nie wymyślaj brakujących materiałów marki.
-```
+Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współpracy tworzą wspólny film. [Logo SVG](assets/framecore-logo.svg) · [wariant odwrócony](assets/framecore-logo-reversed.svg) · [plansza identyfikacji](assets/framecore-logo-board.png) · [zasady użycia](docs/IDENTYFIKACJA.md).
 
-## Dokumentacja
+## Współpraca
 
-| Potrzebujesz | Otwórz |
-| --- | --- |
-| Pełnych komend, parametrów i kolejności pracy | [REFERENCE.md](REFERENCE.md) |
-| Szczegółowej listy dostępnych operacji | [Mapa możliwości](docs/CAPABILITIES.md) |
-| Instrukcji dla agenta | [Skill vstudio](skills/vstudio/SKILL.md) |
-| Wzoru opisu filmu | [Szablon briefu](templates/BRIEF.md) |
-| Planów rozwoju projektu | [Roadmap](docs/ROADMAP.md) |
+**TABASCO CREATIVES + FRAMECORE — STUDIO** to projekt współpracy nad narzędziami twórczymi. Łączymy decyzje człowieka z narzędziami agenta, aby film dało się obejrzeć, poprawić i dalej edytować.
 
-Dotychczasowa rozbudowana instrukcja została zachowana w `REFERENCE.md`. README jest teraz krótszym wejściem do projektu.
+Poniższa ilustracja została dostarczona do projektu. Przedstawia jego ideę i identyfikację; aktualny interfejs pokazuje zrzut ekranu na początku README.
 
-### Co oznacza „powtarzalny render”?
-
-Animacja jest opisana kodem i czasem. Przy tych samych plikach i zgodnym środowisku klatka z danego momentu powinna wyglądać tak samo, niezależnie od kolejności jej odtwarzania. Dzięki temu łatwiej poprawiać sceny i sprawdzać, czy zmiana kodu nie zepsuła obrazu. W dokumentacji technicznej ta cecha jest nazywana determinizmem. Nie jest to obietnica identycznych plików na każdym komputerze.
-
-## Prywatność
-
-Podstawowy proces renderowania działa lokalnie. Pobieranie bibliotek i zewnętrznych materiałów wymaga połączenia z siecią. Osobno podłączony agent lub model może korzystać z usług chmurowych zgodnie ze swoją konfiguracją. Nie zakładaj, że cały proces jest offline tylko dlatego, że render wykonuje się na twoim komputerze.
-
-## Licencja
-
-Kod vstudio jest dostępny na licencji [MIT](LICENSE). Własne zdjęcia, nagrania, fonty, pobrane materiały i opcjonalne silniki mają odrębne zasady licencyjne. Sprawdzaj prawa do materiałów używanych w filmie.
-
----
-
-**AI Evolution Polska** · Narzędzia do tworzenia wideo i automatyzacji pracy z AI.
+![TABASCO CREATIVES + FRAMECORE — STUDIO: człowiek i agent AI wspólnie tworzą film](assets/tabasco-framecore-collaboration.jpg)

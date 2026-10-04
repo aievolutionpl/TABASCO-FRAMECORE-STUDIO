@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "redistributed": [
+    {
+      "name": "@hyperframes/player",
+      "version": "0.8.124",
+      "license": "Apache-2.0",
+      "source": "https://github.com/heygen-com/hyperframes",
+      "commit": "173103dfdec5738f85733e6796d56932ad2a7436",
+      "files": [
+        "framecore/static/vendor/hyperframes-player-0.8.124.js"
+      ],
+      "sha256": "56016d722d6614a9422fb0fc3df2bd6e0114609bea3e9aa92c1b388726cccc27",
+      "licenseFile": "licenses/HyperFrames-Apache-2.0.txt"
+    },
+    {
+      "name": "@phosphor-icons/core",
+      "version": "2.1.1",
+      "license": "MIT",
+      "source": "https://github.com/phosphor-icons/phosphor-core",
+      "files": [
+        "framecore/static/icons/*.svg"
+      ],
+      "licenseFile": "licenses/Phosphor-MIT.txt",
+      "usage": "39 unmodified regular SVG icons"
+    }
+  ],
+  "referenceOnly": [
+    "OpenCut",
+    "FreeCut",
+    "CartCut",
+    "NullMotion"
+  ]
+}

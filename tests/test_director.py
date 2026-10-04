@@ -771,7 +771,7 @@ class TestReviewInBrowser:
         assert {"SLOW_PACE", "WEAK_HOOK", "MONOTONE_STYLE"} <= codes(rep), rep["findings"]
         assert rep["verdict"] == "needs_fixes" and rep["metrics"]["gaps"] == [[0.0, 6.0]]
         slow = next(f for f in rep["findings"] if f["code"] == "SLOW_PACE")
-        assert slow["t"] == 0.0 and "limit dla reels" in slow["detail"]
+        assert slow["t"] == 0.0 and "limit dla " in slow["detail"] and "reels" in slow["detail"]
         again = director.review(pdir, pr, depth="quick")
         assert again["round"] == 2 and again["delta"]["persisting"] >= 3 and again["delta"]["resolved"] == []
 

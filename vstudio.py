@@ -87,6 +87,9 @@ def _studio_commands(a) -> int:
         from vstudio.mcp_server import main as mcp_main
         return mcp_main()
     if a.cmd == "dashboard":
+        if not a.legacy:
+            from framecore.server import serve as serve_framecore
+            return serve_framecore(a.host, a.port, open_browser=not a.no_open)
         from vstudio.dashboard.server import serve
         return serve(a.host, a.port, open_browser=not a.no_open)
     if a.cmd == "check":
@@ -345,10 +348,11 @@ def build_parser() -> argparse.ArgumentParser:
     a_x.add_argument("-o", "--out", required=True)
 
     sub.add_parser("mcp", help="serwer MCP (stdio) dla agenta: narzędzia, wiedza, prompty")
-    a_d = sub.add_parser("dashboard", help="dashboard: onboarding, podgląd, nadzór jakości, rendery, aktywność agenta")
+    a_d = sub.add_parser("dashboard", help="FrameCore Studio: edytor, timeline, storyboard i agent MCP")
     a_d.add_argument("--host", default="127.0.0.1", help="tylko 127.0.0.1/localhost (dashboard zmienia pliki)")
     a_d.add_argument("--port", type=int, default=8765)
     a_d.add_argument("--no-open", action="store_true", help="nie otwieraj przeglądarki")
+    a_d.add_argument("--legacy", action="store_true", help="otwórz poprzedni dashboard vstudio")
     a_k = sub.add_parser("check", help="nadzór jakości: sprawdź film (błędy, klatki, pętla, determinizm, czytelność)")
     a_k.add_argument("--project", "-p")
     a_k.add_argument("--depth", choices=["quick", "standard", "deep"], default="standard")
