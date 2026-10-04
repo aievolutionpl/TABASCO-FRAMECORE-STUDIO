@@ -92,9 +92,9 @@ def mutate(p, name, args, session):
                 copies.append(e)
         p["scenes"].append(copy)
         p["elements"].extend(copies)
-    elif name == "add_icon":
-        from .library import icon_asset
-        a = icon_asset(args["icon_id"])
+    elif name in {"add_icon", "add_library_asset"}:
+        from .library import icon_asset, library_asset
+        a = icon_asset(args["icon_id"]) if name == "add_icon" else library_asset(args["asset_id"])
         p["assets"].append(a)
         p["elements"].append(element(p, "image", assetId=a["id"], start=args.get("start", session["playhead"]),
                                      duration=args.get("duration", min(3, p["duration"]-session["playhead"])),
@@ -103,7 +103,13 @@ def mutate(p, name, args, session):
     elif name == "apply_template":
         from .templates import template_scenes
         scenes = template_scenes(args["template_id"], p["duration"], args.get("title", p["metadata"]["name"]))
-        mutate(p, "assemble_storyboard", {"scenes": scenes, "replace": args.get("replace", False)}, session)
+        mutate(p, "assemble_storyboard", {"scenes": scenes, "replace": args.get("replace", False), "template_id": args["template_id"]}, session)
+    elif name == "set_background":
+        from .backgrounds import resolve
+        bg = resolve(args["background_id"])
+        animated = args.get("animated", True)
+        if not isinstance(animated, bool): raise EditorError("Ruch tła wymaga wartości logicznej")
+        p["canvas"].update(background=bg["colors"][0], backgroundPreset=bg["id"], backgroundAnimated=animated)
     elif name == "duplicate_clip":
         e = target(p, args, session)
         copy = deepcopy(e)
@@ -141,6 +147,10 @@ def mutate(p, name, args, session):
             e[key] = args["value"]
         elif key.startswith("style.") and key[6:] in STYLE_FIELDS:
             e["style"][key[6:]] = args["value"]
+            if key == "style.fontFamily":
+                from .library import manifest
+                face = next((f for f in manifest()["fonts"] if f["family"] == args["value"]), None)
+                if face: e["style"]["fontWeight"] = max(face["weight"][0], min(e["style"]["fontWeight"], face["weight"][1]))
         else:
             raise EditorError("Właściwość nie jest edytowalna")
     elif name == "move_clip":
@@ -207,6 +217,7 @@ def mutate(p, name, args, session):
         p["brand"].update(deepcopy(supplied))
         if args.get("restyle", True):
             p["canvas"]["background"] = p["brand"]["colors"]["background"]
+            p["canvas"].pop("backgroundPreset", None)
             for e in p["elements"]:
                 if e["type"] in {"text", "caption"}:
                     e["style"].update(color=p["brand"]["colors"]["text"], fontFamily=p["brand"]["font"])
@@ -259,6 +270,9 @@ def mutate(p, name, args, session):
         if audios:
             a = audios[0]
             p["elements"].append(element(p, "audio", assetId=a["id"], start=0, duration=min(p["duration"], a.get("duration") or p["duration"])))
+        if args.get("template_id"):
+            from .templates import apply_look
+            apply_look(p, args["template_id"])
     elif name == "rename_project":
         p["metadata"]["name"] = str(args["name"])[:200]
     else:

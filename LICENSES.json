@@ -23,6 +23,207 @@
       ],
       "licenseFile": "licenses/Phosphor-MIT.txt",
       "usage": "39 unmodified regular SVG icons"
+    },
+    {
+      "name": "Tabler",
+      "license": "MIT",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "files": [
+        "framecore/static/library/icons/tabler-rocket.svg",
+        "framecore/static/library/icons/tabler-camera.svg",
+        "framecore/static/library/icons/tabler-microphone.svg",
+        "framecore/static/library/icons/tabler-music.svg",
+        "framecore/static/library/icons/tabler-heart.svg",
+        "framecore/static/library/icons/tabler-star.svg",
+        "framecore/static/library/icons/tabler-gift.svg",
+        "framecore/static/library/icons/tabler-bolt.svg",
+        "framecore/static/library/icons/tabler-bulb.svg",
+        "framecore/static/library/icons/tabler-palette.svg",
+        "framecore/static/library/icons/tabler-cloud.svg",
+        "framecore/static/library/icons/tabler-device-laptop.svg",
+        "framecore/static/library/icons/tabler-code.svg",
+        "framecore/static/library/icons/tabler-chart-bar.svg",
+        "framecore/static/library/icons/tabler-clock.svg",
+        "framecore/static/library/icons/tabler-calendar.svg",
+        "framecore/static/library/icons/tabler-trophy.svg",
+        "framecore/static/library/icons/tabler-shopping-bag.svg",
+        "framecore/static/library/icons/tabler-sun.svg",
+        "framecore/static/library/icons/tabler-moon.svg",
+        "framecore/static/library/icons/tabler-world.svg",
+        "framecore/static/library/icons/tabler-leaf.svg",
+        "framecore/static/library/icons/tabler-sparkles.svg",
+        "framecore/static/library/icons/tabler-target.svg"
+      ],
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "fileManifest": "framecore/static/library/catalog.json",
+      "usage": "24 niezmienionych plików"
+    },
+    {
+      "name": "Lucide",
+      "license": "ISC/MIT",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "files": [
+        "framecore/static/library/icons/lucide-rocket.svg",
+        "framecore/static/library/icons/lucide-camera.svg",
+        "framecore/static/library/icons/lucide-microphone.svg",
+        "framecore/static/library/icons/lucide-music.svg",
+        "framecore/static/library/icons/lucide-heart.svg",
+        "framecore/static/library/icons/lucide-star.svg",
+        "framecore/static/library/icons/lucide-gift.svg",
+        "framecore/static/library/icons/lucide-bolt.svg",
+        "framecore/static/library/icons/lucide-bulb.svg",
+        "framecore/static/library/icons/lucide-palette.svg",
+        "framecore/static/library/icons/lucide-cloud.svg",
+        "framecore/static/library/icons/lucide-device-laptop.svg",
+        "framecore/static/library/icons/lucide-code.svg",
+        "framecore/static/library/icons/lucide-chart-bar.svg",
+        "framecore/static/library/icons/lucide-clock.svg",
+        "framecore/static/library/icons/lucide-calendar.svg",
+        "framecore/static/library/icons/lucide-trophy.svg",
+        "framecore/static/library/icons/lucide-shopping-bag.svg",
+        "framecore/static/library/icons/lucide-sun.svg",
+        "framecore/static/library/icons/lucide-moon.svg",
+        "framecore/static/library/icons/lucide-world.svg",
+        "framecore/static/library/icons/lucide-leaf.svg",
+        "framecore/static/library/icons/lucide-sparkles.svg",
+        "framecore/static/library/icons/lucide-target.svg"
+      ],
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "fileManifest": "framecore/static/library/catalog.json",
+      "usage": "24 niezmienionych plików"
+    },
+    {
+      "name": "Fluent Emoji 3D",
+      "license": "MIT",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "files": [
+        "framecore/static/library/illustrations/fluent-rocket.png",
+        "framecore/static/library/illustrations/fluent-robot.png",
+        "framecore/static/library/illustrations/fluent-light-bulb.png",
+        "framecore/static/library/illustrations/fluent-clapper-board.png",
+        "framecore/static/library/illustrations/fluent-artist-palette.png",
+        "framecore/static/library/illustrations/fluent-camera.png",
+        "framecore/static/library/illustrations/fluent-headphone.png",
+        "framecore/static/library/illustrations/fluent-microphone.png",
+        "framecore/static/library/illustrations/fluent-laptop.png",
+        "framecore/static/library/illustrations/fluent-sparkles.png",
+        "framecore/static/library/illustrations/fluent-fire.png",
+        "framecore/static/library/illustrations/fluent-star.png",
+        "framecore/static/library/illustrations/fluent-bullseye.png",
+        "framecore/static/library/illustrations/fluent-megaphone.png",
+        "framecore/static/library/illustrations/fluent-wrapped-gift.png",
+        "framecore/static/library/illustrations/fluent-party-popper.png",
+        "framecore/static/library/illustrations/fluent-hourglass-done.png",
+        "framecore/static/library/illustrations/fluent-musical-note.png",
+        "framecore/static/library/illustrations/fluent-movie-camera.png",
+        "framecore/static/library/illustrations/fluent-video-game.png",
+        "framecore/static/library/illustrations/fluent-books.png",
+        "framecore/static/library/illustrations/fluent-globe-showing-europe-africa.png",
+        "framecore/static/library/illustrations/fluent-seedling.png",
+        "framecore/static/library/illustrations/fluent-rainbow.png"
+      ],
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "fileManifest": "framecore/static/library/catalog.json",
+      "usage": "24 niezmienionych plików"
+    },
+    {
+      "name": "Manrope",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/manrope.ttf"
+      ],
+      "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+      "licenseFile": "licenses/fonts/manrope-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
+    },
+    {
+      "name": "Space Grotesk",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/spacegrotesk.ttf"
+      ],
+      "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72",
+      "licenseFile": "licenses/fonts/spacegrotesk-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
+    },
+    {
+      "name": "Playfair Display",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/playfairdisplay.ttf"
+      ],
+      "sha256": "c40f2293766a503bc70cce9e512ef844a4ccb7cbcde792fe2ea31d191917d8d6",
+      "licenseFile": "licenses/fonts/playfairdisplay-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
+    },
+    {
+      "name": "Fraunces",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/fraunces.ttf"
+      ],
+      "sha256": "177ff6c0f14e5550a3c624247cd1189611d4eb65d000b14944c63d967958abbb",
+      "licenseFile": "licenses/fonts/fraunces-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
+    },
+    {
+      "name": "Bebas Neue",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/bebasneue.ttf"
+      ],
+      "sha256": "08e4623805102d819f58601e46e345648846075e363b2ceb23313c2d1c83ec73",
+      "licenseFile": "licenses/fonts/bebasneue-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
+    },
+    {
+      "name": "DM Sans",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/dmsans.ttf"
+      ],
+      "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d",
+      "licenseFile": "licenses/fonts/dmsans-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
+    },
+    {
+      "name": "DM Serif Display",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/dmserifdisplay.ttf"
+      ],
+      "sha256": "8cc3643535edf039aa5d95440a8542735e9197e4f4b8d9303e980fefbf5ab616",
+      "licenseFile": "licenses/fonts/dmserifdisplay-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
+    },
+    {
+      "name": "JetBrains Mono",
+      "license": "OFL-1.1",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "files": [
+        "framecore/static/library/fonts/jetbrainsmono.ttf"
+      ],
+      "sha256": "48715a42ec242c21e9f02692891e147d022299a52e48d5e413e1a942193ffeda",
+      "licenseFile": "licenses/fonts/jetbrainsmono-OFL.txt",
+      "usage": "Niezmieniony plik TTF; komplet polskich znaków"
     }
   ],
   "referenceOnly": [

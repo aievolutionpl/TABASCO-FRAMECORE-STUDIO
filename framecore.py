@@ -10,6 +10,7 @@ def main():
     parser.add_argument("command", choices=["editor", "mcp", "projects", "sample"], nargs="?", default="editor")
     parser.add_argument("--port", type=int, default=8877)
     parser.add_argument("--root", help="Katalog projektów (taki sam dla edytora i MCP)")
+    parser.add_argument("--creator-pack", action="store_true", help="Utwórz przykład z lokalną biblioteką materiałów (sample)")
     args = parser.parse_args()
     store = Store(args.root) if args.root else Store()
     if args.command == "mcp":
@@ -20,8 +21,8 @@ def main():
     elif args.command == "projects":
         print(json.dumps(store.list(), indent=2, ensure_ascii=False))
     elif args.command == "sample":
-        from framecore.sample import create_sample
-        state = create_sample(store)
+        from framecore.sample import create_sample, create_creator_pack
+        state = create_creator_pack(store) if args.creator_pack else create_sample(store)
         print(json.dumps({"project_id":state["project"]["id"], "name":state["project"]["metadata"]["name"]},ensure_ascii=False))
     else:
         from framecore.server import Server

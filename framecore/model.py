@@ -84,6 +84,11 @@ def validate(p):
     number(p["canvas"]["fps"], "fps", 1, 60)
     if not isinstance(p["canvas"]["fps"], int):
         raise EditorError("FPS musi być liczbą całkowitą")
+    if p["canvas"].get("backgroundPreset"):
+        from .backgrounds import resolve
+        resolve(p["canvas"]["backgroundPreset"])
+    if "backgroundAnimated" in p["canvas"] and not isinstance(p["canvas"]["backgroundAnimated"], bool):
+        raise EditorError("Nieprawidłowe ustawienie animacji tła")
     ids = []
     for group in ("elements", "tracks", "scenes", "assets"):
         if not isinstance(p[group], list) or len(p[group]) > 1000:
@@ -170,6 +175,11 @@ def validate(p):
             for prop in ("fadeIn", "fadeOut"):
                 number(e["audio"][prop], prop, 0, e["duration"])
         style = e["style"]
+        if not isinstance(style["fontFamily"], str) or not style["fontFamily"].strip() or len(style["fontFamily"]) > 200 or any(ord(c) < 32 for c in style["fontFamily"]):
+            raise EditorError("Nieprawidłowa nazwa fontu")
+        number(style["fontWeight"], "fontWeight", 100, 1000)
+        if not isinstance(style["fontWeight"], int):
+            raise EditorError("Grubość fontu musi być liczbą całkowitą")
         number(style["fontSize"], "fontSize", 1, 600)
         number(style["radius"], "radius", 0, 1000)
         if style["align"] not in {"left", "center", "right"}:

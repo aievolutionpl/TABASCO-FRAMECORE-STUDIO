@@ -38,3 +38,9 @@ Klip audio może mieć `audio: {"gain":0.8,"fadeIn":0.5,"fadeOut":1}`. Głośno�
 Odrzucamy NaN, nieskończoność, powtórzone identyfikatory, brakujące referencje, błędne ścieżki, nieznane animacje i właściwości. Historia zawiera aktora, opis, komendę oraz stan przed i po zmianie. Zapis jest atomowy, chroniony blokadą między procesami.
 
 Zmiana formatu skaluje geometrię, rozmiar tekstu i klatki pozycji. Eksport zamraża rewizję. Bezpośrednia edycja pliku stanu omija walidację i historię, dlatego do edycji używaj komend. Nieznane wersje schematu są odrzucane; migracje wymagają osobnej implementacji.
+
+## Tła i materiały biblioteki
+
+`canvas.backgroundPreset` zawiera identyfikator z `list_backgrounds`; opcjonalne `backgroundAnimated` pozwala zamrozić ruch w czasie 0. `background` zachowuje jednolity kolor bazowy. Receptury są zamkniętym katalogiem kodu, bez dowolnego CSS w JSON.
+
+Wbudowane ikony i ilustracje mają `provenance.source: framecore_builtin` oraz `library_id`, kolekcję, commit i SHA-256. Pliki trafiają do lokalnego `assets/`. Ikony mają rolę `icon` i kolorowanie maską; ilustracje zachowują kolory PNG. Eksport osadza użyte fonty z audytowanego katalogu. `metadata.templateId` opisuje użyty kierunek wizualny.

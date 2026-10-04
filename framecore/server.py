@@ -65,7 +65,7 @@ class Handler(StudioHandler):
                 return self._send(200, html.encode(), "text/html; charset=utf-8")
             if path.startswith("/static/"):
                 file = (STATIC / path.removeprefix("/static/")).resolve()
-                if not file.is_relative_to(STATIC.resolve()) or not file.is_file() or file.suffix not in {".js", ".css", ".svg"}:
+                if not file.is_relative_to(STATIC.resolve()) or not file.is_file() or file.suffix not in {".js", ".css", ".svg", ".ttf", ".png"}:
                     return self._err(404, "Nie znaleziono")
                 return self._send(200, file.read_bytes(), mimetypes.guess_type(file)[0] or "application/octet-stream")
             if path == "/api/projects": return self._json(200, {"projects": store.list()})

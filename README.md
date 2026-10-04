@@ -30,7 +30,7 @@ Podgląd korzysta z lokalnej biblioteki HyperFrames Player. Render zapisuje klat
 Zainstaluj Python 3.11 lub nowszy, Git oraz FFmpeg z FFprobe dostępnymi w PATH.
 
 ```bash
-git clone https://github.com/aievolutionpl/vstudio.git
+git clone https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO.git vstudio
 cd vstudio
 python3 -m venv .venv
 source .venv/bin/activate
@@ -62,9 +62,19 @@ Przykład FORM zawiera własną ilustrację produktu i proceduralnie przygotowan
 
 Film 1920 × 1080 pokazuje sześć scen z polskimi tekstami, ikonami MIT i własnym podkładem. Utwórz jego lokalną wersję poleceniem `python framecore.py sample`, następnie wybierz projekt w menu studia.
 
+## Wbudowane materiały
+
+**Biblioteka** pozwala wyszukiwać ikony Phosphor, Tabler i Lucide oraz ilustracje Microsoft Fluent Emoji. **Tekst** i **Marka** udostępniają lokalne fonty: Manrope, Space Grotesk, Playfair Display, Fraunces, Bebas Neue, DM Sans, DM Serif Display i JetBrains Mono. W panelu **Tła** wybierzesz gradienty, wzory i animowane kompozycje.
+
+[![Przykład wbudowanych materiałów](assets/framecore-creator-pack-poster.jpg)](assets/framecore-creator-pack.mp4)
+
+[Obejrzyj pokaz 12 sekund](assets/framecore-creator-pack.mp4) · [Przegląd 12 szablonów](assets/framecore-templates.jpg) · [Instrukcja Creator Pack](docs/CREATOR_PACK.md)
+
+Utwórz edytowalną kopię pokazu: `python framecore.py sample --creator-pack`. Po instalacji fonty, ilustracje i eksport działają bez CDN. Oryginalne licencje i źródła są dołączone do repozytorium.
+
 ## Edycja i narzędzia agenta
 
-Studio obsługuje tekst, obrazy, wideo, kształty, napisy i dźwięk na osobnych ścieżkach. Możesz zmieniać geometrię, typografię, czas, markę i format: 9:16, 4:5, 1:1 lub 16:9. Materiały pozostają lokalnie w katalogu projektu. Biblioteka zawiera 20 animacji, cztery struktury filmu i 12 ikon do wykorzystania w kompozycji. Nowe narzędzia obejmują duplikowanie klipów, liniowe klatki kluczowe, głośność oraz narastanie i wyciszenie dźwięku. Agent może przeprowadzić kontrolę struktury i obejrzeć rzeczywistą klatkę filmu.
+Studio obsługuje tekst, obrazy, wideo, kształty, napisy i dźwięk na osobnych ścieżkach. Możesz zmieniać geometrię, typografię, czas, markę i format: 9:16, 4:5, 1:1 lub 16:9. Materiały pozostają lokalnie w katalogu projektu. Biblioteka zawiera **28 animacji, 12 szablonów, 60 ikon, 24 ilustracje 3D, 8 rodzin fontów z polskimi znakami oraz 24 tła**. Wszystkie materiały są lokalne; sześć teł ma deterministyczną animację. Szablony dobierają własną typografię, paletę, układ i ruch. Nowe narzędzia obejmują duplikowanie klipów, liniowe klatki kluczowe, głośność oraz narastanie i wyciszenie dźwięku. Agent może przeprowadzić kontrolę struktury i obejrzeć rzeczywistą klatkę filmu.
 
 Uruchom `.venv/bin/python framecore.py mcp` z katalogiem repozytorium ustawionym jako katalog pracy klienta MCP. Na Windows użyj `.venv\Scripts\python.exe`. [Konfiguracja MCP](MCP_SPEC.md) i [instrukcja pracy agenta](skills/framecore/SKILL.md) opisują odczyt kontekstu, zmiany, propozycje i kontrolę jakości.
 
@@ -82,16 +92,17 @@ Lokalny asystent rozpoznaje konkretne polecenia czasu i animacji. Swobodne polec
 | Format projektu | [FRAMECORE_PROJECT_SPEC.md](FRAMECORE_PROJECT_SPEC.md) |
 | Integracja agenta | [MCP_SPEC.md](MCP_SPEC.md) |
 | Przegląd projektów źródłowych | [THIRD_PARTY_RESEARCH.md](THIRD_PARTY_RESEARCH.md) |
+| Wbudowane materiały, fonty, tła i szablony | [Creator Pack](docs/CREATOR_PACK.md) |
 | Biblioteki, ikony i licencje | [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [LICENSES.json](LICENSES.json) |
 | Wyniki sprawdzeń | [Walidacja](docs/FRAMECORE_VALIDATION.md) |
 | Dotychczasowe narzędzia vstudio | [REFERENCE.md](REFERENCE.md), [mapa możliwości](docs/CAPABILITIES.md) |
 
-Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apache-2.0, a ikony Phosphor — MIT. Teksty licencji zachowujemy w oryginale. Własne zdjęcia, nagrania, fonty i ilustracje podlegają prawom ich autorów. Przesłana ilustracja poniżej jest materiałem identyfikacji projektu; licencja kodu nie przenosi praw do niej.
+Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apache-2.0, ikony Phosphor i Tabler oraz ilustracje Fluent — MIT, Lucide — ISC/MIT, a fonty — SIL OFL 1.1. Teksty licencji zachowujemy w oryginale. Własne zdjęcia, nagrania, fonty i ilustracje podlegają prawom ich autorów. Przesłana ilustracja poniżej jest materiałem identyfikacji projektu; licencja kodu nie przenosi praw do niej.
 
 ## Testy
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_browser.py -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py -q
 ```
 
 Test przeglądarkowy importuje materiały, uruchamia osobny proces agenta MCP, sprawdza wspólną historię i eksportuje rzeczywisty film 15 sekund w rozdzielczości 1080 × 1920 z dźwiękiem. Wyniki dotyczą wykonanego przebiegu i są opisane w dokumencie walidacji.

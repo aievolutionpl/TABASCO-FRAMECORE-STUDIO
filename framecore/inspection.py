@@ -6,14 +6,15 @@ from .model import number
 
 GUIDE = """Pracujesz w TABASCO CREATIVES + FRAMECORE — STUDIO, projekcie współpracy człowieka z agentem.
 1. Odczytaj get_project i get_selection. Uwzględnij zaznaczenie, playhead, ścieżki i blokady.
-2. Odczytaj list_motion, list_templates i list_icons; używaj wyłącznie dostępnych identyfikatorów.
+2. Odczytaj list_motion, list_templates, list_icons, list_library, list_fonts i list_backgrounds; używaj wyłącznie dostępnych identyfikatorów.
 3. Każda zmiana treści wymaga expected_revision. Po konflikcie odczytaj stan ponownie; nie nadpisuj pracy człowieka.
 4. Kilka powiązanych zmian połącz przez propose_changes. Pokaż commands, changes i removed; zastosuj apply_proposal zgodnie z poleceniem użytkownika.
 5. inspect_project wykrywa problemy techniczne. capture_frame zwraca rzeczywisty obraz; obejrzyj klatki przed, w trakcie i po animacji. Raport struktury nie zastępuje oceny wizualnej.
 6. Klatki kluczowe mają property (x/y/rotation/scale/opacity), time w sekundach względem początku klipu i value. Interpolacja jest liniowa.
 7. Dźwięk zmieniaj przez set_audio: gain 0–1, fadeIn i fadeOut w sekundach. Sprawdź cały miks w filmie.
 8. Materiały importuj z katalogu imports przy katalogu projektów. Nie wklejaj kodu HTML ani adresów plików z innych lokalizacji.
-9. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
+9. Materiały lokalne dodawaj przez add_library_asset, tło przez set_background. Przekazuj template_id z plan_storyboard do assemble_storyboard, aby zachować wygląd szablonu.
+10. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
 """
 
 

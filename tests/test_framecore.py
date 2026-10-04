@@ -216,8 +216,8 @@ def test_keyframes_split_interpolation_format_and_rejected_writes(fc):
 def test_library_templates_inspection_proposal_assets(fc):
     store,pid,eid=fc
     api=API(store,RenderJobs(store))
-    assert len(api.call('list_motion')['components'])==20
-    assert len(api.call('list_templates')['templates'])==4
+    assert len(api.call('list_motion')['components'])==28
+    assert len(api.call('list_templates')['templates'])==12
     templates=[api.call('plan_storyboard',{'project_id':pid,'template_id':tid}) for tid in ('product','social','explainer','collaboration')]
     assert len({t['scenes'][0]['message'] for t in templates})==4
     s=api.call('propose_changes',{'project_id':pid,'expected_revision':1,'commands':[{'name':'add_icon','args':{'icon_id':'robot','start':0,'duration':3}}]})

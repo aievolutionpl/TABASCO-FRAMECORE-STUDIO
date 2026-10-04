@@ -8,7 +8,7 @@ description: Edycja wspólnego projektu filmowego człowieka i agenta przez MCP 
 Pracujesz nad istniejącym projektem współpracy. Zachowuj intencję użytkownika, materiały i jego ostatnie poprawki.
 
 1. Odczytaj `get_editing_guide`, `get_project` i `get_selection`. Ustal zaznaczenie, czas, markę, ścieżki i bieżącą rewizję.
-2. Poznaj dostępne zasoby przez `list_assets`, `list_motion`, `list_templates` i `list_icons`. Nie wymyślaj identyfikatorów ani wyników dostawców.
+2. Poznaj dostępne zasoby przez `list_assets`, `list_motion`, `list_templates`, `list_icons`, `list_library`, `list_fonts` i `list_backgrounds`. Nie wymyślaj identyfikatorów ani wyników dostawców.
 3. Przy konkretnej zmianie użyj odpowiedniej komendy. Większe powiązane operacje przygotuj przez `propose_changes`. Jedna zastosowana propozycja to jeden krok cofania.
 4. Wszystkie zmiany treści wysyłaj z `expected_revision`. Po konflikcie odczytaj projekt ponownie i dostosuj plan do nowych zmian.
 5. Zaznaczenie i wskaźnik czasu są współdzielone z człowiekiem. Nie przenoś ich bez potrzeby. Blokada ścieżki chroni jej klipy.
@@ -21,9 +21,13 @@ Pracujesz nad istniejącym projektem współpracy. Zachowuj intencję użytkowni
 
 „Przesuń zaznaczony nagłówek o 0,4 sekundy wcześniej i nadaj mocniejsze wejście”: odczytaj zaznaczenie, zaproponuj `move_clip` i `apply_motion` (`impact-rise`, 0.5 s), przejrzyj propozycję, zastosuj zgodnie z poleceniem użytkownika, obejrzyj klatkę.
 
-„Utwórz film o współpracy”: sprawdź materiały, użyj `plan_storyboard` z `template_id: collaboration`, popraw teksty, zbuduj montaż przez `assemble_storyboard`. Zastąpienie istniejącego montażu wymaga jawnego `replace: true`; pokaż propozycję i zachowaj możliwość cofnięcia.
+„Utwórz film o współpracy”: sprawdź materiały, użyj `plan_storyboard` z `template_id: collaboration`, popraw teksty, zbuduj montaż przez `assemble_storyboard`, przekazując także `template_id`, aby zachować wygląd. Zastąpienie istniejącego montażu wymaga jawnego `replace: true`; pokaż propozycję i zachowaj możliwość cofnięcia.
 
-„Ożyw ikonę”: wybierz ikonę z `list_icons`, dodaj ją przez `add_icon`, ustaw `float` albo własne dwie klatki pozycji. Ikony mają licencję MIT; zapis zachowuje ich pochodzenie.
+„Ożyw ikonę”: wybierz ikonę z `list_icons`, dodaj ją przez `add_icon`, ustaw `float` albo własne dwie klatki pozycji. Ikony mają licencję podaną w katalogu (MIT lub ISC/MIT); zapis zachowuje ich pochodzenie.
+
+„Dodaj ilustrację i tło”: odczytaj `list_library` i `list_backgrounds`, wybierz materiały, zaproponuj `add_library_asset` oraz `set_background`. Przykład identyfikatorów: `fluent-rocket`, `aurora-breath`. Odczytaj aktualny katalog przed użyciem. Współdzielone propozycje i undo obejmują pliki biblioteki.
+
+„Zmień typografię”: odczytaj `list_fonts`, użyj `set_property` z `property: style.fontFamily` dla tekstu lub `set_brand` dla całej marki. Osadzone fonty zawierają polskie znaki i nie potrzebują CDN. Sprawdź łamanie wierszy przez `capture_frame`.
 
 ## Granice
 

@@ -65,3 +65,27 @@ def create_sample(store):
     store.execute(pid,"set_selection",{"element_ids":[first["id"]]})
     store.execute(pid,"set_playhead",{"time":1.1})
     return store.read(pid)
+
+
+def create_creator_pack(store):
+    """Nowa kopia edytowalnego pokazu; istniejące projekty pozostają zachowane."""
+    import json
+    import shutil
+    from copy import deepcopy
+    from .model import validate
+    source=Path(__file__).resolve().parents[1]/'examples/creator-pack'
+    p=json.loads((source/'project.json').read_text(encoding='utf-8'))
+    validate(p)
+    state=store.create(p['metadata']['name'],'16:9',p['duration'])
+    state=store._load(state['project']['id'])
+    p=deepcopy(p);p['id']=state['project']['id'];p['revision']=0
+    p['metadata']['createdAt']=state['project']['metadata']['createdAt']
+    p['metadata']['updatedAt']=state['project']['metadata']['updatedAt']
+    for a in p['assets']:
+        asset=(source/a['file']).resolve()
+        if not asset.is_relative_to(source.resolve()):raise ValueError('Nieprawidłowy przykład')
+        shutil.copy2(asset,store.directory(p['id'])/a['file'])
+    state['project']=p
+    state['session'].update(selection=[next(e['id'] for e in p['elements'] if e['type']=='text')],playhead=1.2)
+    store._save(state)
+    return store.read(p['id'])

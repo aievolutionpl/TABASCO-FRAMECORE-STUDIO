@@ -4,13 +4,15 @@ from .model import EditorError
 from .motion import registry
 from .providers import PROVIDERS
 
-READS = {"get_project", "get_selection", "get_timeline", "get_frame_context", "list_assets", "list_projects", "list_motion", "get_history", "get_providers", "get_job", "preview", "list_templates", "list_icons", "get_editing_guide", "inspect_project", "capture_frame"}
+READS = {"get_project", "get_selection", "get_timeline", "get_frame_context", "list_assets", "list_projects", "list_motion", "get_history", "get_providers", "get_job", "preview", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "inspect_project", "capture_frame"}
 WRITES = {"add_scene", "duplicate_scene", "add_text", "add_video", "add_image", "add_audio", "add_caption", "add_shape",
           "move_element", "resize_element", "set_property", "trim_clip", "split_clip", "move_clip", "delete_clip", "apply_motion",
           "set_brand", "set_format", "style_captions", "set_track", "assemble_storyboard", "rename_project",
           "undo", "redo", "propose_changes", "apply_proposal", "cancel_proposal", "set_selection", "set_playhead",
-          "add_icon", "apply_template", "duplicate_clip", "set_audio", "set_keyframes", "set_duration"}
+          "add_icon", "add_library_asset", "set_background", "apply_template", "duplicate_clip", "set_audio", "set_keyframes", "set_duration"}
 FIELDS = {
+    "add_library_asset": {"asset_id":"string", "start":"number", "duration":"number", "x":"number", "y":"number", "width":"number", "height":"number"},
+    "set_background": {"background_id":"string", "animated":"boolean"},
     "add_icon": {"icon_id":"string", "start":"number", "duration":"number", "x":"number", "y":"number", "width":"number", "height":"number"},
     "apply_template": {"template_id":"string", "title":"string", "replace":"boolean"},
     "duplicate_clip": {"element_id":"string", "start":"number"},
@@ -35,7 +37,7 @@ FIELDS = {
     "propose_changes": {"commands": "array", "description": "string"},
     "apply_proposal": {"proposal_id": "string"},
     "cancel_proposal": {"proposal_id": "string"},
-    "assemble_storyboard": {"scenes": "array", "replace": "boolean"},
+    "assemble_storyboard": {"scenes": "array", "replace": "boolean", "template_id":"string"},
     "add_scene": {"name": "string", "start": "number", "duration": "number", "message": "string"},
     "duplicate_scene": {"scene_id": "string", "start": "number"},
     "rename_project": {"name": "string"},
@@ -59,7 +61,16 @@ class API:
             return {"templates": catalog()}
         if name == "list_icons":
             from .library import catalog
-            return {"icons": catalog()}
+            return {"icons": catalog("icon")}
+        if name == "list_library":
+            from .library import catalog
+            return {"assets": catalog()}
+        if name == "list_fonts":
+            from .library import fonts
+            return {"fonts": fonts()}
+        if name == "list_backgrounds":
+            from .backgrounds import catalog
+            return {"backgrounds": catalog()}
         if name == "get_editing_guide":
             from .inspection import GUIDE
             return {"instructions": GUIDE}
@@ -84,7 +95,7 @@ class API:
             p = self.store.read(pid)["project"]
             from .templates import template_scenes
             scenes = template_scenes(args.get("template_id", "product"), p["duration"], args.get("title",p["metadata"]["name"]))
-            return {"scenes": scenes, "method": "deterministic_starter", "note": "Edytowalny plan startowy; bez wywołania modelu językowego."}
+            return {"scenes": scenes, "template_id":args.get("template_id", "product"), "method": "deterministic_starter", "note": "Edytowalny plan startowy; bez wywołania modelu językowego."}
         if name.startswith("generate_") or name == "transcribe":
             return PROVIDERS.generate(args.get("provider_id"), name.removeprefix("generate_"), args)
         if name in {"render", "export"}: return self.jobs.start(pid, revision, args.get("quality", "final"))
@@ -116,7 +127,7 @@ class API:
             if name == "create_project": props.update(name={"type": "string"}, format={"type": "string"}, duration={"type": "number"}, brief={"type": "string"}, workflow={"type": "string"})
             if name == "plan_storyboard": props.update(title={"type": "string"}, workflow={"type": "string"}, template_id={"type": "string"})
             if name.startswith("generate_") or name == "transcribe": props.update(provider_id={"type": "string"}, prompt={"type": "string"})
-            required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "get_editing_guide", "get_providers", "create_project", "get_job"} else ["project_id"]
+            required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_providers", "create_project", "get_job"} else ["project_id"]
             if name in WRITES - {"set_selection", "set_playhead"} or name in {"render", "export", "add_asset"}: required.append("expected_revision")
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
                          "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"],
@@ -125,7 +136,7 @@ class API:
                          "apply_proposal": ["proposal_id"], "cancel_proposal": ["proposal_id"],
                          "set_playhead": ["time"], "set_selection": ["element_ids"], "get_job": ["job_id"],
                          "add_asset": ["source_file"], "duplicate_scene": ["scene_id"], "add_icon":["icon_id"],
-                         "apply_template":["template_id"], "set_audio":["audio"], "set_keyframes":["keyframes"], "set_duration":["duration"]}.get(name, [])
+                         "apply_template":["template_id"], "add_library_asset":["asset_id"], "set_background":["background_id"], "set_audio":["audio"], "set_keyframes":["keyframes"], "set_duration":["duration"]}.get(name, [])
             result.append({"name": name, "description": name.replace("_", " ") + ". Wspólny projekt i historia; przed zmianą odczytaj aktualną rewizję.",
                            "inputSchema": {"type": "object", "properties": props, "required": required},
                            "annotations": {"readOnlyHint": name in READS, "destructiveHint": name in {"delete_clip", "assemble_storyboard"}}})

@@ -1,0 +1,1439 @@
+{
+  "version": 1,
+  "fonts": [
+    {
+      "id": "manrope",
+      "family": "Manrope",
+      "category": "Bezszeryfowa",
+      "file": "framecore/static/library/fonts/manrope.ttf",
+      "weight": [
+        200,
+        800
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/manrope-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/manrope/Manrope[wght].ttf",
+      "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+      "polish": true
+    },
+    {
+      "id": "spacegrotesk",
+      "family": "Space Grotesk",
+      "category": "Technologiczna",
+      "file": "framecore/static/library/fonts/spacegrotesk.ttf",
+      "weight": [
+        300,
+        700
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/spacegrotesk-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/spacegrotesk/SpaceGrotesk[wght].ttf",
+      "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72",
+      "polish": true
+    },
+    {
+      "id": "playfairdisplay",
+      "family": "Playfair Display",
+      "category": "Elegancka",
+      "file": "framecore/static/library/fonts/playfairdisplay.ttf",
+      "weight": [
+        400,
+        900
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/playfairdisplay-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/playfairdisplay/PlayfairDisplay[wght].ttf",
+      "sha256": "c40f2293766a503bc70cce9e512ef844a4ccb7cbcde792fe2ea31d191917d8d6",
+      "polish": true
+    },
+    {
+      "id": "fraunces",
+      "family": "Fraunces",
+      "category": "Redakcyjna",
+      "file": "framecore/static/library/fonts/fraunces.ttf",
+      "weight": [
+        100,
+        900
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/fraunces-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/fraunces/Fraunces[SOFT,WONK,opsz,wght].ttf",
+      "sha256": "177ff6c0f14e5550a3c624247cd1189611d4eb65d000b14944c63d967958abbb",
+      "polish": true
+    },
+    {
+      "id": "bebasneue",
+      "family": "Bebas Neue",
+      "category": "Mocny nagłówek",
+      "file": "framecore/static/library/fonts/bebasneue.ttf",
+      "weight": [
+        400,
+        400
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/bebasneue-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/bebasneue/BebasNeue-Regular.ttf",
+      "sha256": "08e4623805102d819f58601e46e345648846075e363b2ceb23313c2d1c83ec73",
+      "polish": true
+    },
+    {
+      "id": "dmsans",
+      "family": "DM Sans",
+      "category": "Czytelna",
+      "file": "framecore/static/library/fonts/dmsans.ttf",
+      "weight": [
+        100,
+        1000
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/dmsans-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/dmsans/DMSans[opsz,wght].ttf",
+      "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d",
+      "polish": true
+    },
+    {
+      "id": "dmserifdisplay",
+      "family": "DM Serif Display",
+      "category": "Klasyczna",
+      "file": "framecore/static/library/fonts/dmserifdisplay.ttf",
+      "weight": [
+        400,
+        400
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/dmserifdisplay-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/dmserifdisplay/DMSerifDisplay-Regular.ttf",
+      "sha256": "8cc3643535edf039aa5d95440a8542735e9197e4f4b8d9303e980fefbf5ab616",
+      "polish": true
+    },
+    {
+      "id": "jetbrainsmono",
+      "family": "JetBrains Mono",
+      "category": "Kod i dane",
+      "file": "framecore/static/library/fonts/jetbrainsmono.ttf",
+      "weight": [
+        100,
+        800
+      ],
+      "license": "OFL-1.1",
+      "licenseFile": "licenses/fonts/jetbrainsmono-OFL.txt",
+      "source": "https://github.com/google/fonts",
+      "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+      "upstreamFile": "ofl/jetbrainsmono/JetBrainsMono[wght].ttf",
+      "sha256": "48715a42ec242c21e9f02692891e147d022299a52e48d5e413e1a942193ffeda",
+      "polish": true
+    }
+  ],
+  "assets": [
+    {
+      "id": "tabler-rocket",
+      "name": "Rakieta",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-rocket.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/rocket.svg",
+      "sha256": "bd4cd3e27278d3c5a84b9480437d9c8bb10907540d01824ae2b0da6a16a0e84b",
+      "tags": [
+        "rocket",
+        "rakieta",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-camera",
+      "name": "Aparat",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-camera.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/camera.svg",
+      "sha256": "24c3560560e6177528dada3805efab129c5667ef97b0ea342a21d0a34032baa8",
+      "tags": [
+        "camera",
+        "aparat",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-microphone",
+      "name": "Mikrofon",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-microphone.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/microphone.svg",
+      "sha256": "804b6189fea0ae697def236da6790d3ae81e99449cd5c056245c205eb7f333f2",
+      "tags": [
+        "microphone",
+        "mikrofon",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-music",
+      "name": "Muzyka",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-music.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/music.svg",
+      "sha256": "8b69aafb5497fc9773078aab151dda57434e89011e712bb24c10c9b66f80ab68",
+      "tags": [
+        "music",
+        "muzyka",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-heart",
+      "name": "Serce",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-heart.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/heart.svg",
+      "sha256": "f9f42a4d4ae0aca8f01dde4a7a255eff7af26ed0ee133b1458e9d3ff257464d6",
+      "tags": [
+        "heart",
+        "serce",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-star",
+      "name": "Gwiazda",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-star.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/star.svg",
+      "sha256": "33727ef0a469dbe7147e5cfe5a875a28b97809b0eac99a2e6886679369d43934",
+      "tags": [
+        "star",
+        "gwiazda",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-gift",
+      "name": "Prezent",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-gift.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/gift.svg",
+      "sha256": "5e0c4ef9d3e8437c2ea230009ebe78085e101c490eb456c8b38d141411078864",
+      "tags": [
+        "gift",
+        "prezent",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-bolt",
+      "name": "Energia",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-bolt.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/bolt.svg",
+      "sha256": "f18f1b4476d1f1ba018219131fee671f2a7ac286c9eb3aa83ea72274e17f34e5",
+      "tags": [
+        "bolt",
+        "energia",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-bulb",
+      "name": "Pomysł",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-bulb.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/bulb.svg",
+      "sha256": "3617f3cd3f835b03b9d8d4feeaa180fa3d436a01de8e109ced052e419f9fa7e0",
+      "tags": [
+        "bulb",
+        "pomysł",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-palette",
+      "name": "Paleta",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-palette.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/palette.svg",
+      "sha256": "27a5a19ae4b0f73ff4089b7f5a6c8fdf17f19ecc853e19fa04494f083943e778",
+      "tags": [
+        "palette",
+        "paleta",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-cloud",
+      "name": "Chmura",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-cloud.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/cloud.svg",
+      "sha256": "9b0f459e678245c64a1fb312f9f59109fb00f6dda15a36ea39a25a0bfa1d4f8b",
+      "tags": [
+        "cloud",
+        "chmura",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-device-laptop",
+      "name": "Laptop",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-device-laptop.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/device-laptop.svg",
+      "sha256": "f773cac887378f6da0d2bfa206e62ce28c6ec6c723cb9f6c28db67ac9def9faf",
+      "tags": [
+        "device-laptop",
+        "laptop",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-code",
+      "name": "Kod",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-code.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/code.svg",
+      "sha256": "dcebc6b4a9ff0a4367624487b17bea6ac08468ae0a1b7eaf300243e780b5d119",
+      "tags": [
+        "code",
+        "kod",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-chart-bar",
+      "name": "Wykres",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-chart-bar.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/chart-bar.svg",
+      "sha256": "5fbe60a66fbebaf0a06d4b5bede3af05301d9f580c4f8f7bd65a39077389e4ae",
+      "tags": [
+        "chart-bar",
+        "wykres",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-clock",
+      "name": "Czas",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-clock.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/clock.svg",
+      "sha256": "bb582eb2c9d6709d285623bea586e1f532872a9db3d2391308360636e93d199d",
+      "tags": [
+        "clock",
+        "czas",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-calendar",
+      "name": "Kalendarz",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-calendar.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/calendar.svg",
+      "sha256": "97faa5ae97a558ba4a427b3ec576b11670cc0d1dbcc128c44507fa54e831451f",
+      "tags": [
+        "calendar",
+        "kalendarz",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-trophy",
+      "name": "Sukces",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-trophy.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/trophy.svg",
+      "sha256": "2e56bd8f0e6f4d2ca4554485acc11717bb05a040d8a296fe2fb029781f4dad21",
+      "tags": [
+        "trophy",
+        "sukces",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-shopping-bag",
+      "name": "Zakupy",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-shopping-bag.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/shopping-bag.svg",
+      "sha256": "5b02f93914223f96ad1ea90ab4e3ce5fb2b22099ee9d5b8cda436839a3086b30",
+      "tags": [
+        "shopping-bag",
+        "zakupy",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-sun",
+      "name": "Słońce",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-sun.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/sun.svg",
+      "sha256": "6d4dc625a54dea6c696e8320c35fcf7e235dc039f512ef2c30af9b0663a7ab3f",
+      "tags": [
+        "sun",
+        "słońce",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-moon",
+      "name": "Księżyc",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-moon.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/moon.svg",
+      "sha256": "921d27bb214f2ec714ff4deeffa8a5efc4bb989e367df47f9f58351d2effee00",
+      "tags": [
+        "moon",
+        "księżyc",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-world",
+      "name": "Świat",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-world.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/world.svg",
+      "sha256": "ab71e6f58782ae4b2aa099ca869627c6051840f95e727d261f0d994c9fac7619",
+      "tags": [
+        "world",
+        "świat",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-leaf",
+      "name": "Natura",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-leaf.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/leaf.svg",
+      "sha256": "b661e18f1dc686659f811ea050b13aade9cd7a31962fd5b3ebb89e6222bab61a",
+      "tags": [
+        "leaf",
+        "natura",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-sparkles",
+      "name": "Blask",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-sparkles.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/sparkles.svg",
+      "sha256": "4e3e97b37d6399e647989856950d0c024a53f3d1bb2f1bf0714f1df2c1bd90d7",
+      "tags": [
+        "sparkles",
+        "blask",
+        "tabler"
+      ]
+    },
+    {
+      "id": "tabler-target",
+      "name": "Cel",
+      "kind": "icon",
+      "collection": "Tabler",
+      "file": "framecore/static/library/icons/tabler-target.svg",
+      "license": "MIT",
+      "licenseFile": "licenses/Tabler-LICENSE.txt",
+      "source": "https://github.com/tabler/tabler-icons",
+      "commit": "a49ebdf8e13cc30794a5629c5b637e13ed5699d0",
+      "upstreamFile": "icons/outline/target.svg",
+      "sha256": "86aeb93cca8fdd443836de446a3fc565c45f5af5e7312171c1d054f14da1388e",
+      "tags": [
+        "target",
+        "cel",
+        "tabler"
+      ]
+    },
+    {
+      "id": "lucide-rocket",
+      "name": "Rakieta",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-rocket.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/rocket.svg",
+      "sha256": "2b7887d9a5623f2e5e4a5d32716f93829d61b458e03b6eae33a6df648b9eb855",
+      "tags": [
+        "rocket",
+        "rakieta",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-camera",
+      "name": "Aparat",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-camera.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/camera.svg",
+      "sha256": "ebbb3178dd80dfd942770a2237fe7bfc3515c55c7daa9d3666933a656d2790e3",
+      "tags": [
+        "camera",
+        "aparat",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-microphone",
+      "name": "Mikrofon",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-microphone.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/mic.svg",
+      "sha256": "9b940cd735d1ffa270ba670c4e677d9a09400f3fa81d6b3f405b12a3b67a59a8",
+      "tags": [
+        "microphone",
+        "mikrofon",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-music",
+      "name": "Muzyka",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-music.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/music.svg",
+      "sha256": "8721b8a3594219c1313c4083049e5a5c049f49c47b1cd93fdb61d52a0803e42b",
+      "tags": [
+        "music",
+        "muzyka",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-heart",
+      "name": "Serce",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-heart.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/heart.svg",
+      "sha256": "70af5f30be9fcb500b852556b38dcdf8c04a4ba81fd262534fb0336bd39b3b52",
+      "tags": [
+        "heart",
+        "serce",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-star",
+      "name": "Gwiazda",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-star.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/star.svg",
+      "sha256": "c59da86b889569387db28e69ad00a89f96af22863ad9eea9aa12c4876a14338c",
+      "tags": [
+        "star",
+        "gwiazda",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-gift",
+      "name": "Prezent",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-gift.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/gift.svg",
+      "sha256": "bc0651476bc7fdefa8d033f7b7572f9c8712aaca3b9196488442e6b4e76ed2a4",
+      "tags": [
+        "gift",
+        "prezent",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-bolt",
+      "name": "Energia",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-bolt.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/zap.svg",
+      "sha256": "4c395891eab4d1e5627c5d414a16db037317cb2f12453de0f3a1130964c6d444",
+      "tags": [
+        "bolt",
+        "energia",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-bulb",
+      "name": "Pomysł",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-bulb.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/lightbulb.svg",
+      "sha256": "e33bbec15b1e64cca958e086850f951c0dc2201cd5778bb3695fda3cb6ea457d",
+      "tags": [
+        "bulb",
+        "pomysł",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-palette",
+      "name": "Paleta",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-palette.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/palette.svg",
+      "sha256": "8e7d3fde990cffd10469ba351f27c50202b057a9bb9af5626322e53fd3abc78c",
+      "tags": [
+        "palette",
+        "paleta",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-cloud",
+      "name": "Chmura",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-cloud.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/cloud.svg",
+      "sha256": "28a34022ed00177eb1f218eea5d2b7af30d09b529187fe32219e4dd8ea2b9740",
+      "tags": [
+        "cloud",
+        "chmura",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-device-laptop",
+      "name": "Laptop",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-device-laptop.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/laptop.svg",
+      "sha256": "b8389056d3b7125670b60a4bd03e6d4ecc440e228f4140e7b66c4e97dcb0dc70",
+      "tags": [
+        "device-laptop",
+        "laptop",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-code",
+      "name": "Kod",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-code.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/code.svg",
+      "sha256": "83235d4a0352d74234f949c9fc23f89c65ff165f1b6d54a90e5f0ea5bfc2c3d7",
+      "tags": [
+        "code",
+        "kod",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-chart-bar",
+      "name": "Wykres",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-chart-bar.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/chart-column.svg",
+      "sha256": "80664a4c5ca1bca10bcb88c1a99f62593c94d61d72d3a4bbf577eb3f3ea4da57",
+      "tags": [
+        "chart-bar",
+        "wykres",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-clock",
+      "name": "Czas",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-clock.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/clock.svg",
+      "sha256": "e9d3e3acf4d1c280fcf8092293439dc0a4756a908ceb859de144b12451cd1cb9",
+      "tags": [
+        "clock",
+        "czas",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-calendar",
+      "name": "Kalendarz",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-calendar.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/calendar.svg",
+      "sha256": "312ac8e715ac2b71bcc942dec2e8de9c1929085474f08885af35b563f6aa7a0b",
+      "tags": [
+        "calendar",
+        "kalendarz",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-trophy",
+      "name": "Sukces",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-trophy.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/trophy.svg",
+      "sha256": "c641553befdb899b2eb01075c0962c73b4b0e0d1835d9d407f5d5d4d70f77d03",
+      "tags": [
+        "trophy",
+        "sukces",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-shopping-bag",
+      "name": "Zakupy",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-shopping-bag.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/shopping-bag.svg",
+      "sha256": "24a161961b559234b7a31af904dab18b437507336ba2decff3fe6b7772495896",
+      "tags": [
+        "shopping-bag",
+        "zakupy",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-sun",
+      "name": "Słońce",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-sun.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/sun.svg",
+      "sha256": "a3955c8b0425fcc5c9ba12d2bdd77fe53b2cd5dd05e7742a56f342e996fb2ef8",
+      "tags": [
+        "sun",
+        "słońce",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-moon",
+      "name": "Księżyc",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-moon.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/moon.svg",
+      "sha256": "205b959e940d5841f0ce1d09c933153da9d9c94130a54d5cc0c68c2af1d403da",
+      "tags": [
+        "moon",
+        "księżyc",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-world",
+      "name": "Świat",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-world.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/globe.svg",
+      "sha256": "82c6b8fa0b8e8d775ec9becd86f74a4e50bff7bee4c81f7362de45348504f14d",
+      "tags": [
+        "world",
+        "świat",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-leaf",
+      "name": "Natura",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-leaf.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/leaf.svg",
+      "sha256": "ac2b65d8d35b5038c9388cd1f161e74570fce6ef6a4c3d99a6b0c2bd68e0cb28",
+      "tags": [
+        "leaf",
+        "natura",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-sparkles",
+      "name": "Blask",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-sparkles.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/sparkles.svg",
+      "sha256": "f5499f33f09d7158151e9bd2ec0faf79ff8fb57292f84fdd7286d96d0f0424d8",
+      "tags": [
+        "sparkles",
+        "blask",
+        "lucide"
+      ]
+    },
+    {
+      "id": "lucide-target",
+      "name": "Cel",
+      "kind": "icon",
+      "collection": "Lucide",
+      "file": "framecore/static/library/icons/lucide-target.svg",
+      "license": "ISC/MIT",
+      "licenseFile": "licenses/Lucide-LICENSE.txt",
+      "source": "https://github.com/lucide-icons/lucide",
+      "commit": "500620a2e8123f8d1db191538886dc0c223f69a9",
+      "upstreamFile": "icons/target.svg",
+      "sha256": "96a6b16628825a1a207a77e9a5818f74c3e74ea3664783ff5c2a44e6347b90df",
+      "tags": [
+        "target",
+        "cel",
+        "lucide"
+      ]
+    },
+    {
+      "id": "fluent-rocket",
+      "name": "Rakieta 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-rocket.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Rocket/3D/rocket_3d.png",
+      "sha256": "4636925a1dfc76a45dc83c08b983699d39143a0978f794a4e2dfb6cbffdcd7ab",
+      "tags": [
+        "rocket",
+        "rakieta 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-robot",
+      "name": "Agent 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-robot.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Robot/3D/robot_3d.png",
+      "sha256": "3f9b5a00b53c8bddda36b6a3f68d00718d9d7d8c04f986a3248e55ae93a7961b",
+      "tags": [
+        "robot",
+        "agent 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-light-bulb",
+      "name": "Pomysł 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-light-bulb.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Light bulb/3D/light_bulb_3d.png",
+      "sha256": "df7b09aa18301507e6fb8c279df66d9afa465b6fed3e63d2efa84dacebdbbf79",
+      "tags": [
+        "light bulb",
+        "pomysł 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-clapper-board",
+      "name": "Montaż 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-clapper-board.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Clapper board/3D/clapper_board_3d.png",
+      "sha256": "1a6e2d6681865c8834b29576398f82045b170177e4e745d7bce210e80cc98561",
+      "tags": [
+        "clapper board",
+        "montaż 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-artist-palette",
+      "name": "Paleta 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-artist-palette.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Artist palette/3D/artist_palette_3d.png",
+      "sha256": "147e62f6523e7e923add4ed5497bf90982d22e04eb2e65ab916b743de2dbe1d2",
+      "tags": [
+        "artist palette",
+        "paleta 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-camera",
+      "name": "Aparat 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-camera.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Camera/3D/camera_3d.png",
+      "sha256": "1b16f78a3feb212e66c0263b81d651347d702383e4a23f6e0211f83c79d3c7e3",
+      "tags": [
+        "camera",
+        "aparat 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-headphone",
+      "name": "Słuchawki 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-headphone.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Headphone/3D/headphone_3d.png",
+      "sha256": "e7c26d433340b1706f20c733558da412cbf70b1a95048d51a80eb0ed2c0a02c9",
+      "tags": [
+        "headphone",
+        "słuchawki 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-microphone",
+      "name": "Mikrofon 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-microphone.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Microphone/3D/microphone_3d.png",
+      "sha256": "99ccf1ae9f0df5a0449441da687cd5337581c029f452db8ed135f14c6a6e0121",
+      "tags": [
+        "microphone",
+        "mikrofon 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-laptop",
+      "name": "Laptop 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-laptop.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Laptop/3D/laptop_3d.png",
+      "sha256": "3b8a267f6c3d2721af925782bdbc11c4e1bc9ae806c5c875557b100393665aab",
+      "tags": [
+        "laptop",
+        "laptop 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-sparkles",
+      "name": "Blask 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-sparkles.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Sparkles/3D/sparkles_3d.png",
+      "sha256": "e4490c9ff74a3fd73a8f99c760d65b6ed51b8a3e4ad28da137fec050b77e1058",
+      "tags": [
+        "sparkles",
+        "blask 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-fire",
+      "name": "Ogień 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-fire.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Fire/3D/fire_3d.png",
+      "sha256": "d56355132d73df1741edcf37cb4e21ad54f1c46eeb76fa17224607abf4128c3f",
+      "tags": [
+        "fire",
+        "ogień 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-star",
+      "name": "Gwiazda 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-star.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Star/3D/star_3d.png",
+      "sha256": "b935cdf502b69054bc2b08e7ba4e4eaba6499564a2041dd77d6291e21bf8cfe8",
+      "tags": [
+        "star",
+        "gwiazda 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-bullseye",
+      "name": "Cel 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-bullseye.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Bullseye/3D/bullseye_3d.png",
+      "sha256": "2b2a2d9eec76c5649b8207b050f9135ce666c9d94694e5577aade50c53768437",
+      "tags": [
+        "bullseye",
+        "cel 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-megaphone",
+      "name": "Promocja 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-megaphone.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Megaphone/3D/megaphone_3d.png",
+      "sha256": "78fd3bd1d93600888d4b06e157672c2dfb8058aaeb0f924fc461ca6af6e44c29",
+      "tags": [
+        "megaphone",
+        "promocja 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-wrapped-gift",
+      "name": "Prezent 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-wrapped-gift.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Wrapped gift/3D/wrapped_gift_3d.png",
+      "sha256": "fc9c446401c9fb347f4e9f47e6023247208126047d9ec32059d5e14e127fb562",
+      "tags": [
+        "wrapped gift",
+        "prezent 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-party-popper",
+      "name": "Świętowanie 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-party-popper.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Party popper/3D/party_popper_3d.png",
+      "sha256": "70a8e2f9daf1646be9e773751b7f3b6b281a2415cf29c3c3aeebd9c923cdc3e0",
+      "tags": [
+        "party popper",
+        "świętowanie 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-hourglass-done",
+      "name": "Klepsydra 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-hourglass-done.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Hourglass done/3D/hourglass_done_3d.png",
+      "sha256": "3b5e903ed916a692cdb7db131d43f6fc6040ea21303809fd1bfc148cf4af531a",
+      "tags": [
+        "hourglass done",
+        "klepsydra 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-musical-note",
+      "name": "Muzyka 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-musical-note.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Musical note/3D/musical_note_3d.png",
+      "sha256": "24f7ec2e5cdf032c3605ec8c57399f72b96585ea6495f8da59695f5ea86da2ff",
+      "tags": [
+        "musical note",
+        "muzyka 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-movie-camera",
+      "name": "Film 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-movie-camera.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Movie camera/3D/movie_camera_3d.png",
+      "sha256": "1a62dfdbca5a6a9e90aeacd9a0b3781ff588f4cb96025155fb55829f4020dd0c",
+      "tags": [
+        "movie camera",
+        "film 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-video-game",
+      "name": "Gra 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-video-game.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Video game/3D/video_game_3d.png",
+      "sha256": "4b01e22089defe553717d49624e673cb5492ecdd9c6a8eddb7e6ba12d400c0da",
+      "tags": [
+        "video game",
+        "gra 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-books",
+      "name": "Książki 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-books.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Books/3D/books_3d.png",
+      "sha256": "36f75eaa1e1a849fc950f43962b447c206d96244858468240a6a81beaa97f7be",
+      "tags": [
+        "books",
+        "książki 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-globe-showing-europe-africa",
+      "name": "Świat 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-globe-showing-europe-africa.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Globe showing europe-africa/3D/globe_showing_europe-africa_3d.png",
+      "sha256": "a69baec3cc48ed5206d171f5f494e3ab06665277ec4a3acc7e6bf3962ee460ad",
+      "tags": [
+        "globe showing europe-africa",
+        "świat 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-seedling",
+      "name": "Natura 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-seedling.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Seedling/3D/seedling_3d.png",
+      "sha256": "b16c51b1b36c68b87bc05b92841d3cbd25d93919911057bb0eb3648717615cc1",
+      "tags": [
+        "seedling",
+        "natura 3d",
+        "3d"
+      ]
+    },
+    {
+      "id": "fluent-rainbow",
+      "name": "Tęcza 3D",
+      "kind": "illustration",
+      "collection": "Fluent Emoji 3D",
+      "file": "framecore/static/library/illustrations/fluent-rainbow.png",
+      "license": "MIT",
+      "licenseFile": "licenses/Fluent-Emoji-MIT.txt",
+      "source": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
+      "upstreamFile": "assets/Rainbow/3D/rainbow_3d.png",
+      "sha256": "81c60a96369047dd287b9fb54d02d29fe1e9b7fe3f00924330037e861b1fbd81",
+      "tags": [
+        "rainbow",
+        "tęcza 3d",
+        "3d"
+      ]
+    }
+  ]
+}

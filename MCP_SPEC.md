@@ -25,10 +25,10 @@ Jeśli edytor używa `--root`, dodaj tę samą opcję i ścieżkę do `args`. In
 | Cel | Narzędzia |
 | --- | --- |
 | Kontekst | `get_project`, `get_selection`, `get_timeline`, `get_frame_context`, `get_history`, `list_projects`, `list_assets` |
-| Instrukcje i biblioteki | `get_editing_guide`, `list_motion`, `list_templates`, `list_icons` |
+| Instrukcje i biblioteki | `get_editing_guide`, `list_motion`, `list_templates`, `list_icons`, `list_library`, `list_fonts`, `list_backgrounds` |
 | Kontrola | `inspect_project`, `capture_frame`, `preview` |
-| Projekt | `create_project`, `rename_project`, `set_duration`, `set_format`, `set_brand`, `set_track` |
-| Materiały i elementy | `add_asset`, `add_icon`, `add_text`, `add_shape`, `add_video`, `add_image`, `add_audio`, `add_caption` |
+| Projekt | `create_project`, `rename_project`, `set_duration`, `set_format`, `set_brand`, `set_background`, `set_track` |
+| Materiały i elementy | `add_asset`, `add_library_asset`, `add_icon`, `add_text`, `add_shape`, `add_video`, `add_image`, `add_audio`, `add_caption` |
 | Montaż | `move_clip`, `trim_clip`, `split_clip`, `duplicate_clip`, `delete_clip`, `move_element`, `resize_element`, `set_property` |
 | Ruch i dźwięk | `apply_motion`, `set_keyframes`, `set_audio`, `style_captions` |
 | Plan scen | `plan_storyboard`, `apply_template`, `assemble_storyboard`, `add_scene`, `duplicate_scene` |
@@ -57,3 +57,9 @@ Komendy projektu wymagają `project_id`. Zmiany treści i eksport wymagają tak�
 ## HTTP
 
 Odczyt: `/api/projects`, `/api/project/<id>`, `/api/context/<id>`, `/api/motion`, `/api/tools`, `/api/job/<id>`. Zmiany: POST `/api/create`, `/api/command`, `/api/upload/<id>`, `/api/export`. Komendy POST wymagają tokena sesji, poprawnego Host i tego samego Origin. Konflikt rewizji zwraca HTTP 409. Podgląd: `/composition/<id>`; pliki materiałów i eksportu mają ograniczone ścieżki.
+
+## Wbudowane materiały
+
+`list_library` zwraca 84 materiały wraz z identyfikatorem, kolekcją, licencją i lokalnym podglądem. `add_library_asset` kopiuje wybraną ilustrację lub ikonę do projektu i dodaje edytowalny klip. `list_fonts` opisuje osiem lokalnych rodzin, w tym dostępne grubości. `list_backgrounds` opisuje 24 receptury; `set_background` przyjmuje `background_id` i opcjonalne `animated`.
+
+`plan_storyboard` zwraca `template_id`. Przekaż go do `assemble_storyboard` wraz ze scenami, aby zachować font, tło, układ i animacje. `apply_template` wykonuje tę operację bez osobnej redakcji scen. [Przykłady](docs/CREATOR_PACK.md).

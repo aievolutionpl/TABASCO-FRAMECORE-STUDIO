@@ -131,7 +131,7 @@ def test_polish_editor_new_tools_and_deterministic_motion(tmp_path):
             assert page.locator('html').get_attribute('lang')=='pl'
             assert page.locator('#export').inner_text()=='Eksport'
             page.click('[data-tab="Shapes"]')
-            assert page.locator('[data-icon]').count()==12
+            assert page.locator('[data-icon]').count()==60
             page.click('[data-icon="robot"]')
             page.wait_for_function('document.querySelectorAll(".clip.image").length===1')
             page.locator('.clip.text').click()
@@ -147,7 +147,7 @@ def test_polish_editor_new_tools_and_deterministic_motion(tmp_path):
             result=store.read(pid)
             assert result['project']['elements'][0]['keyframes'][-1]['value']==400
             page.click('[data-tab="Motion"]')
-            assert page.locator('[data-motion]').count()==20
+            assert page.locator('[data-motion]').count()==28
             page.click('#agentTab')
             page.click('[data-inspect]')
             page.locator('#modal').wait_for(state='visible')
@@ -172,3 +172,70 @@ def test_polish_editor_new_tools_and_deterministic_motion(tmp_path):
             browser.close()
     finally:
         srv.shutdown();srv.server_close()
+
+
+@pytest.mark.browser
+def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
+    from framecore.composition import compile_project
+    from framecore.library import manifest
+    store=Store(tmp_path/'projects');state=store.create('Zażółć gęślą jaźń','16:9',6)
+    pid=state['project']['id'];srv,_=start_background(store);base=f'http://127.0.0.1:{srv.server_port}'
+    errors=[];external=[]
+    try:
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
+            page=browser.new_page(viewport={'width':1512,'height':982})
+            page.on('pageerror',lambda e:errors.append(str(e)))
+            def offline(route):
+                if route.request.url.startswith(base) or route.request.url.startswith('data:'):route.continue_()
+                else:external.append(route.request.url);route.abort()
+            page.route('**/*',offline)
+            page.goto(base);page.wait_for_function('document.querySelector("#player").ready')
+            page.click('[data-tab="Text"]')
+            assert page.locator('[data-font]').count()==8
+            page.click('[data-text="Twój nagłówek"]')
+            page.wait_for_selector('[data-property="style.fontFamily"]')
+            page.select_option('[data-property="style.fontFamily"]','Playfair Display')
+            page.wait_for_function('document.querySelector("[data-property=\\"style.fontFamily\\"]").value==="Playfair Display"')
+            page.click('[data-tab="Library"]')
+            assert page.locator('[data-builtin]').count()==84
+            page.fill('#librarySearch','rakieta')
+            assert page.locator('[data-builtin]').count()==3
+            page.click('[data-builtin="fluent-rocket"]')
+            page.wait_for_function('document.querySelectorAll(".clip.image").length===1')
+            assert store.read(pid)['project']['assets'][0]['provenance']['library_id']=='fluent-rocket'
+            page.click('[data-tab="Backgrounds"]')
+            assert page.locator('[data-background]').count()==24
+            page.click('[data-background="aurora-breath"]')
+            page.wait_for_selector('[data-background="aurora-breath"].active')
+            page.click('[data-tab="Templates"]')
+            assert page.locator('[data-template]').count()==12
+            page.click('[data-template="editorial"]')
+            page.wait_for_selector('.plan-item')
+            page.fill('[data-plan-message="0"]','Zażółć gęślą jaźń')
+            page.click('#assemble')
+            page.wait_for_selector('[data-apply]')
+            page.click('[data-apply]')
+            page.wait_for_function('document.querySelectorAll(".clip.text").length===6')
+            after=store.read(pid)['project']
+            assert after['brand']['font']=='Fraunces' and after['canvas']['backgroundPreset']=='cream'
+            assert after['scenes'][0]['message']=='Zażółć gęślą jaźń'
+            page.click('#undo')
+            page.wait_for_function('document.querySelectorAll(".clip.text").length===1')
+            assert store.read(pid)['project']['canvas']['backgroundPreset']=='aurora-breath'
+            # Every font is embedded in the composition, loaded with networking blocked.
+            test=browser.new_page(viewport={'width':1920,'height':1080});test.route('**/*',offline)
+            project=store.read(pid)['project']
+            project['elements']=[project['elements'][0]];e=project['elements'][0]
+            e.update(text='Zażółć gęślą jaźń',start=0,duration=6,motion=None)
+            for f in manifest()['fonts']:
+                e['style'].update(fontFamily=f['family'],fontWeight=min(700,f['weight'][1]))
+                test.set_content(compile_project(project));test.evaluate('window.__ready')
+                faces=test.evaluate('Array.from(document.fonts).filter(f=>f.status==="loaded").map(f=>f.family.replaceAll(\'"\',\'\'))')
+                assert f['family'] in faces
+            test.evaluate('window.seek(1.2)');first=test.screenshot()
+            test.evaluate('window.seek(3.6)');assert test.screenshot()!=first
+            test.evaluate('window.seek(1.2)');assert test.screenshot()==first
+            assert errors==[] and external==[]
+            browser.close()
+    finally:srv.shutdown();srv.server_close()
