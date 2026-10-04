@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/tabasco-framecore-collaboration.jpg" alt="TABASCO CREATIVES + FRAMECORE — STUDIO: człowiek i agent AI tworzą razem" width="100%">
+
 # TABASCO CREATIVES + FRAMECORE — STUDIO
 
 <picture>
