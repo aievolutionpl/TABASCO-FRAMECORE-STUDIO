@@ -1,0 +1,6 @@
+# Zachowaj bajty plików audytowanych także przy core.autocrlf=true na Windows.
+framecore/static/library/** -text
+framecore/static/icons/*.svg -text
+examples/creator-pack/assets/** -text
+licenses/*.txt -text
+licenses/fonts/*.txt -text

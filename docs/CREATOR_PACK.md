@@ -73,3 +73,5 @@ Podstaw rzeczywisty identyfikator i rewizję. Zastosowana propozycja ma jeden kr
 ## Twoje materiały z dysku F:
 
 Środowisko chmurowe nie ma dostępu do `F:\CREATOR PACK`. Nie dodano plików z tego folderu. Po udostępnieniu paczki można ocenić jakość, formaty, rozmiar i prawa do rozpowszechniania, a następnie dołączyć wybrane pliki do katalogu.
+
+`.gitattributes` zachowuje oryginalne bajty materiałów i licencji także przy automatycznej konwersji końców linii w Git na Windows. Dzięki temu sumy SHA-256 plików SVG zgadzają się po pobraniu repozytorium.
