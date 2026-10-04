@@ -32,6 +32,7 @@ Skrypt `scripts/install-local.sh` wykonano w obecnym środowisku i potwierdzono 
 ## Creator Pack — dodatkowa walidacja
 
 - **60 ikon, 24 ilustracje 3D, 8 fontów, 24 tła i 12 szablonów**. Sumy SHA-256 i obecność oryginalnych licencji sprawdzono dla każdego pobranego pliku.
+- W chmurze wykonano dodatkowy checkout z `core.autocrlf=true`. Wszystkie 80 sum plików fontów i nowych materiałów pozostało zgodnych dzięki `.gitattributes`; jest to sprawdzenie zachowania Git, nie uruchomienie aplikacji na Windows.
 - Tablice znaków ośmiu fontów sprawdzono przez FontTools. Wszystkie zawierają `ĄąĆćĘęŁłŃńÓóŚśŹźŻż`. FontTools służył do audytu; aplikacja go nie wymaga.
 - Test Chromium blokował wszystkie żądania poza własnym lokalnym serwerem. Biblioteka, wybór fontu, ilustracji i tła, propozycja nowego montażu i cofanie działały bez błędów JavaScript. Każdy z ośmiu fontów osiągnął stan załadowany w kompozycji przy zablokowanym internecie.
 - Zrzuty animowanego tła w dwóch czasach były różne; powrót do tego samego czasu dał identyczny PNG.

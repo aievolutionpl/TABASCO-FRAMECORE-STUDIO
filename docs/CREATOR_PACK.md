@@ -70,8 +70,8 @@ Podstaw rzeczywisty identyfikator i rewizję. Zastosowana propozycja ma jeden kr
 
 [Katalog plików](../framecore/static/library/catalog.json) zapisuje commit źródłowy, oryginalną ścieżkę, sumę SHA-256 i ścieżkę licencji. Pliki zewnętrzne pozostają niezmienione. SVG sprawdzono pod kątem skryptów i odwołań zewnętrznych; arbitralny import SVG nadal nie jest dozwolony. Tła, animacje i szablony są własnym kodem projektu MIT. [Pełne informacje prawne](../THIRD_PARTY_NOTICES.md).
 
+`.gitattributes` zachowuje oryginalne bajty materiałów i licencji także przy automatycznej konwersji końców linii w Git na Windows. Dzięki temu sumy SHA-256 plików SVG zgadzają się po pobraniu repozytorium.
+
 ## Twoje materiały z dysku F:
 
 Środowisko chmurowe nie ma dostępu do `F:\CREATOR PACK`. Nie dodano plików z tego folderu. Po udostępnieniu paczki można ocenić jakość, formaty, rozmiar i prawa do rozpowszechniania, a następnie dołączyć wybrane pliki do katalogu.
-
-`.gitattributes` zachowuje oryginalne bajty materiałów i licencji także przy automatycznej konwersji końców linii w Git na Windows. Dzięki temu sumy SHA-256 plików SVG zgadzają się po pobraniu repozytorium.
