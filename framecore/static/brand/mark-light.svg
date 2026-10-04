@@ -1,1 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img"><title>Wspólna rama — FrameCore Studio</title><path fill="#f5f3ec" d="M16 32H192V96H160V64H48V144H16Z M64 152H96V192H208V136H160V104H240V224H64Z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img"><title>Wspólna rama — FrameCore Studio</title><path fill="none" stroke="#F5F3EC" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" d="M32 144V32H184V72 M88 152V224H224V112H152"/></svg>

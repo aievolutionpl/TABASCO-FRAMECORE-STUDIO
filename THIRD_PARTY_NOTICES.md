@@ -18,7 +18,7 @@ Copyright (c) 2023 Phosphor Icons. Licencja MIT. W `framecore/static/icons/` zna
 
 Nie rozpowszechniamy kodu OpenCut, FreeCut, CartCut ani Null Motion. [Przegląd źródeł](THIRD_PARTY_RESEARCH.md) opisuje zakres audytu. Zależności Pythona są instalowane przez `requirements.txt`. FFmpeg i Chromium są zewnętrznymi programami; nie dołączamy ich plików binarnych.
 
-Ilustracja `assets/tabasco-framecore-collaboration.jpg` została dostarczona przez użytkownika jako materiał identyfikacji projektu. Licencja MIT kodu nie obejmuje automatycznie praw do tej ilustracji. `assets/framecore-logo-concepts.png` przedstawia trzy wstępne koncepcje. Użytkownik wybrał Wspólną ramę; plansza `assets/framecore-logo-board.png` pokazuje ten kierunek, a symbol i pliki SVG są jego geometryczną wersją. Pliki znaku nie zawierają pobranych fontów.
+Ilustracja `assets/tabasco-framecore-collaboration.jpg` została dostarczona przez użytkownika jako materiał identyfikacji projektu. Licencja MIT kodu nie obejmuje automatycznie praw do tej ilustracji. `assets/framecore-logo-concepts.png` przedstawia trzy wstępne koncepcje. Użytkownik wybrał Wspólną ramę; plansza `assets/framecore-logo-board.png` pokazuje ten kierunek, a symbol i pliki SVG są jego geometryczną wersją. Dopracowane logo ma własną konstrukcję geometryczną i liternictwo Manrope zamienione na krzywe. Plik fontu Manrope, informacja copyright i licencja SIL OFL 1.1 są zachowane w bibliotece projektu (odnośniki poniżej). `assets/framecore-logo-refined.png` jest wygenerowanym przez AI odniesieniem, a `assets/framecore-brand-kit.png` przedstawia produkcyjne wektory, paletę i przykłady użycia.
 
 ## Tabler Icons
 

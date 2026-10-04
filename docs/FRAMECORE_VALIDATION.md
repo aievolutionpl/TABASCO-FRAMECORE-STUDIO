@@ -4,10 +4,10 @@
 
 ## Wyniki wykonanych testów
 
-Nowy zestaw FrameCore: **22 testy przeszły, bez pominięć**. Polecenie:
+Nowy zestaw FrameCore: **23 testy przeszły, bez pominięć**. Polecenie:
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py -o addopts='' -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py -o addopts='' -q
 ```
 
 Sprawdzono wspólną edycję przez HTTP i osobny proces MCP, zaznaczenie, propozycje, cofanie, ponowną edycję człowieka, trwałość historii, konflikty rewizji i atomowość błędnych operacji. Import przez interfejs obejmował obraz produktu, logo oraz MP4 z dźwiękiem.
@@ -41,7 +41,18 @@ Skrypt `scripts/install-local.sh` wykonano w obecnym środowisku i potwierdzono 
 - `python framecore.py sample --creator-pack` tworzy niezależną kopię przykładu. Test potwierdza zachowanie wcześniejszej kopii i oryginalnego projektu.
 - Ponownie sprawdzono żywy interfejs w szerokościach 1512, 900 i 390 px: brak poziomego przepełnienia dokumentu. Zrzut README pokazuje nową bibliotekę ilustracji.
 
-Dysk `F:\CREATOR PACK` nie jest udostępniony w chmurze. Żaden materiał z tego folderu nie został przejrzany ani dodany. Zestaw 22 testów obejmuje 19 testów kontraktu/integracji i 3 testy przeglądarkowe; końcowy przebieg zakończył się w 128,90 s.
+Dysk `F:\CREATOR PACK` nie jest udostępniony w chmurze. Żaden materiał z tego folderu nie został przejrzany ani dodany. Zestaw 23 testów obejmuje 19 testów kontraktu/integracji i 4 testy przeglądarkowe; końcowy przebieg zakończył się w 132,66 s.
+
+## Dopracowany interfejs i logo
+
+- Nowy nagłówek, favicon, większa typografia Manrope, grafitowe powierzchnie i akcenty Tabasco. Obejrzano rzeczywiste zrzuty kompozycji na komputerze i paneli na telefonie.
+- Wyrównanie elementu w osi X/Y zapisuje zmianę projektu i działa z cofnięciem. Ulubione przetrwały przeładowanie strony bez zmiany rewizji. Filtr kolekcji Tabler zwrócił 24 materiały.
+- Dodanie logo przez panel Marka importuje lokalny PNG, ustawia logo marki i dodaje klip przez wspólną propozycję. Test sprawdził czas klipu oraz cofnięcie montażu i logo marki.
+- Wybór animacji uruchamia rzeczywisty krótki podgląd. Preferencja ograniczonego ruchu wyłącza dekoracyjne animacje kart.
+- Sprawdzono szybką sekwencję zaznaczenie → duplikowanie przy celowo opóźnionym zapisie zaznaczenia: duplikowany jest właściwy klip. Poprawka usuwa wyścig ujawniony przez pierwsze uruchomienie pełnego zestawu (22 przeszły, 1 nie przeszedł); końcowy przebieg 23/23 podano powyżej.
+- Telefon: biblioteka i właściwości wykorzystują wysokość ekranu, mają tło nieaktywne przez `inert`, zamykanie Escape, pułapkę Tab i powrót fokusu do przycisku. Test sprawdził również dostęp do tworzenia i wyboru projektu.
+- Po końcowej poprawce wysokości i układu paneli dodatkowo wykonano rozszerzony test interfejsu: **1/1 przeszedł w 7,46 s**. Dokument nie miał poziomego przepełnienia w szerokościach 320, 390, 900 i 1512 px. Brak błędów JavaScript w testowanych ścieżkach.
+- Pliki logo SVG mają wektorowy symbol oraz liternictwo Manrope zamienione na krzywe; PNG wygenerowany przez AI zachowano osobno jako odniesienie wizualne. Paleta, warianty i zasady użycia są w [identyfikacji](IDENTYFIKACJA.md).
 
 ## Granice potwierdzenia
 
@@ -49,4 +60,4 @@ To działający etap rozbudowy, a nie wszystkie fazy z briefu. Test osobnego pro
 
 Dostawcy AI i automatyczna transkrypcja wymagają integracji. Plan scen jest szablonem lokalnym. Nie obsługujemy jeszcze dowolnego importu źródeł HyperFrames, marketplace, ripple/slip, krzywych animacji ani automatycznego dopasowania transkrypcji.
 
-Kontrola struktury nie zastępuje oceny wizualnej i odsłuchu. Pełny historyczny zestaw repozytorium wykonano przed dołączeniem Creator Pack: **233 testy przeszły, 24 nie przeszły** (257 łącznie). Wszystkie 24 błędy dotyczą testów animacji otwierających `file://`, blokowanych przez politykę zarządzanego Chromium. Dwie nieaktualne asercje dokumentacji i nazwy profilu zostały poprawione. Wynik 22/22 dotyczy aktualnego zestawu FrameCore; cały historyczny zestaw pozostaje zablokowany w opisanej części.
+Kontrola struktury nie zastępuje oceny wizualnej i odsłuchu. Pełny historyczny zestaw repozytorium wykonano przed dołączeniem Creator Pack: **233 testy przeszły, 24 nie przeszły** (257 łącznie). Wszystkie 24 błędy dotyczą testów animacji otwierających `file://`, blokowanych przez politykę zarządzanego Chromium. Dwie nieaktualne asercje dokumentacji i nazwy profilu zostały poprawione. Wynik 23/23 dotyczy aktualnego zestawu FrameCore; cały historyczny zestaw pozostaje zablokowany w opisanej części.
