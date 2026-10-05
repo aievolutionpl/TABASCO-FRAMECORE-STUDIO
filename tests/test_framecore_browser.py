@@ -13,6 +13,7 @@ from playwright.sync_api import sync_playwright
 
 from framecore.server import start_background
 from framecore.store import Store
+from vstudio.renderers.html_to_video import launch_browser
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -30,7 +31,7 @@ def test_editable_reel_human_external_agent_undo_export(tmp_path):
     errors=[]
     try:
         with sync_playwright() as pw:
-            browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
+            browser=launch_browser(pw, None)
             page=browser.new_page(viewport={'width':1512,'height':982})
             page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
