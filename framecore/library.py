@@ -15,7 +15,10 @@ ICONS = {'sparkle':'Iskra','lightning':'Energia','film-strip':'Film','robot':'Ag
 
 @lru_cache(maxsize=1)
 def manifest():
-    return json.loads((STATIC / 'library/catalog.json').read_text(encoding='utf-8'))
+    data = json.loads((STATIC / 'library/catalog.json').read_text(encoding='utf-8'))
+    extra = STATIC / 'library/campaign/catalog.json'
+    if extra.is_file(): data['assets'].extend(json.loads(extra.read_text(encoding='utf-8'))['assets'])
+    return data
 
 
 def checked_file(entry):
@@ -61,7 +64,8 @@ def library_asset(asset_id):
             'mime':'image/svg+xml' if suffix=='.svg' else 'image/png','duration':None,
             'role':'icon' if a['kind']=='icon' else 'illustration','license':a['license'],
             'provenance':{'source':'framecore_builtin','library_id':asset_id,'version':manifest()['version'],
-                          'collection':a['collection'],'sha256':a['sha256'],'upstream':a['source'],'commit':a['commit']}}
+                          'collection':a['collection'],'sha256':a['sha256'],'upstream':a['source'],'commit':a.get('commit'),
+                          'source_kind':a.get('source_kind','upstream')}}
 
 
 def icon_asset(icon_id):

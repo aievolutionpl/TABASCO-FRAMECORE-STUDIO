@@ -19,10 +19,13 @@ def test_pack_integrity_license_and_local_fonts():
     assert len(catalog('icon'))==60
     assert len(catalog('illustration'))==24
     for item in pack['fonts']+pack['assets']:
-        assert len(item['commit'])==40
+        if item.get('source_kind') == 'generated':
+            assert (ROOT/item['promptFile']).is_file()
+        else:
+            assert len(item['commit'])==40
         assert checked_file(item)==(ROOT/item['file']).read_bytes()
         assert (ROOT/item['licenseFile']).is_file()
-        assert item['license'] in {'MIT','ISC/MIT','OFL-1.1'}
+        assert item['license'] in {'MIT','ISC/MIT','OFL-1.1','AI-generated'}
     assert all(f['polish'] for f in pack['fonts'])
     css=(ROOT/'framecore/static/library/fonts.css').read_text()
     assert 'http' not in css
@@ -49,7 +52,7 @@ def test_every_template_uses_distinct_look_and_editable_local_assets(tmp_path,fo
 def test_agent_library_and_background_proposal_is_one_undo(tmp_path):
     store=Store(tmp_path/'projects');api=API(store,RenderJobs(store))
     p=store.create('Materiały')['project'];pid=p['id']
-    assert len(api.call('list_library')['assets'])==84
+    assert len(api.call('list_library')['assets'])==87
     assert len(api.call('list_backgrounds')['backgrounds'])==24
     commands=[{'name':'add_library_asset','args':{'asset_id':'fluent-rocket'}},
               {'name':'add_icon','args':{'icon_id':'lucide-leaf'}},

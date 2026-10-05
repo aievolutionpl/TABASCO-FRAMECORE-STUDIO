@@ -69,6 +69,16 @@ class Handler(StudioHandler):
                     return self._err(404, "Nie znaleziono")
                 return self._send(200, file.read_bytes(), mimetypes.guess_type(file)[0] or "application/octet-stream")
             if path == "/api/projects": return self._json(200, {"projects": store.list()})
+            if path == "/api/assistant/status": return self._json(200, self.server.assistant.status())
+            if path == "/api/runtime":
+                from .runtime import diagnostics
+                return self._json(200, diagnostics())
+            if path == "/api/mcp-config":
+                import sys
+                root = Path(__file__).resolve().parents[1]
+                return self._json(200, {"mcpServers":{"framecore":{"command":sys.executable,
+                    "args":[str(root / 'framecore.py'), 'mcp', '--root', str(store.root.resolve())], 'cwd':str(root)}}})
+            if path.startswith("/api/assistant/job/"): return self._json(200, self.server.assistant.get(path.split("/")[-1]))
             if path == "/api/motion": return self._json(200, {"components": registry()})
             if path == "/api/tools": return self._json(200, {"tools": self.server.api.tools()})
             if path.startswith("/api/project/"): return self._json(200, store.read(path.split("/")[-1]))
@@ -119,6 +129,11 @@ class Handler(StudioHandler):
                 elif path == "/api/create": result = self.server.api.call("create_project", body, "human")
                 elif path == "/api/command": result = self.server.api.call(body["name"], body.get("args", {}), "human")
                 elif path == "/api/export": result = self.server.api.call("export", body, "human")
+                elif path == "/api/assistant/settings": result = self.server.assistant.save(body)
+                elif path == "/api/assistant/test": result = self.server.assistant.test()
+                elif path == "/api/assistant/models": result = self.server.assistant.models()
+                elif path == "/api/assistant/run": result = self.server.assistant.start(body.get("project_id"), body.get("prompt"))
+                elif path == "/api/assistant/cancel": result = self.server.assistant.cancel(body.get("job_id"))
                 else: return self._err(404, "Nie znaleziono")
             self._json(200, result)
         except (EditorError, KeyError, ValueError, TypeError) as exc:
@@ -129,6 +144,7 @@ class Handler(StudioHandler):
 
 class Server(ThreadingHTTPServer):
     daemon_threads = True
+    request_queue_size = 128
     allow_reuse_address = True
 
     def __init__(self, store, port=8877):
@@ -137,6 +153,8 @@ class Server(ThreadingHTTPServer):
         self.store = store
         self.jobs = RenderJobs(store)
         self.api = API(store, self.jobs)
+        from .agent import AgentService
+        self.assistant = AgentService(self.api)
 
 
 def start_background(store, port=0):

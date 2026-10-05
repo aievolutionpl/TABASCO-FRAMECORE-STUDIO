@@ -31,6 +31,7 @@ def test_editable_reel_human_external_agent_undo_export(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base)
             page.wait_for_function('document.querySelector("#player").ready')
@@ -125,6 +126,7 @@ def test_polish_editor_new_tools_and_deterministic_motion(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base)
             page.wait_for_function('document.querySelector("#player").ready')
@@ -185,6 +187,7 @@ def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
             def offline(route):
                 if route.request.url.startswith(base) or route.request.url.startswith('data:'):route.continue_()

@@ -29,6 +29,12 @@ Pracujesz nad istniejącym projektem współpracy. Zachowuj intencję użytkowni
 
 „Zmień typografię”: odczytaj `list_fonts`, użyj `set_property` z `property: style.fontFamily` dla tekstu lub `set_brand` dla całej marki. Osadzone fonty zawierają polskie znaki i nie potrzebują CDN. Sprawdź łamanie wierszy przez `capture_frame`.
 
+## Szybki onboarding
+
+Przeczytaj `docs/AGENT_QUICKSTART.md`. W interfejsie dostępne są **Jak zacząć**, **Integracje** i **Twój agent**. OpenRouter/OpenAI obsługują rozmowę i wywołania narzędzi montażowych. Wbudowany agent tekstowy korzysta z tego samego API i historii, ale nie ogląda klatek i nie ma dostępu do terminala. Klucze pozostają w lokalnej konfiguracji serwera; nie zapisuj ich w projekcie ani dokumentacji.
+
+Dla reklamy stosuj jeden komunikat na scenę, 3–6 sekund na scenę, kontrastową typografię i różne animacje bez nadmiaru efektów. Biblioteka FrameCore Cinema zawiera trzy tła AI (`kind: scene`) z odrębną informacją o pochodzeniu. Nie opisuj ich jako ikon MIT.
+
 ## Granice
 
-Nie ma skonfigurowanego dostawcy AI ani transkrypcji. Asystent w interfejsie jest parserem konkretnych poleceń czasu i animacji. Kontrola struktury nie mierzy automatycznie jakości montażu, kontrastu ani łamania wierszy. Import dowolnych dokumentów HTML HyperFrames, marketplace, ripple/slip i edytor krzywych animacji pozostają kolejnymi etapami.
+Klucz dostawcy rozmowy konfiguruje użytkownik. Generowanie mediów i transkrypcja nadal wymagają osobnych adapterów. Starsze lokalne skróty poleceń działają bez modelu. Kontrola struktury nie mierzy automatycznie jakości montażu, kontrastu ani łamania wierszy. Import dowolnych dokumentów HTML HyperFrames, marketplace, ripple/slip i edytor krzywych animacji pozostają kolejnymi etapami.

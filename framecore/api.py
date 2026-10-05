@@ -45,6 +45,10 @@ FIELDS = {
 for kind in ("video", "image", "audio", "caption", "shape"):
     FIELDS["add_" + kind] = {"assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object"}
 
+# Expose the geometry accepted by commands to tool-calling models as well.
+for kind in ("text", "video", "image", "audio", "caption", "shape"):
+    FIELDS["add_" + kind].update({"x":"number", "y":"number", "width":"number", "height":"number", "style":"object", "motion":"object"})
+
 
 class API:
     def __init__(self, store, jobs):

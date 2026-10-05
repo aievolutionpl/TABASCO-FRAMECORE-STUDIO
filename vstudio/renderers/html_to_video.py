@@ -31,6 +31,7 @@ import functools
 import glob
 import http.server
 import io
+import mimetypes
 import os
 import shutil
 import subprocess
@@ -38,6 +39,7 @@ import sys
 import tempfile
 import threading
 import time
+from urllib.parse import unquote, urlparse
 from pathlib import Path
 
 SEEK_NAMES = ["seek", "renderFrame", "draw", "render"]
@@ -152,8 +154,14 @@ def serve_directory(directory: Path) -> tuple[http.server.ThreadingHTTPServer, i
                 return
             super().do_GET()
 
+    class AssetServer(http.server.ThreadingHTTPServer):
+        # Chromium opens parallel connections for fonts, images and audio.
+        # The default backlog of five can reset these bursts on Windows.
+        request_queue_size = 128
+        daemon_threads = True
+
     handler = functools.partial(Quiet, directory=str(directory))
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    server = AssetServer(("127.0.0.1", 0), handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server, server.server_address[1]
 
@@ -255,6 +263,7 @@ def main() -> int:
         raise SystemExit("--alpha writes ProRes 4444: use an output name ending in .mov")
     width, height = args.size
     server = None
+    local_root = None
     if args.html.startswith(("http://", "https://")):
         url = args.html
     else:
@@ -262,6 +271,7 @@ def main() -> int:
         if not src.exists():
             raise SystemExit(f"not found: {src}")
         root = Path(args.root).resolve() if args.root else src.parent
+        local_root = root
         server, port = serve_directory(root)
         url = f"http://127.0.0.1:{port}/{src.relative_to(root).as_posix()}"
     url += ("&" if "?" in url else "?") + "capture=1"
@@ -285,6 +295,17 @@ def main() -> int:
             pg.on("console", lambda m: log(f"[console.{m.type}] {m.text}") if m.type in ("error", "warning") else None)
             pg.add_init_script("window.__CAPTURE__ = true;" + (" window.__ALPHA__ = true;" if args.alpha else ""))
             install_vendor_routes(ctx)
+            if local_root is not None:
+                # Serve local render assets through Playwright, avoiding Windows
+                # loopback resets when Chromium loads several large images.
+                def local_asset(route):
+                    relative = unquote(urlparse(route.request.url).path).lstrip('/')
+                    file = (local_root / relative).resolve()
+                    if not file.is_relative_to(local_root) or not file.is_file():
+                        route.fulfill(status=404, body='Not found')
+                        return
+                    route.fulfill(path=str(file), content_type=mimetypes.guess_type(file)[0] or 'application/octet-stream')
+                ctx.route(f'http://127.0.0.1:{port}/**', local_asset)
             if use_clock:
                 pg.clock.install(time=0)
                 pg.clock.pause_at(1)  # frozen before any page script runs; we advance it manually
