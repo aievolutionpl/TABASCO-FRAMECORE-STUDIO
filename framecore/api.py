@@ -42,6 +42,16 @@ FIELDS = {
     "duplicate_scene": {"scene_id": "string", "start": "number"},
     "rename_project": {"name": "string"},
 }
+READS.update({"get_production_status", "get_review"})
+WRITES.update({"set_production_contract", "set_scene_beat", "annotate_story_beats", "apply_motion_rules"})
+FIELDS.update({
+    "set_production_contract": {"contract":"object"}, "set_scene_beat":{"scene_id":"string", "beat":"object"},
+    "create_review":{"times":"array"}, "get_review":{"review_id":"string"},
+    "review_verdict":{"review_id":"string", "verdict":"string", "checklist":"object", "notes":"string"},
+    "create_format_variant":{"format":"string"}, "package_delivery":{"job_id":"string"},
+})
+FIELDS["apply_motion"]["easing"]="string"
+
 for kind in ("video", "image", "audio", "caption", "shape"):
     FIELDS["add_" + kind] = {"assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object"}
 
@@ -99,6 +109,28 @@ class API:
         if name.startswith("generate_") or name == "transcribe":
             return PROVIDERS.generate(args.get("provider_id"), name.removeprefix("generate_"), args)
         if name in {"render", "export"}: return self.jobs.start(pid, revision, args.get("quality", "final"))
+        if name == "get_production_status":
+            from .production import status
+            return status(self.store.read(pid)["project"], self.store.directory(pid))
+        if name == "create_review":
+            from .review import create_review
+            return create_review(self.store, pid, revision, args.get("times"))
+        if name == "get_review":
+            from .review import load_review
+            report = load_review(self.store.directory(pid), args["review_id"])
+            from .production import fingerprint
+            p = self.store.read(pid)["project"]
+            report["current"] = report["fingerprint"] == fingerprint(p)
+            from .production import asset_manifest
+            report["current"] = report["current"] and report["assetHashes"] == {a["id"]:a["sha256"] for a in asset_manifest(p,self.store.directory(pid))}
+            return report
+        if name == "review_verdict":
+            from .review import verdict
+            return verdict(self.store, pid, revision, args["review_id"], args["verdict"], args.get("checklist"), args.get("notes", ""), actor)
+        if name == "create_format_variant": return self.store.create_variant(pid, revision, args["format"])
+        if name == "package_delivery":
+            from .delivery import package
+            return package(self.store, self.jobs, pid, args["job_id"])
         if name == "get_project": return self.store.read(pid)
         if name in {"get_selection", "get_frame_context", "preview"}:
             context = self.store.context(pid)
@@ -116,7 +148,7 @@ class API:
         raise EditorError(f"Nieznane narzędzie: {name}", "unknown_tool")
 
     def tools(self):
-        names = sorted(READS | WRITES | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe"})
+        names = sorted(READS | WRITES | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery"})
         result = []
         for name in names:
             props = {"project_id": {"type": "string"}, "expected_revision": {"type": "integer"}}
@@ -128,7 +160,7 @@ class API:
             if name == "plan_storyboard": props.update(title={"type": "string"}, workflow={"type": "string"}, template_id={"type": "string"})
             if name.startswith("generate_") or name == "transcribe": props.update(provider_id={"type": "string"}, prompt={"type": "string"})
             required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_providers", "create_project", "get_job"} else ["project_id"]
-            if name in WRITES - {"set_selection", "set_playhead"} or name in {"render", "export", "add_asset"}: required.append("expected_revision")
+            if name in WRITES - {"set_selection", "set_playhead"} or name in {"render", "export", "add_asset", "create_review", "review_verdict", "create_format_variant"}: required.append("expected_revision")
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
                          "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"],
                          "set_format": ["format"], "set_brand": ["brand"], "style_captions": ["style"],

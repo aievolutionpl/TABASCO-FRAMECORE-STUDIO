@@ -1,0 +1,24 @@
+{
+  "product": "FrameCore Studio",
+  "message": "Film powstaje z historii, materiałów i sprawdzonych klatek.",
+  "facts": [
+    "Materiały i fonty są lokalne",
+    "Klatki renderuje Chromium",
+    "Warianty są osobnymi projektami"
+  ],
+  "references": [
+    "docs/references/AI_Evolution_Opus_55_Video_Studio_Guide_PL.pdf"
+  ],
+  "rejectionCriteria": [
+    "Ucięty tekst",
+    "Brak logo",
+    "Nieczytelny główny komunikat"
+  ],
+  "requiredAssets": [
+    {
+      "label": "Logo FrameCore",
+      "assetId": "asset_b582748ff1f3"
+    }
+  ],
+  "requireReview": true
+}

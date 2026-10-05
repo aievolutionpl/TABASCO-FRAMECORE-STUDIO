@@ -17,6 +17,18 @@ Pracujesz nad istniejącym projektem współpracy. Zachowuj intencję użytkowni
 8. Użyj `inspect_project` do kontroli struktury i `capture_frame` do obejrzenia rzeczywistych klatek. Obejrzyj początek, środek i koniec ruchu. Sprawdź teksty, kadr, rytm i dźwięk w wyeksportowanym filmie.
 9. `export` zamraża bieżącą rewizję. `get_job` zwraca stan i adres wyniku. Nie opisuj filmu jako wyrenderowanego przed zakończeniem zadania.
 
+## Kontrakt produkcyjny i przegląd
+
+Przeczytaj [PRODUCTION_PIPELINE.md](../../docs/PRODUCTION_PIPELINE.md). Odczytaj `get_production_status` i brief `production`. Fakty odróżnij od decyzji kreatywnych. `requiredAssets` wskazuje rzeczywiste materiały; przy brakującym wymaganym pliku zatrzymaj przegląd i render, nie generuj zamiennika.
+
+`annotate_story_beats` przygotowuje propozycję opisów. Doprecyzuj `set_scene_beat`: cel, stan wejściowy i wyjściowy oraz główny element w czasie beatu. `apply_motion_rules` różnicuje masę ruchu czasem i krzywą; nie narusza blokad ścieżek. `apply_motion` może dostać `easing`: linear, quad-out, cubic-out, quint-out.
+
+Przed eksportem użyj `create_review`; MCP zwraca również planszę JPEG. Obejrzyj pełne klatki w potrzebnych czasach przez `capture_frame`, a roboczy film odsłuchaj, jeśli masz możliwość. `review_verdict` wymaga jawnej checklisty. Nie deklaruj oglądania lub odsłuchu, których nie wykonano. Nowa rewizja albo zmieniony plik unieważnia ocenę. Bramka `requireReview` blokuje finalny eksport bez aktualnej oceny; wersja draft służy do kontroli filmu.
+
+Wprowadzaj tylko poprawki związane z nazwanym problemem z przeglądu, poprzez `propose_changes`. Ogranicz autonomiczną naprawę do dwóch rund. Jeśli problem pozostaje, podaj dowód i potrzebną decyzję. Limit jest instrukcją pracy, nie automatycznym kontrolerem po stronie serwera.
+
+`create_format_variant` tworzy niezależny projekt z układem startowym dla formatu; złożone sceny mogą wymagać ręcznej korekty. Wykonaj osobny przegląd wariantu. `package_delivery` wymaga ukończonego eksportu i pakuje jego zamrożone artefakty. Kontrakt nie pozwala wykonywać dowolnego kodu HTML/JS modelu.
+
 ## Przykłady
 
 „Przesuń zaznaczony nagłówek o 0,4 sekundy wcześniej i nadaj mocniejsze wejście”: odczytaj zaznaczenie, zaproponuj `move_clip` i `apply_motion` (`impact-rise`, 0.5 s), przejrzyj propozycję, zastosuj zgodnie z poleceniem użytkownika, obejrzyj klatkę.

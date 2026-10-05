@@ -60,7 +60,24 @@ def storyboard(duration=15, title="Your product", workflow="Product launch"):
 def mutate(p, name, args, session):
     if not isinstance(args, dict):
         raise EditorError("Argumenty komendy muszą być obiektem")
-    if name.startswith("add_") and name[4:] in {"text", "video", "image", "audio", "caption", "shape"}:
+    if name == "set_production_contract":
+        if not isinstance(args.get("contract"), dict): raise EditorError("Kontrakt musi być obiektem")
+        p.setdefault("production", {}).update(deepcopy(args["contract"]))
+    elif name == "set_scene_beat":
+        scene = next((s for s in p["scenes"] if s["id"] == args.get("scene_id")), None)
+        if not scene: raise EditorError("Nie znaleziono sceny")
+        scene["beat"] = deepcopy(args["beat"])
+    elif name == "annotate_story_beats":
+        from .production import annotate_beats
+        annotate_beats(p)
+    elif name == "apply_motion_rules":
+        from .production import MOTION_RULES
+        for e in p["elements"]:
+            if e["type"] in MOTION_RULES and e.get("motion"):
+                target(p, {"element_id": e["id"]}, session)
+                rule = MOTION_RULES[e["type"]]
+                e["motion"].update(duration=max(.1, min(e["duration"], rule["duration"])), easing=rule["easing"])
+    elif name.startswith("add_") and name[4:] in {"text", "video", "image", "audio", "caption", "shape"}:
         kind = name[4:]
         values = {k: deepcopy(v) for k, v in args.items() if k in PROPERTIES | {"id", "trackId", "assetId", "sceneId", "motion"}}
         e = element(p, kind, **values)
@@ -191,7 +208,7 @@ def mutate(p, name, args, session):
         p["elements"].remove(e)
     elif name == "apply_motion":
         e = target(p, args, session)
-        e["motion"] = {"id": args["motion_id"], "duration": args.get("duration", .8)}
+        e["motion"] = {"id": args["motion_id"], "duration": args.get("duration", .8), "easing": args.get("easing", "cubic-out")}
         e.pop("motionOffset", None)
     elif name == "set_format":
         fmt = args["format"]
@@ -277,3 +294,12 @@ def mutate(p, name, args, session):
         p["metadata"]["name"] = str(args["name"])[:200]
     else:
         raise EditorError(f"Nieobsługiwana komenda: {name}")
+    # Editing a focused clip may remove it or move it outside its beat. Keep the
+    # narrative description and ask for a new focus rather than blocking editing.
+    if name in {"delete_clip", "trim_clip", "move_clip", "split_clip", "duplicate_scene", "assemble_storyboard", "set_property"}:
+        for scene in p["scenes"]:
+            beat = scene.get("beat")
+            if not beat or not beat.get("focusElementId"): continue
+            focus = next((e for e in p["elements"] if e["id"] == beat["focusElementId"]), None)
+            if not focus or focus["start"] >= scene["start"]+scene["duration"] or focus["start"]+focus["duration"] <= scene["start"]:
+                beat["focusElementId"] = None

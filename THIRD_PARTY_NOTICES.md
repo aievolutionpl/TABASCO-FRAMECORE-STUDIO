@@ -46,3 +46,5 @@ Niezmienione pliki TTF na licencji SIL Open Font License 1.1. [Źródło](https:
 - [JetBrains Mono](licenses/fonts/jetbrainsmono-OFL.txt)
 
 [Katalog plików i sum SHA-256](framecore/static/library/catalog.json) pozwala zweryfikować każdy pobrany plik. Fonty nie zostały przetworzone ani przemianowane. Własne receptury teł, animacje i szablony mają licencję MIT projektu. Powielone pliki w przykładzie `examples/creator-pack/assets/` zachowują pochodzenie opisane w jego `project.json`; stosują się te same licencje.
+
+Przewodnik `docs/references/AI_Evolution_Opus_55_Video_Studio_Guide_PL.pdf` został dostarczony przez użytkownika jako materiał źródłowy. Zachowano go w oryginale; licencja kodu nie przenosi automatycznie praw do tego dokumentu. Przykład `examples/production-pipeline/` zachowuje pochodzenie i licencje materiałów w manifestach; ilustracje i fonty mają te same licencje opisane powyżej.

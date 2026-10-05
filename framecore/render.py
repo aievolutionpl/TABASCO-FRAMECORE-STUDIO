@@ -48,10 +48,12 @@ class RenderJobs:
 
     def start(self, pid, expected_revision, quality="final"):
         p = self.store.read(pid)["project"]
-        if expected_revision != p["revision"]:
+        if isinstance(expected_revision, bool) or not isinstance(expected_revision,int) or expected_revision != p["revision"]:
             raise EditorError("Konflikt rewizji przed eksportem", "revision_conflict")
         if quality not in {"final", "draft"}:
             raise EditorError("Nieobsługiwana jakość eksportu")
+        from .production import require_export
+        production_status = require_export(p, self.store.directory(pid), quality)
         job_id = uid("render")
         with file_lock(self.directory / ".lock"):
             for path in self.directory.glob("*.json"):
@@ -66,10 +68,10 @@ class RenderJobs:
                         raise EditorError("Trwa inny render; poczekaj przed kolejnym eksportem", "render_busy")
             job = {"id": job_id, "project_id": pid, "revision": p["revision"], "status": "queued", "progress": 0, "quality": quality, "ownerPid": os.getpid()}
             atomic_write(self._path(job_id), json.dumps(job))
-        threading.Thread(target=self._run, args=(job_id, p, quality), daemon=True).start()
+        threading.Thread(target=self._run, args=(job_id, p, quality, production_status), daemon=True).start()
         return self.get(job_id)
 
-    def _run(self, job_id, p, quality):
+    def _run(self, job_id, p, quality, production_status):
         try:
             self._update(job_id, status="rendering", progress=.05)
             root = self.store.directory(p["id"])
@@ -79,11 +81,21 @@ class RenderJobs:
             for a in p["assets"]:
                 src = root / a["file"]
                 target = directory / a["file"]
-                try:
-                    os.link(src, target)
-                except OSError:
-                    shutil.copy2(src, target)
+                shutil.copy2(src, target)
             (directory / "project.json").write_text(json.dumps(p, indent=2), encoding="utf-8")
+            from .production import asset_manifest
+            frozen_assets = asset_manifest(p,directory)
+            if {a["id"]:a["sha256"] for a in frozen_assets} != {a["id"]:a["sha256"] for a in production_status["assets"]}:
+                raise EditorError("Materiały zmieniły się przed zamrożeniem eksportu", "revision_conflict")
+            for filename, data in {"brief.json":p.get("production",{}), "assets-manifest.json":frozen_assets,
+                                   "shot-list.json":p["scenes"], "motion-rules.json":{e["id"]:e.get("motion") for e in p["elements"]}}.items():
+                (directory/filename).write_text(json.dumps(data,ensure_ascii=False,indent=2),encoding="utf-8")
+            reviewed = production_status.get("review")
+            if reviewed:
+                shutil.copytree(root/"reviews"/reviewed["id"], directory/"review")
+                (directory/"review"/"review.json").write_text(json.dumps(reviewed,ensure_ascii=False,indent=2),encoding="utf-8")
+            from .delivery import freeze_notices
+            freeze_notices(p,directory)
             html = directory / "index.html"
             html.write_text(compile_project(p), encoding="utf-8")
             renderer = Path(__file__).resolve().parents[1] / "vstudio/renderers/html_to_video.py"
@@ -106,7 +118,7 @@ class RenderJobs:
                 args = ["ffmpeg", "-y", "-i", str(video)]
                 filters = []
                 for idx, e in enumerate(audio, 1):
-                    args += ["-i", str(root / assets[e["assetId"]]["file"])]
+                    args += ["-i", str(directory / assets[e["assetId"]]["file"])]
                     settings = e.get("audio", {"gain": 1, "fadeIn": 0, "fadeOut": 0})
                     chain = f'[{idx}:a]atrim=start={e["sourceStart"]}:duration={e["duration"]},asetpts=PTS-STARTPTS,volume={settings["gain"]}'
                     if settings["fadeIn"]: chain += f',afade=t=in:st=0:d={settings["fadeIn"]}'

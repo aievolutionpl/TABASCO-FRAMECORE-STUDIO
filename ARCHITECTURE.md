@@ -45,3 +45,7 @@ Eksport zamraża projekt i materiały. Przeglądarka zapisuje obraz, a FFmpeg sk
 ## Kolejne etapy
 
 Import i ponowna edycja dowolnych źródeł HyperFrames, proxy wideo, przebiegi falowe, marketplace, ripple/slip, krzywe animacji, prawdziwe integracje dostawców i dopasowanie transkrypcji pozostają do wykonania. Obecne szablony są lokalnymi planami startowymi, a nie generowaniem przez model językowy.
+
+## Kontrakt produkcyjny FrameCore
+
+Opcjonalne `project.production` zawiera brief i wymagane materiały; `scene.beat` opisuje cel, stany i fokus. Zmiany używają dotychczasowych transakcji i undo. `framecore/production.py` waliduje kontrakt, reguły ruchu i układ wariantu; `review.py` generuje dowody z Chromium i przypisuje ocenę do pełnego odcisku projektu oraz SHA-256 plików. Raporty i checklisty są artefaktami poza historią montażu. `RenderJobs.start` sprawdza bramkę, a eksport kopiuje pliki do zamrożonego katalogu. `delivery.py` pakuje ten eksport. HTTP i MCP korzystają z tej samej implementacji; MCP przekazuje również obraz planszy klatek. [Pełny przepływ i ograniczenia](docs/PRODUCTION_PIPELINE.md).

@@ -63,3 +63,7 @@ Odczyt: `/api/projects`, `/api/project/<id>`, `/api/context/<id>`, `/api/motion`
 `list_library` zwraca 84 materiały wraz z identyfikatorem, kolekcją, licencją i lokalnym podglądem. `add_library_asset` kopiuje wybraną ilustrację lub ikonę do projektu i dodaje edytowalny klip. `list_fonts` opisuje osiem lokalnych rodzin, w tym dostępne grubości. `list_backgrounds` opisuje 24 receptury; `set_background` przyjmuje `background_id` i opcjonalne `animated`.
 
 `plan_storyboard` zwraca `template_id`. Przekaż go do `assemble_storyboard` wraz ze scenami, aby zachować font, tło, układ i animacje. `apply_template` wykonuje tę operację bez osobnej redakcji scen. [Przykłady](docs/CREATOR_PACK.md).
+
+## Pipeline produkcyjny
+
+FrameCore udostępnia również kontrakt produkcyjny, beaty, reguły ruchu, przegląd klatek, ocenę konkretnej rewizji i niezależne warianty formatów. [Pola i przykłady narzędzi](docs/PRODUCTION_PIPELINE.md). `create_review` oraz `get_review` zwracają planszę JPEG jako blok obrazu MCP obok raportu JSON. Używaj aktualnego `expected_revision`; przy braku wymaganych materiałów lub nieaktualnej ocenie serwer zatrzyma odpowiedni etap. `package_delivery` przyjmuje `job_id` ukończonego eksportu tego projektu.

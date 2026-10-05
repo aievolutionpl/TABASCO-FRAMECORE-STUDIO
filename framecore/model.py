@@ -77,6 +77,8 @@ def validate(p):
         raise EditorError("Nieobsługiwany schemat projektu")
     identifier(p["id"])
     number(p["duration"], "duration", .1, 600)
+    from .production import validate_contract
+    validate_contract(p)
     for k in ("width", "height"):
         number(p["canvas"][k], k, 64, 4096)
         if not isinstance(p["canvas"][k], int) or p["canvas"][k] % 2:
@@ -150,6 +152,9 @@ def validate(p):
             if not motion.resolve(m["id"]):
                 raise EditorError("Nieznana animacja")
             number(m["duration"], "motion duration", .1, 2)
+            from .production import EASINGS
+            if m.get("easing", "cubic-out") not in EASINGS:
+                raise EditorError("Nieobsługiwana krzywa ruchu")
         if e.get("effects"):
             raise EditorError("Użyj animacji z biblioteki; efekty własne nie są obsługiwane")
         if not isinstance(e.get("keyframes", []), list) or len(e.get("keyframes", [])) > 200:

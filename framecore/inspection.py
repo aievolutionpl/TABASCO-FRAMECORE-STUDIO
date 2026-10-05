@@ -14,7 +14,10 @@ GUIDE = """Pracujesz w TABASCO CREATIVES + FRAMECORE — STUDIO, projekcie wspó
 7. Dźwięk zmieniaj przez set_audio: gain 0–1, fadeIn i fadeOut w sekundach. Sprawdź cały miks w filmie.
 8. Materiały importuj z katalogu imports przy katalogu projektów. Nie wklejaj kodu HTML ani adresów plików z innych lokalizacji.
 9. Materiały lokalne dodawaj przez add_library_asset, tło przez set_background. Przekazuj template_id z plan_storyboard do assemble_storyboard, aby zachować wygląd szablonu.
-10. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
+10. Odczytaj get_production_status: brief, requiredAssets, blokery i ważność oceny. annotate_story_beats i set_scene_beat zapisują cel oraz stany scen. apply_motion_rules różnicuje czas i krzywą ruchu.
+11. create_review generuje rzeczywiste klatki i planszę; obejrzyj je przed review_verdict. Nie zaznaczaj checklisty bez oceny. Przy błędzie proponuj lokalną poprawkę; najwyżej dwie autonomiczne rundy, potem raport. To instrukcja pracy, nie automatyczny kontroler napraw.
+12. create_format_variant tworzy osobny układ startowy; każda kopia wymaga własnego przeglądu. package_delivery pakuje ukończony eksport z artefaktami.
+13. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
 """
 
 

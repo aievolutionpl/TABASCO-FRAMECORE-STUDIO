@@ -85,11 +85,21 @@ class Handler(StudioHandler):
                 return self._file(store.directory(pid) / a["file"])
             if path.startswith("/exports/"):
                 parts = path.strip("/").split("/")
-                if len(parts) != 4 or parts[-1] != "framecore.mp4": return self._err(404, "Nie znaleziono")
+                if len(parts) != 4 or parts[-1] not in {"framecore.mp4", "delivery.zip"}: return self._err(404, "Nie znaleziono")
                 from .model import identifier
                 identifier(parts[2])
-                file = store.directory(parts[1]) / "exports" / parts[2] / "framecore.mp4"
+                file = store.directory(parts[1]) / "exports" / parts[2] / parts[-1]
                 if not file.is_file(): return self._err(404, "Nie znaleziono")
+                return self._file(file)
+            if path.startswith("/reviews/"):
+                parts = path.strip("/").split("/")
+                import re
+                from .model import identifier
+                if len(parts) != 4 or not re.fullmatch(r"frame-\d{3}\.png|contact-sheet\.jpg|review\.json",parts[-1]):
+                    return self._err(404,"Nie znaleziono klatki")
+                identifier(parts[2])
+                file = store.directory(parts[1])/"reviews"/parts[2]/parts[-1]
+                if not file.is_file(): return self._err(404,"Nie znaleziono klatki")
                 return self._file(file)
             return self._err(404, "Nie znaleziono")
         except (EditorError, ValueError) as exc:

@@ -33,7 +33,7 @@ Pliki dla agenta umieść w `output/imports/` (przy domyślnym katalogu projekt�
 ## Sprawdzenie instalacji
 
 ```bash
-.venv/bin/python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py -q
+.venv/bin/python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py -q
 ```
 
 Na Windows zamień interpreter na `.venv\Scripts\python.exe`. Test przeglądarkowy otwiera lokalny serwer, uruchamia Chromium i eksportuje rzeczywisty film. W izolowanym środowisku chmurowym wymaga prawa do uruchamiania serwera i procesów przeglądarki.

@@ -27,6 +27,16 @@ Na telefonie biblioteka i właściwości otwierają się jako panele. Obsługuj�
 
 W panelu **Marka → Dodaj logo FrameCore** umieścisz nowy znak w filmie. To zwykły edytowalny klip: możesz zmieniać jego pozycję, rozmiar i ruch albo cofnąć dodanie.
 
+## Produkcja na podstawie dowodów
+
+Nowy panel **Produkcja** prowadzi przez brief reżyserski, wymagane prawdziwe materiały i storyboard opisany jako stany oraz beaty. **Plansza rzeczywistych klatek** pokazuje momenty scen i przejścia; pomiar wykrywa tekst poza polem oraz elementy poza kadrem. Zatwierdzasz checklistę i zapisujesz uwagi do konkretnej rewizji. Opcjonalna bramka zatrzyma finalny eksport po zmianach aż do nowego przeglądu.
+
+Reguły ruchu różnicują czas i krzywą dla napisów, tekstu i ilustracji. Warianty **16:9, 9:16, 4:5 i 1:1** powstają jako niezależne projekty z osobnym układem startowym oraz własną oceną. Po renderze pobierzesz **ZIP: film, projekt, materiały, brief, shot list, reguły ruchu, przegląd i informacje o licencjach**.
+
+![Panel Produkcja: brief i wspólny montaż](assets/framecore-production.png)
+
+[Jak korzystać z pipeline’u](docs/PRODUCTION_PIPELINE.md) · [Film 6 sekund](assets/framecore-production-demo.mp4) · [Paczka przykładu](assets/framecore-production-delivery.zip) · [Edytowalny projekt](examples/production-pipeline/project.json) · [Dostarczony przewodnik PDF](docs/references/AI_Evolution_Opus_55_Video_Studio_Guide_PL.pdf).
+
 ## Jak działa projekt
 
 **Pomysł → materiały → plan scen → wspólny montaż → podgląd → MP4.**
@@ -112,7 +122,7 @@ Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apa
 ## Testy
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py -q
 ```
 
 Test przeglądarkowy importuje materiały, uruchamia osobny proces agenta MCP, sprawdza wspólną historię i eksportuje rzeczywisty film 15 sekund w rozdzielczości 1080 × 1920 z dźwiękiem. Wyniki dotyczą wykonanego przebiegu i są opisane w dokumencie walidacji.

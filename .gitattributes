@@ -4,3 +4,5 @@ framecore/static/icons/*.svg -text
 examples/creator-pack/assets/** -text
 licenses/*.txt -text
 licenses/fonts/*.txt -text
+examples/production-pipeline/assets/** -text
+examples/production-pipeline/licenses/** -text

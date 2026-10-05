@@ -1,0 +1,97 @@
+[
+  {
+    "id": "asset_c35fcd09b3a3",
+    "name": "Pomysł 3D",
+    "kind": "image",
+    "file": "assets/asset_c35fcd09b3a3.png",
+    "mime": "image/png",
+    "duration": null,
+    "role": "illustration",
+    "license": "MIT",
+    "provenance": {
+      "source": "framecore_builtin",
+      "library_id": "fluent-light-bulb",
+      "version": 1,
+      "collection": "Fluent Emoji 3D",
+      "sha256": "df7b09aa18301507e6fb8c279df66d9afa465b6fed3e63d2efa84dacebdbbf79",
+      "upstream": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc"
+    },
+    "exists": true,
+    "sha256": "df7b09aa18301507e6fb8c279df66d9afa465b6fed3e63d2efa84dacebdbbf79"
+  },
+  {
+    "id": "asset_f1d9b5c2be9f",
+    "name": "Montaż 3D",
+    "kind": "image",
+    "file": "assets/asset_f1d9b5c2be9f.png",
+    "mime": "image/png",
+    "duration": null,
+    "role": "illustration",
+    "license": "MIT",
+    "provenance": {
+      "source": "framecore_builtin",
+      "library_id": "fluent-clapper-board",
+      "version": 1,
+      "collection": "Fluent Emoji 3D",
+      "sha256": "1a6e2d6681865c8834b29576398f82045b170177e4e745d7bce210e80cc98561",
+      "upstream": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc"
+    },
+    "exists": true,
+    "sha256": "1a6e2d6681865c8834b29576398f82045b170177e4e745d7bce210e80cc98561"
+  },
+  {
+    "id": "asset_da79fdee3d1b",
+    "name": "Rakieta 3D",
+    "kind": "image",
+    "file": "assets/asset_da79fdee3d1b.png",
+    "mime": "image/png",
+    "duration": null,
+    "role": "illustration",
+    "license": "MIT",
+    "provenance": {
+      "source": "framecore_builtin",
+      "library_id": "fluent-rocket",
+      "version": 1,
+      "collection": "Fluent Emoji 3D",
+      "sha256": "4636925a1dfc76a45dc83c08b983699d39143a0978f794a4e2dfb6cbffdcd7ab",
+      "upstream": "https://github.com/microsoft/fluentui-emoji",
+      "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc"
+    },
+    "exists": true,
+    "sha256": "4636925a1dfc76a45dc83c08b983699d39143a0978f794a4e2dfb6cbffdcd7ab"
+  },
+  {
+    "id": "asset_b582748ff1f3",
+    "name": "FrameCore-logo.png",
+    "kind": "image",
+    "file": "assets/asset_b582748ff1f3.png",
+    "mime": "image/png",
+    "duration": null,
+    "hasAudio": false,
+    "role": "logo",
+    "provenance": {
+      "source": "user_upload"
+    },
+    "license": "user_provided",
+    "exists": true,
+    "sha256": "7321b81725e7e605d2eaf31a72ac956b988bf5e76a34bd55d935dace32e7dcad"
+  },
+  {
+    "id": "asset_799054eb88f7",
+    "name": "Rytm procesu.wav",
+    "kind": "audio",
+    "file": "assets/asset_799054eb88f7.wav",
+    "mime": "audio/wav",
+    "duration": 6.0,
+    "hasAudio": true,
+    "role": "audio",
+    "provenance": {
+      "source": "user_upload"
+    },
+    "license": "user_provided",
+    "exists": true,
+    "sha256": "71b586df6dcd7f5c9f214df6aace05aa726d56cce410ae3cc618d8fdd1708737"
+  }
+]
