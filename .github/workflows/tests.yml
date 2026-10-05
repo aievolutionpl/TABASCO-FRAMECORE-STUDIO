@@ -10,11 +10,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-2022]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     env:
       PYTHONUTF8: '1'
+      PYTHONFAULTHANDLER: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,7 +43,7 @@ jobs:
           tar xzf gsap-3.12.5.tgz
           python -c "import os; from pathlib import Path; open(os.environ['GITHUB_ENV'],'a',encoding='utf-8').write('GSAP_JS='+str(Path('package/dist/gsap.min.js').resolve())+'\n')"
       - name: Testy
-        run: python -m pytest -q --junitxml=output/pytest-results.xml
+        run: python -m pytest -q --durations=10 --junitxml=output/pytest-results.xml
       - name: Raport testów
         if: always()
         uses: actions/upload-artifact@v4

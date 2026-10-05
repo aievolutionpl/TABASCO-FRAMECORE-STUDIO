@@ -39,3 +39,5 @@ Regresje: `tests/test_framecore_media.py` obejmuje prawdziwy FFmpeg, cache, niez
 ## Walidacja lokalna
 
 Pełny przebieg na Windows: 305 przypadków, 282 zaliczone, 23 pominięte przez warunki środowiska (m.in. lokalny GSAP), 0 błędów i 0 niepowodzeń. Nowy zestaw sześciu regresji Media Engine przeszedł także osobno. Wyniki macierzy CI należy sprawdzać dla konkretnego SHA, a nie wnioskować z samej konfiguracji workflow.
+
+Pierwszy przebieg macierzy ujawnił natywny błąd zamykania Pythona na ruchomym obrazie Ubuntu (305/305 testów zaliczonych przed błędem procesu) oraz problemy z marginesami/kolizjami fontów w dwóch szablonach legacy na Windows. CI przypięto do Ubuntu 24.04 i Windows 2022, włączono faulthandler i pomiar czasu testów. Szablony zachowują sceny i animacje, ale mają większy zapas wokół dużych cyfr i długich napisów. Regresje nadzorcy i reżysera pozostają obowiązkowe.
