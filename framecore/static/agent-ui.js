@@ -19,8 +19,8 @@ export function createAgentUI(ctx){
   const s=await api('status');current=s;
   const box=document.querySelector('#agentConnectionStatus');if(box)box.textContent=s.connected?s.provider+' · '+(s.model||'model domyślny'):'Agent nie jest połączony';
   const t=s.task,taskBox=document.querySelector('#agentTaskStatus');
-  if(taskBox)taskBox.textContent=t?({queued:'W kolejce',running:'Agent pracuje',proposed:'Propozycja gotowa',applied:'Zmiany zastosowane',complete:'Gotowe',failed:'Błąd',cancelled:'Zatrzymano'}[t.status]||t.status)+' · '+t.message:'';
-  if(t&&!['queued','running'].includes(t.status)&&lastTask!==t.id+':'+t.status){lastTask=t.id+':'+t.status;await refreshProject(t.project_id);}
+  if(taskBox)taskBox.textContent=t?({queued:'W kolejce',running:'Agent pracuje',proposed:'Propozycja gotowa',applied:'Zmiany zastosowane',complete:'Gotowe',draft:'Szkic profilu gotowy',failed:'Błąd',cancelled:'Zatrzymano'}[t.status]||t.status)+' · '+t.message:'';
+  if(t?.project_id&&!['queued','running'].includes(t.status)&&lastTask!==t.id+':'+t.status){lastTask=t.id+':'+t.status;await refreshProject(t.project_id);}
  }
  async function handle(event){
   const b=event.target.closest('[data-agent-action]');if(!b)return;

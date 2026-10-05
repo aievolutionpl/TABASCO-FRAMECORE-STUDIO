@@ -144,7 +144,9 @@ def test_dashboard_connection_task_stop_and_key_not_stored(tmp_path,monkeypatch)
             page.wait_for_function('document.querySelector("#agentTaskStatus").textContent.includes("Zmiany zastosowane")',timeout=8000)
             assert store.read(pid)['project']['elements'][0]['text']=='Nagłówek od agenta'
             assert page.evaluate('JSON.stringify(localStorage)').find('test-key')==-1
-            page.click('#undo');assert store.read(pid)['project']['elements'][0]['text']=='Przed'
+            page.click('#undo')
+            page.wait_for_function("async pid => (await (await fetch('/api/project/'+pid)).json()).project.elements[0].text==='Przed'",arg=pid)
+            assert store.read(pid)['project']['elements'][0]['text']=='Przed'
             # Same-origin token boundary covers billing-triggering routes.
             unauth=page.request.post(base+'/api/agent/run',data={'project_id':pid,'prompt':'x'})
             assert unauth.status==403

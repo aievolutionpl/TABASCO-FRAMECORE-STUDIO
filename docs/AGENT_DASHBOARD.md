@@ -60,3 +60,7 @@ Wszystkie wymagają POST, JSON, tokena sesji, poprawnego Host i Origin:
 | `/api/agent/disconnect` | Zatrzymanie i usunięcie połączenia |
 
 Statusy zadania: queued, running, proposed, applied, complete, failed, cancelled. Edycja korzysta z tej samej historii co HTTP i MCP. API połączenia nie jest udostępniane jako narzędzia modelu MCP; kluczem zarządza człowiek w dashboardzie.
+
+## Kontekst marki i szkic company brain
+
+Po wybraniu profilu w Ustawieniach każde zadanie montażu otrzymuje `companyBrain` zamrożony w projekcie: ofertę, ton, design guidelines, źródła i metadane obrazów. Wbudowany tryb **Przygotuj szkic z agentem** porządkuje wklejone materiały bez pobierania stron. Wymaga sprawdzenia oraz osobnego zapisania formularza; wynik zadania ma status `draft`. [Instrukcja profili](COMPANY_BRAIN.md).

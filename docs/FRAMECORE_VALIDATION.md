@@ -99,3 +99,15 @@ Końcowy pełny przebieg: **42/42 w 175,46 s**, bez pominięć. Obejmuje 30 test
 Nie wykonano uwierzytelnionych wywołań OpenRouter, OpenAI ani Claude, nie zweryfikowano abonamentów ani działania na Windows. Nie uruchomiono natywnego Rust/Skia z fframes; zaadaptowano narzędzia przeglądu do obecnego silnika. Konfiguracja połączenia nie jest dowodem logowania — pierwsze zadanie sprawdza odpowiedź dostawcy.
 
 Przykład laboratorium: dwie wersje sceny 960×540, po 10 klatek; oba przeglądy bez błędów tekstu/kadru, zmiana nagłówka wykryta. Zrzuty panelu połączenia, telefonu i nakładki wykonano z działającego serwera, bez błędów JavaScript. [Połączenie agenta](AGENT_DASHBOARD.md) · [fframes](FFRAMES.md) · [przykład różnic](../assets/framecore-motion-comparison.json).
+
+## Profile marek · Company brain
+
+Nowe testy sprawdzają trwały zapis profilu, konflikt wersji, obrazy i ich SHA-256, kopie w projektach oraz Cofnij/Ponów. Aktualizacja i usunięcie biblioteki nie zmieniają wybranego profilu ani bajtów materiałów wcześniejszego filmu. Niepoprawny obraz, font, adres i ścieżka spoza katalogu importów są odrzucane; konflikt przypisania nie zostawia skopiowanych plików.
+
+Test przeglądarkowy tworzy firmę usługową, wpisuje produkt/usługę i źródło zwykłymi polami, wgrywa logo, wybiera profil i przenosi szkic agenta do formularza. Sprawdza oddzielny zapis oraz zachowanie wcześniejszej kopii projektu, brak zapisu bez tokena i dostęp do Ustawień na telefonie. Test dotychczasowego interfejsu sprawdza szerokości 320, 390, 900 i 1512 px. Odrzucony upload zamyka połączenie POST, aby pozostałe bajty nie stały się kolejnym żądaniem HTTP.
+
+Adapter researchu był sprawdzany z deterministycznymi odpowiedziami: szkic nie zapisuje profilu samodzielnie, a anulowana odpowiedź nie pojawia się jako gotowy szkic. Osobny test potwierdza, że agent montażu otrzymuje company brain z ofertą, źródłami i metadanymi obrazów. Nie wykonywano płatnych sesji AI ani pobierania stron przez adapter szkicu. Zewnętrzny research zależy od narzędzi klienta MCP.
+
+Trzy zrzuty panelu wykonano z rzeczywistego serwera; obejrzano widok komputera i telefonu. Przeglądarka nie zgłosiła błędów JavaScript. Profil na zrzutach jest fikcyjnym przykładem. Po restarcie studia potwierdzono dostępność biblioteki, siedmiu narzędzi i nowego menu na działającym serwerze.
+
+Końcowy pełny przebieg FrameCore: **47/47 przeszło w 183,27 s**, bez pominięć. Uzupełniający przebieg interfejsu i marek po korekcie paska na telefonie: **6/6 w 11,42 s**. To weryfikacja modułów FrameCore, nie całego historycznego zestawu testów starszego silnika CLI.

@@ -57,6 +57,14 @@ def import_asset(store, pid, data, filename, role="media", expected_revision=Non
 
 
 class Handler(StudioHandler):
+    def _send(self, code, body, ctype, extra=None):
+        # Rejected uploads can leave unread bytes. Never treat them as a second
+        # HTTP request on a persistent POST connection.
+        if self.command == "POST":
+            self.close_connection = True
+            extra = {**(extra or {}), "Connection": "close"}
+        return super()._send(code, body, ctype, extra)
+
     def _route_get(self, path, qs):
         store = self.server.store
         try:
@@ -68,6 +76,17 @@ class Handler(StudioHandler):
                 if not file.is_relative_to(STATIC.resolve()) or not file.is_file() or file.suffix not in {".js", ".css", ".svg", ".ttf", ".png"}:
                     return self._err(404, "Nie znaleziono")
                 return self._send(200, file.read_bytes(), mimetypes.guess_type(file)[0] or "application/octet-stream")
+            if path == "/api/brands":
+                from .brands import BrandLibrary
+                return self._json(200, BrandLibrary(store).list())
+            if path.startswith("/brand-assets/"):
+                from .brands import BrandLibrary
+                _, _, bid, aid = path.split("/")
+                library = BrandLibrary(store)
+                profile = library.get(bid)
+                asset = next((a for a in profile["assets"] if a["id"] == aid), None)
+                if not asset: return self._err(404, "Nie znaleziono materiału marki")
+                return self._file(library.directory(bid) / asset["file"])
             if path == "/api/projects": return self._json(200, {"projects": store.list()})
             if path == "/api/motion": return self._json(200, {"components": registry()})
             if path == "/api/tools": return self._json(200, {"tools": self.server.api.tools()})
@@ -116,8 +135,15 @@ class Handler(StudioHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             path = unquote(urlparse(self.path).path)
-            if length < 0 or length > (100_000_000 if path.startswith("/api/upload/") else 4_000_000): return self._err(413, "Żądanie jest zbyt duże")
-            if path.startswith("/api/upload/"):
+            limit = 20_000_000 if path.startswith("/api/brand-upload/") else 100_000_000 if path.startswith("/api/upload/") else 4_000_000
+            if length < 0 or length > limit: return self._err(413, "Żądanie jest zbyt duże")
+            if path.startswith("/api/brand-upload/"):
+                from urllib.parse import parse_qs
+                from .brands import BrandLibrary
+                qs = parse_qs(urlparse(self.path).query)
+                result = BrandLibrary(self.server.store).upload(path.split("/")[-1], int(qs["version"][0]),
+                    self.rfile.read(length), qs.get("name", ["upload"])[0], qs.get("role", ["reference"])[0])
+            elif path.startswith("/api/upload/"):
                 from urllib.parse import parse_qs
                 qs = parse_qs(urlparse(self.path).query)
                 result = import_asset(self.server.store, path.split("/")[-1], self.rfile.read(length),
@@ -130,6 +156,7 @@ class Handler(StudioHandler):
                 elif path == "/api/agent/connect": result=self.server.agent.connect(body.get("provider"),body.get("model",""),body.get("api_key",""))
                 elif path == "/api/agent/disconnect": result=self.server.agent.stop(disconnect=True)
                 elif path == "/api/agent/stop": result=self.server.agent.stop()
+                elif path == "/api/agent/brand-draft": result=self.server.agent.start_brand(body.get("profile"), body.get("notes"))
                 elif path == "/api/agent/run": result=self.server.agent.start(body.get("project_id"),body.get("expected_revision"),body.get("prompt"),body.get("auto_apply",False))
                 elif path == "/api/demo":
                     from .demo import create_demo

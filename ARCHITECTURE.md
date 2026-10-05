@@ -55,3 +55,7 @@ Opcjonalne `project.production` zawiera brief i wymagane materiały; `scene.beat
 `AgentControl` posiada połączenie w pamięci, jeden wątek zadania i sygnał anulowania. Adapter OpenRouter wysyła opis projektu do stałego endpointu; Codex/Claude są lokalnymi podprocesami zwracającymi JSON. Wynik jest ograniczony do komend edytora i przechodzi `propose_changes` oraz opcjonalnie `apply_proposal`, z rewizją i zaznaczeniem zamrożonym przy starcie. Klucz API nie jest zapisywany. Endpointy konfiguracji nie są narzędziami modelu MCP.
 
 `motion_evidence` adresuje czasy scen, składa ważoną nakładkę z rzeczywistych PNG i porównuje dwa zapisane harmonogramy klatek. Korzysta z obecnego renderera; nie uruchamia Rust/Skia. Pomiar `quality` dotyczy SHA-256 ukończonego MP4 i nie stanowi oceny kreatywnej.
+
+## Company brain w FrameCore
+
+`framecore.brands.BrandLibrary` przechowuje formularze i obrazy w `_brands` przy projektach, z blokadą biblioteki, zapisem atomowym i własną wersją. `apply_brand_profile` kopiuje obrazy, sprawdza SHA-256 i wykonuje jeden zapis `attach_brand_snapshot`: `brandProfile`, konfigurację `brand` oraz materiały w jednej historii projektu. Stare kopie i formaty są niezależne od późniejszych zmian lub usunięcia biblioteki. Dashboard i MCP mają ten sam interfejs biblioteki. Szkic agenta jest osobnym zadaniem procesu, ze stanem `draft`, bez automatycznego zapisu ani dostępu do sieci; montaż dostaje zamrożony `companyBrain`.

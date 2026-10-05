@@ -75,3 +75,7 @@ FrameCore udostępnia również kontrakt produkcyjny, beaty, reguły ruchu, prze
 ## Laboratorium ruchu — fframes
 
 `resolve_frame_time` tłumaczy `spec` (scena@czas, procent, klatka, sekundy) na czas globalny. `create_motion_strip` wymaga rewizji, przyjmuje `start`, `end`, `count` 2–24 i generuje przegląd z planszą oraz onion PNG. MCP zwraca oba obrazy także przez `get_review`. `list_reviews` opisuje zapisane harmonogramy. `compare_reviews` wymaga `baseline_id`, `review_id`, opcjonalnie `threshold` i `max_diff_ratio`; porównuje identyczne harmonogramy i rozmiary, zapisuje diff PNG i raport. [Parametry i przykłady](docs/FFRAMES.md). [Połączenie i sterowanie z dashboardu](docs/AGENT_DASHBOARD.md) korzysta z odrębnych tras HTTP chronionych tokenem.
+
+## Profile marek i company brain
+
+Wspólny edytor udostępnia `list_brand_profiles`, `get_brand_profile`, `save_brand_profile`, `upload_brand_asset`, `remove_brand_asset`, `delete_brand_profile` oraz `apply_brand_profile`. Biblioteka ma własny `expected_version`; przypisanie do projektu wymaga także `expected_revision`. Kontekst klatki zwraca `companyBrain`, a projekt zachowuje kopię profilu i materiałów. [Schemat, research i przykłady](docs/COMPANY_BRAIN.md).

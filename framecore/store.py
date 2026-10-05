@@ -172,5 +172,5 @@ class Store:
                 "selection": session["selection"], "selected": [e for e in p["elements"] if e["id"] in session["selection"]],
                 "playhead": t, "frame": round(t * p["canvas"]["fps"]), "visible": visible,
                 "transcript": [{"text": e["text"], "start": e["start"], "duration": e["duration"]} for e in p["elements"] if e["type"] == "caption"],
-                "assets": p["assets"], "brand": p["brand"], "scenes": p["scenes"], "tracks": p["tracks"],
+                "assets": p["assets"], "brand": p["brand"], "companyBrain": p.get("brandProfile"), "scenes": p["scenes"], "tracks": p["tracks"],
                 "recentActions": s["history"][max(0, s["cursor"] - 10):s["cursor"]]}

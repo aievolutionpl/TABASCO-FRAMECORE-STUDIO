@@ -226,6 +226,10 @@ def mutate(p, name, args, session):
                 if keyframe["property"] == "x": keyframe["value"] *= w / ow
                 if keyframe["property"] == "y": keyframe["value"] *= h / oh
         p["canvas"].update(width=w, height=h)
+    elif name == "attach_brand_snapshot":
+        p["assets"].extend(deepcopy(args["assets"]))
+        p["brandProfile"] = deepcopy(args["snapshot"])
+        mutate(p, "set_brand", {"brand": args["brand"], "restyle": args["restyle"]}, session)
     elif name == "set_brand":
         supplied = args.get("brand", {})
         allowed = {"name", "colors", "font", "logoAssetId", "captionStyle", "motionStyle", "ctaStyle"}

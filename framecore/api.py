@@ -60,6 +60,17 @@ for kind in ("text", "video", "image", "audio", "caption", "shape"):
         "x":"number", "y":"number", "width":"number", "height":"number", "scale":"number", "rotation":"number", "opacity":"number", "motion":None}
 
 
+BRAND_TOOLS = {"list_brand_profiles", "get_brand_profile", "save_brand_profile", "delete_brand_profile", "apply_brand_profile", "remove_brand_asset", "upload_brand_asset"}
+READS.update({"list_brand_profiles", "get_brand_profile"})
+FIELDS.update({
+    "get_brand_profile": {"brand_id":"string"},
+    "save_brand_profile": {"brand_id":"string", "expected_version":"integer", "profile":"object"},
+    "delete_brand_profile": {"brand_id":"string", "expected_version":"integer"},
+    "remove_brand_asset": {"brand_id":"string", "expected_version":"integer", "asset_id":"string"},
+    "upload_brand_asset": {"brand_id":"string", "expected_version":"integer", "source_file":"string", "role":"string"},
+    "apply_brand_profile": {"brand_id":"string", "expected_version":"integer", "restyle":"boolean"},
+})
+
 class API:
     def __init__(self, store, jobs):
         self.store, self.jobs = store, jobs
@@ -68,6 +79,22 @@ class API:
         args = dict(args or {})
         pid = args.pop("project_id", None)
         revision = args.pop("expected_revision", None)
+        if name in BRAND_TOOLS:
+            from .brands import BrandLibrary
+            brands = BrandLibrary(self.store)
+            if name == "list_brand_profiles": return brands.list()
+            if name == "get_brand_profile": return brands.get(args["brand_id"])
+            if name == "save_brand_profile": return brands.save(args["profile"], args.get("brand_id"), args.get("expected_version"))
+            if name == "delete_brand_profile": return brands.delete(args["brand_id"], args["expected_version"])
+            if name == "upload_brand_asset":
+                from pathlib import Path
+                source = Path(args["source_file"]).resolve()
+                import_root = (self.store.root.parent / "imports").resolve()
+                if not source.is_relative_to(import_root) or not source.is_file() or source.stat().st_size > 20_000_000:
+                    raise EditorError("Umieść obraz do 20 MB w katalogu imports przy katalogu projektów")
+                return brands.upload(args["brand_id"], args["expected_version"], source.read_bytes(), source.name, args.get("role", "reference"))
+            if name == "remove_brand_asset": return brands.remove_asset(args["brand_id"], args["expected_version"], args["asset_id"])
+            return brands.apply(args["brand_id"], args["expected_version"], pid, revision, args.get("restyle",False), actor)
         if name == "list_projects": return {"projects": self.store.list()}
         if name == "list_motion": return {"components": registry()}
         if name == "list_templates":
@@ -172,7 +199,7 @@ class API:
         raise EditorError(f"Nieznane narzędzie: {name}", "unknown_tool")
 
     def tools(self):
-        names = sorted(READS | WRITES | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery", "analyze_export", "create_motion_strip", "compare_reviews"})
+        names = sorted(READS | WRITES | BRAND_TOOLS | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery", "analyze_export", "create_motion_strip", "compare_reviews"})
         result = []
         for name in names:
             props = {"project_id": {"type": "string"}, "expected_revision": {"type": "integer"}}
@@ -180,10 +207,28 @@ class API:
             if name in {"render", "export"}: props["quality"] = {"type": "string", "enum": ["final", "draft"]}
             if name == "get_job": props["job_id"] = {"type": "string"}
             if name == "add_asset": props.update(source_file={"type": "string"}, role={"type": "string"})
+            if name == "save_brand_profile":
+                from .brands import TEXT_FIELDS
+                props["profile"] = {"type":"object", "additionalProperties":False, "properties": {
+                    **{k:{"type":"string"} for k in TEXT_FIELDS},
+                    "businessType":{"type":"string", "enum":["services","products","both"]},
+                    "font":{"type":"string", "description":"Font z list_fonts lub Arial/Georgia/Verdana/Times New Roman"},
+                    "colors":{"type":"object", "additionalProperties":False, "required":["background","text","accent"],
+                        "properties":{k:{"type":"string","pattern":"^#[0-9a-fA-F]{6}$"} for k in ("background","text","accent")}},
+                    **{field:{"type":"array", "maxItems":60, "items":{"type":"object", "additionalProperties":False,
+                        "required":keys, "properties":{k:{"type":"string"} for k in keys}}}
+                       for field,keys in [("products",["name","description","url"]),("sources",["url","note"])]},
+                }}
             if name == "create_project": props.update(name={"type": "string"}, format={"type": "string"}, duration={"type": "number"}, brief={"type": "string"}, workflow={"type": "string"})
             if name == "plan_storyboard": props.update(title={"type": "string"}, workflow={"type": "string"}, template_id={"type": "string"})
             if name.startswith("generate_") or name == "transcribe": props.update(provider_id={"type": "string"}, prompt={"type": "string"})
             required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_motion_playbook", "get_providers", "create_project", "get_job"} else ["project_id"]
+            if name in BRAND_TOOLS - {"apply_brand_profile"}: required = []
+            if name in BRAND_TOOLS - {"list_brand_profiles", "save_brand_profile"}: required += ["brand_id", "expected_version"] if name != "get_brand_profile" else ["brand_id"]
+            if name == "save_brand_profile": required.append("profile")
+            if name == "remove_brand_asset": required.append("asset_id")
+            if name == "upload_brand_asset": required.append("source_file")
+            if name == "apply_brand_profile": required.append("expected_revision")
             if name in WRITES - {"set_selection", "set_playhead"} or name in {"render", "export", "add_asset", "create_review", "create_motion_strip", "review_verdict", "create_format_variant"}: required.append("expected_revision")
             if name in {"analyze_export", "get_quality_report", "package_delivery"}: required.append("job_id")
             if name == "resolve_frame_time": required.append("spec")
@@ -199,5 +244,5 @@ class API:
                          "apply_template":["template_id"], "add_library_asset":["asset_id"], "set_background":["background_id"], "set_audio":["audio"], "set_keyframes":["keyframes"], "set_duration":["duration"]}.get(name, [])
             result.append({"name": name, "description": name.replace("_", " ") + ". Wspólny projekt i historia; przed zmianą odczytaj aktualną rewizję.",
                            "inputSchema": {"type": "object", "properties": props, "required": required},
-                           "annotations": {"readOnlyHint": name in READS, "destructiveHint": name in {"delete_clip", "assemble_storyboard"}}})
+                           "annotations": {"readOnlyHint": name in READS, "destructiveHint": name in {"delete_clip", "assemble_storyboard", "delete_brand_profile", "remove_brand_asset"}}})
         return result

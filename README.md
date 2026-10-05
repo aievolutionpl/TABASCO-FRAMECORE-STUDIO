@@ -27,6 +27,14 @@ Na telefonie biblioteka i właściwości otwierają się jako panele. Obsługuj�
 
 W panelu **Marka → Dodaj logo FrameCore** umieścisz nowy znak w filmie. To zwykły edytowalny klip: możesz zmieniać jego pozycję, rozmiar i ruch albo cofnąć dodanie.
 
+## Profile marek · Company brain
+
+W **Ustawieniach** zapiszesz profile firm: opis, produkty i usługi, odbiorców, ton komunikacji, design guidelines, kolory, font, logo oraz zdjęcia referencyjne. Wybierz profil przy pracy nad filmem — projekt otrzyma własną kopię informacji i materiałów, a agent wykorzysta ten kontekst do montażu. Zmiana biblioteki nie zmieni wcześniejszych projektów.
+
+![Profile marek: informacje o firmie i oferta](assets/framecore-company-brain.png)
+
+Agent może przygotować szkic na podstawie dostarczonych treści i źródeł; przeglądasz go w formularzu przed zapisem. Agent zewnętrzny z narzędziami researchu zapisuje profile przez MCP. [Instrukcja profili marek i API](docs/COMPANY_BRAIN.md).
+
 ## Produkcja na podstawie dowodów
 
 Nowy panel **Produkcja** prowadzi przez brief reżyserski, wymagane prawdziwe materiały i storyboard opisany jako stany oraz beaty. **Plansza rzeczywistych klatek** pokazuje momenty scen i przejścia; pomiar wykrywa tekst poza polem oraz elementy poza kadrem. Zatwierdzasz checklistę i zapisujesz uwagi do konkretnej rewizji. Opcjonalna bramka zatrzyma finalny eksport po zmianach aż do nowego przeglądu.
