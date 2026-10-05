@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -83,8 +84,18 @@ def test_editable_reel_human_external_agent_undo_export(tmp_path):
             page.wait_for_function('document.querySelector("[data-property=x]").value==="140"')
             # UI export freezes the same model used by the live agent.
             page.click('#export')
-            page.click('#startExport')
-            page.wait_for_selector('a[href$="framecore.mp4"]',timeout=180000)
+            with page.expect_response(lambda response: response.url.endswith('/api/export')) as started:
+                page.click('#startExport')
+            job=started.value.json()
+            assert started.value.ok,job
+            deadline=time.monotonic()+600
+            while time.monotonic()<deadline:
+                job=srv.jobs.get(job['id'])
+                assert job['status']!='failed',job.get('error')
+                if job['status']=='complete':break
+                page.wait_for_timeout(500)
+            assert job['status']=='complete',f'Render deadline exceeded: {job}'
+            page.wait_for_selector('a[href$="framecore.mp4"]',timeout=10000)
             download=page.locator('a[href$="framecore.mp4"]').get_attribute('href')
             with urlopen(base+download) as response:
                 assert response.status==200

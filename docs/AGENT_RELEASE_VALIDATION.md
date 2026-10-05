@@ -18,6 +18,8 @@ Osobny test na rzeczywistym OpenRouter potwierdził tool calling dla `openai/gpt
 
 Pełny lokalny zestaw: 298 przypadków, 274 zaliczone w pierwszym końcowym przebiegu, 23 pominięte zgodnie z warunkami środowiska oraz jeden timeout testu przeglądarkowego montażu/eksportu. Ten sam test ponowiony osobno przeszedł z rzeczywistym eksportem MP4 (78,73 s). Łącznie zweryfikowano 275 przypadków; timeout był przejściowy i pozostaje odnotowany, zamiast przedstawiać pierwszy przebieg jako bezbłędny. Testy pominięte obejmują między innymi opcjonalne scenariusze wymagające lokalnej kopii GSAP.
 
+GitHub Actions odtworzył timeout oczekiwania na link eksportu, obecny także na poprzednim `main`. Test akceptacyjny został uzupełniony o odczyt rzeczywistego zadania: błąd renderera kończy test natychmiast z diagnostyką; trwający render ma limit 600 sekund dla wolniejszych runnerów, a po ukończeniu sprawdzany jest także link pobierania w interfejsie.
+
 MP4 sprawdzono przez FFprobe (1920 × 1080, 30 fps, 30.000 s, H.264 i AAC) oraz ogląd sześciu rzeczywistych klatek. Renderowanie dużych lokalnych obrazów na Windows korzysta z obsługi plików przez Playwright, eliminując zależność eksportu od połączeń loopback.
 
 ## Granice
