@@ -27,11 +27,15 @@ class FrameCoreMCP(McpServer):
                     data = result.pop("data")
                     return {"content":[{"type":"text", "text":json.dumps(result,ensure_ascii=False)},
                                        {"type":"image", "mimeType":"image/png", "data":data}], "isError":False}
-                if params["name"] in {"create_review", "get_review"}:
+                if params["name"] in {"create_review", "get_review", "create_motion_strip"}:
                     import base64
                     sheet = self.api.store.directory(result["project_id"])/"reviews"/result["id"]/"contact-sheet.jpg"
-                    return {"content":[{"type":"text","text":json.dumps(result,ensure_ascii=False)},
-                                       {"type":"image","mimeType":"image/jpeg","data":base64.b64encode(sheet.read_bytes()).decode()}],"isError":False}
+                    content=[{"type":"text","text":json.dumps(result,ensure_ascii=False)},
+                             {"type":"image","mimeType":"image/jpeg","data":base64.b64encode(sheet.read_bytes()).decode()}]
+                    if result.get("onionUrl"):
+                        onion=sheet.parent/"onion.png"
+                        content.append({"type":"image","mimeType":"image/png","data":base64.b64encode(onion.read_bytes()).decode()})
+                    return {"content":content,"isError":False}
                 return {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}], "isError": False}
             except (EditorError, KeyError, TypeError) as exc:
                 return {"content": [{"type": "text", "text": json.dumps({"error": str(exc), "code": getattr(exc, "code", "invalid_arguments")})}], "isError": True}

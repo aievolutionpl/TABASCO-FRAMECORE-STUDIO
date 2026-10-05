@@ -42,19 +42,22 @@ FIELDS = {
     "duplicate_scene": {"scene_id": "string", "start": "number"},
     "rename_project": {"name": "string"},
 }
-READS.update({"get_production_status", "get_review", "get_motion_playbook", "get_quality_report"})
+READS.update({"get_production_status", "get_review", "get_motion_playbook", "get_quality_report", "resolve_frame_time", "list_reviews"})
 WRITES.update({"set_production_contract", "set_scene_beat", "annotate_story_beats", "apply_motion_rules"})
 FIELDS.update({
     "set_production_contract": {"contract":"object"}, "set_scene_beat":{"scene_id":"string", "beat":"object"},
     "create_review":{"times":"array"}, "get_review":{"review_id":"string"},
     "review_verdict":{"review_id":"string", "verdict":"string", "checklist":"object", "notes":"string"},
     "create_format_variant":{"format":"string"}, "package_delivery":{"job_id":"string"},
+    "resolve_frame_time":{"spec":"string"}, "create_motion_strip":{"start":"string","end":"string","count":"integer"},
+    "compare_reviews":{"baseline_id":"string","review_id":"string","threshold":"integer","max_diff_ratio":"number"},
     "analyze_export":{"job_id":"string", "profile":"string"}, "get_quality_report":{"job_id":"string"},
 })
 FIELDS["apply_motion"]["easing"]="string"
 
-for kind in ("video", "image", "audio", "caption", "shape"):
-    FIELDS["add_" + kind] = {"assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object"}
+for kind in ("text", "video", "image", "audio", "caption", "shape"):
+    FIELDS["add_" + kind] = {"assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object",
+        "x":"number", "y":"number", "width":"number", "height":"number", "scale":"number", "rotation":"number", "opacity":"number", "motion":None}
 
 
 class API:
@@ -82,6 +85,19 @@ class API:
         if name == "list_backgrounds":
             from .backgrounds import catalog
             return {"backgrounds": catalog()}
+        if name == "resolve_frame_time":
+            from .motion_evidence import resolve_time
+            p=self.store.read(pid)["project"]
+            return {"time":resolve_time(p,args["spec"]),"revision":p["revision"]}
+        if name == "create_motion_strip":
+            from .motion_evidence import strip
+            return strip(self.store,pid,revision,args.get("start","0s"),args.get("end","end"),args.get("count",12))
+        if name == "list_reviews":
+            from .motion_evidence import list_reviews
+            return list_reviews(self.store,pid)
+        if name == "compare_reviews":
+            from .motion_evidence import compare
+            return compare(self.store,pid,args["baseline_id"],args["review_id"],args.get("threshold",16),args.get("max_diff_ratio",.001))
         if name == "get_motion_playbook":
             from .playbook import PLAYBOOK
             return PLAYBOOK
@@ -156,7 +172,7 @@ class API:
         raise EditorError(f"Nieznane narzędzie: {name}", "unknown_tool")
 
     def tools(self):
-        names = sorted(READS | WRITES | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery", "analyze_export"})
+        names = sorted(READS | WRITES | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery", "analyze_export", "create_motion_strip", "compare_reviews"})
         result = []
         for name in names:
             props = {"project_id": {"type": "string"}, "expected_revision": {"type": "integer"}}
@@ -168,8 +184,10 @@ class API:
             if name == "plan_storyboard": props.update(title={"type": "string"}, workflow={"type": "string"}, template_id={"type": "string"})
             if name.startswith("generate_") or name == "transcribe": props.update(provider_id={"type": "string"}, prompt={"type": "string"})
             required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_motion_playbook", "get_providers", "create_project", "get_job"} else ["project_id"]
-            if name in WRITES - {"set_selection", "set_playhead"} or name in {"render", "export", "add_asset", "create_review", "review_verdict", "create_format_variant"}: required.append("expected_revision")
+            if name in WRITES - {"set_selection", "set_playhead"} or name in {"render", "export", "add_asset", "create_review", "create_motion_strip", "review_verdict", "create_format_variant"}: required.append("expected_revision")
             if name in {"analyze_export", "get_quality_report", "package_delivery"}: required.append("job_id")
+            if name == "resolve_frame_time": required.append("spec")
+            if name == "compare_reviews": required += ["baseline_id","review_id"]
             if name == "analyze_export": props["profile"] = {"type":"string", "enum":["calm","punchy","mute"]}
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
                          "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"],

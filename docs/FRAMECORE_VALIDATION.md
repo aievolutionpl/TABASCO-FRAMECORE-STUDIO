@@ -4,10 +4,10 @@
 
 ## Wyniki wykonanych testów
 
-Nowy zestaw FrameCore: **34 testy przeszły, bez pominięć**. Polecenie:
+Nowy zestaw FrameCore: **42 testy przeszły, bez pominięć**. Polecenie:
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py -o addopts='' -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py tests/test_framecore_motion_evidence.py tests/test_framecore_agent_control.py -o addopts='' -q
 ```
 
 Sprawdzono wspólną edycję przez HTTP i osobny proces MCP, zaznaczenie, propozycje, cofanie, ponowną edycję człowieka, trwałość historii, konflikty rewizji i atomowość błędnych operacji. Import przez interfejs obejmował obraz produktu, logo oraz MP4 z dźwiękiem.
@@ -41,7 +41,7 @@ Skrypt `scripts/install-local.sh` wykonano w obecnym środowisku i potwierdzono 
 - `python framecore.py sample --creator-pack` tworzy niezależną kopię przykładu. Test potwierdza zachowanie wcześniejszej kopii i oryginalnego projektu.
 - Ponownie sprawdzono żywy interfejs w szerokościach 1512, 900 i 390 px: brak poziomego przepełnienia dokumentu. Zrzut README pokazuje nową bibliotekę ilustracji.
 
-Dysk `F:\CREATOR PACK` nie jest udostępniony w chmurze. Żaden materiał z tego folderu nie został przejrzany ani dodany. Wcześniejszy zestaw interfejsu obejmował 23 testy (19 kontraktu/integracji i 4 przeglądarkowe) i zakończył się w 132,66 s. Obecny zestaw obejmuje 30 testów: 23 kontraktu/integracji i 7 przeglądarkowych.
+Dysk `F:\CREATOR PACK` nie jest udostępniony w chmurze. Żaden materiał z tego folderu nie został przejrzany ani dodany. Wcześniejszy zestaw interfejsu obejmował 23 testy (19 kontraktu/integracji i 4 przeglądarkowe) i zakończył się w 132,66 s. Zestaw produkcyjny przed kolejnymi adaptacjami obejmował 30 testów: 23 kontraktu/integracji i 7 przeglądarkowych.
 
 ## Dopracowany interfejs i logo
 
@@ -77,10 +77,25 @@ To działający etap rozbudowy, a nie wszystkie fazy z briefu. Test osobnego pro
 
 Dostawcy AI i automatyczna transkrypcja wymagają integracji. Plan scen jest szablonem lokalnym. Nie obsługujemy jeszcze dowolnego importu źródeł HyperFrames, marketplace, ripple/slip, własnych krzywych Béziera ani automatycznego dopasowania transkrypcji.
 
-Kontrola struktury nie zastępuje oceny wizualnej i odsłuchu. Pełny historyczny zestaw repozytorium wykonano przed dołączeniem Creator Pack: **233 testy przeszły, 24 nie przeszły** (257 łącznie). Wszystkie 24 błędy dotyczą testów animacji otwierających `file://`, blokowanych przez politykę zarządzanego Chromium. Dwie nieaktualne asercje dokumentacji i nazwy profilu zostały poprawione. Wynik 30/30 dotyczy aktualnego zestawu FrameCore; cały historyczny zestaw pozostaje zablokowany w opisanej części.
+Kontrola struktury nie zastępuje oceny wizualnej i odsłuchu. Pełny historyczny zestaw repozytorium wykonano przed dołączeniem Creator Pack: **233 testy przeszły, 24 nie przeszły** (257 łącznie). Wszystkie 24 błędy dotyczą testów animacji otwierających `file://`, blokowanych przez politykę zarządzanego Chromium. Dwie nieaktualne asercje dokumentacji i nazwy profilu zostały poprawione. Wynik 42/42 dotyczy aktualnego zestawu FrameCore; cały historyczny zestaw pozostaje zablokowany w opisanej części.
 
 ## Adaptacja Motion Video Kit
 
 Pełny aktualny zestaw: **34/34 testy**. Nowe przypadki sprawdzają rzeczywisty statyczny i ruchomy MP4, ciszę i głośność, SHA-256 zamrożonego filmu niezależnie od edycji projektu, raport w ZIP oraz przycisk pomiaru i pobranie JSON na komputerze i telefonie. Test z celowo wprowadzoną zależnością od historii seek wykrywa inne piksele i blokuje zatwierdzenie przeglądu.
 
 Pokaz 6 s: **4,2 s** prawie nieruchomego obrazu przy 10 FPS, najdłuższy przedział **1,4 s**, **−36,3 LUFS**, **−21,2 dBFS true peak**. To demonstracja wykrywania problemów, a nie film spełniający wszystkie nowe kryteria. Trzy badane powroty do czasu (0 / 3 / 5,95 s) dały identyczne piksele. Świeży krytyk niezależnie wyciągnął 24 próbki i 12 dokładnych klatek, potwierdził potrzebę poprawy identyfikacji, CTA i rytmu. [Pełna recenzja](MOTION_VIDEO_KIT_REVIEW.md). Audio nie było odsłuchane.
+
+## fframes i sterowanie agentem w dashboardzie
+
+Końcowy pełny przebieg: **42/42 w 175,46 s**, bez pominięć. Obejmuje 30 testów kontraktu/integracji i 12 przeglądarkowych. Dodatkowy przebieg ośmiu nowych przypadków: **8/8 w 11,92 s**. Po rozszerzeniu obsługi launcherów npm ponownie wykonano cztery testy adapterów i kontraktu: **4/4 w 0,82 s** (test przeglądarkowy wyłączono jawnie w tym uzupełniającym przebiegu).
+
+- `create_motion_strip`: rzeczywiste PNG i ważona nakładka z różnymi pozycjami obiektu; `get_review` przez MCP zwrócił JPEG i PNG.
+- Adresy klatek: nazwa/id sceny, procent, ostatnia klatka, sekundy, milisekundy i zegar; nieprawidłowe zakresy są odrzucane.
+- Porównanie tych samych klatek daje 0% zmian; zmieniony tekst daje różnice i diff PNG. Różne harmonogramy są odrzucane.
+- Dashboard: połączenie OpenRouter z fikcyjnym kluczem, zadanie stosujące zmianę do projektu, historia agenta, cofanie oraz widok telefonu. Test czeka na zamknięcie dialogu przed wpisaniem polecenia. Szkic polecenia i tryb sterowania są zachowywane w pamięci przeglądarki przy odświeżaniu panelu.
+- Ochrona rewizji podczas pracy modelu, zamrożone zaznaczenie, anulowanie i brak zastosowania niepoprawnych komend. Wygenerowane odpowiedzi błędów nie ujawniają fikcyjnego klucza i nie zapisują go w JSON projektu.
+- Transport OpenRouter zweryfikowano z podstawioną odpowiedzią HTTP, z kontrolą endpointu, nagłówka i payloadu. Adaptery Codex/Claude uruchomiły rzeczywiste lokalne podprocesy z deterministycznymi atrapami odpowiedzi, bez płatnych sesji. Launcher `.cmd` rozwiązywano do oficjalnego układu pakietu i wykonywano przez rzeczywisty Node, bez powłoki.
+
+Nie wykonano uwierzytelnionych wywołań OpenRouter, OpenAI ani Claude, nie zweryfikowano abonamentów ani działania na Windows. Nie uruchomiono natywnego Rust/Skia z fframes; zaadaptowano narzędzia przeglądu do obecnego silnika. Konfiguracja połączenia nie jest dowodem logowania — pierwsze zadanie sprawdza odpowiedź dostawcy.
+
+Przykład laboratorium: dwie wersje sceny 960×540, po 10 klatek; oba przeglądy bez błędów tekstu/kadru, zmiana nagłówka wykryta. Zrzuty panelu połączenia, telefonu i nakładki wykonano z działającego serwera, bez błędów JavaScript. [Połączenie agenta](AGENT_DASHBOARD.md) · [fframes](FFRAMES.md) · [przykład różnic](../assets/framecore-motion-comparison.json).

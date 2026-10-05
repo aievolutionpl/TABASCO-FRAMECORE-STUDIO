@@ -127,10 +127,16 @@ Po eksporcie kliknij **Zmierz rytm i dźwięk**. Raport pokazuje czasy zastojów
 
 [Instrukcja i zakres adaptacji](docs/MOTION_VIDEO_KIT.md) · [Przykładowy pomiar](assets/framecore-motion-quality.json) · [Dziennik rund](skills/business-motion-film/references/REVIEW_LEDGER.md).
 
+## Agent za sterami i laboratorium ruchu
+
+W panelu **Agent AI → Podłącz agenta** wybierz OpenRouter API, OpenAI przez lokalny Codex CLI albo Claude przez Claude Code CLI. Zleć polecenie; domyślnie otrzymasz propozycję. Włącz **Agent stosuje zmiany samodzielnie**, aby przekazać mu montaż z możliwością cofania. Logowanie CLI albo klucz OpenRouter trzeba skonfigurować na komputerze uruchamiającym studio. [Połączenie i zasady rozliczeń](docs/AGENT_DASHBOARD.md).
+
+Z [fframes](https://github.com/dmtrKovalenko/fframes) zaadaptowaliśmy adresy klatek scen, plansze i nakładki pokazujące tor ruchu oraz porównania obrazów przed/po. Znajdziesz je w **Produkcja → Laboratorium ruchu** i przez MCP. [Instrukcja i zakres adaptacji](docs/FFRAMES.md).
+
 ## Testy
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py tests/test_framecore_motion_evidence.py tests/test_framecore_agent_control.py -q
 ```
 
 Test przeglądarkowy importuje materiały, uruchamia osobny proces agenta MCP, sprawdza wspólną historię i eksportuje rzeczywisty film 15 sekund w rozdzielczości 1080 × 1920 z dźwiękiem. Wyniki dotyczą wykonanego przebiegu i są opisane w dokumencie walidacji.

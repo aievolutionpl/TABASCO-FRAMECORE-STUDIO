@@ -33,6 +33,10 @@ Wprowadzaj tylko poprawki związane z nazwanym problemem z przeglądu, poprzez `
 
 Przy reklamie, premierze albo explainerze zastosuj [skill filmu biznesowego](../business-motion-film/SKILL.md) i odczytaj `get_motion_playbook`. Po ukończonym eksporcie `analyze_export` z `job_id` mierzy zastoje obrazu, LUFS, zakres LU i szczyt dBFS. Profil: calm, punchy lub mute. `get_quality_report` odczytuje raport ważny dla SHA-256 konkretnego MP4. Wykonaj pomiar przed `package_delivery`, aby raport znalazł się w ZIP. Montażysta nie powinien sam zatwierdzać jakości kreatywnej; przekaż artefakty niezależnej ocenie i zachowaj dziennik problemów oraz ich weryfikacji. Te reguły są instrukcjami, nie automatycznym systemem wielu agentów.
 
+## Laboratorium ruchu
+
+Użyj `resolve_frame_time` dla sceny@50% albo sceny@end, potem `capture_frame` dla otrzymanego czasu. `create_motion_strip` zwraca planszę i nakładkę toru jako obrazy MCP, 2–24 próbek zakresu; nie izoluje obiektu. `list_reviews` daje czasy przeglądów. W następnej rundzie `create_review` z tymi samymi `times` i `compare_reviews` pokażą różnice przed/po. Różnice pikseli nie są werdyktem jakości. Nie nadpisuj wzorca ani nie twierdź, że sprawdzono każdą klatkę. [Instrukcja](../../docs/FFRAMES.md).
+
 ## Przykłady
 
 „Przesuń zaznaczony nagłówek o 0,4 sekundy wcześniej i nadaj mocniejsze wejście”: odczytaj zaznaczenie, zaproponuj `move_clip` i `apply_motion` (`impact-rise`, 0.5 s), przejrzyj propozycję, zastosuj zgodnie z poleceniem użytkownika, obejrzyj klatkę.
@@ -47,4 +51,4 @@ Przy reklamie, premierze albo explainerze zastosuj [skill filmu biznesowego](../
 
 ## Granice
 
-Nie ma skonfigurowanego dostawcy AI ani transkrypcji. Asystent w interfejsie jest parserem konkretnych poleceń czasu i animacji. Kontrola struktury nie mierzy automatycznie jakości montażu, kontrastu ani łamania wierszy. Import dowolnych dokumentów HTML HyperFrames, marketplace, ripple/slip i edytor krzywych animacji pozostają kolejnymi etapami.
+Nie ma skonfigurowanego dostawcy AI ani transkrypcji. Lokalny asystent w interfejsie jest parserem poleceń czasu i animacji. Panel połączenia umożliwia także OpenRouter API lub lokalny Codex/Claude CLI; konto i klucz wymagają konfiguracji przez użytkownika. Kontrola struktury nie mierzy automatycznie jakości montażu, kontrastu ani łamania wierszy. Import dowolnych dokumentów HTML HyperFrames, marketplace, ripple/slip i edytor krzywych animacji pozostają kolejnymi etapami.

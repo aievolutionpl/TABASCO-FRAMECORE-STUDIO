@@ -49,3 +49,9 @@ Import i ponowna edycja dowolnych źródeł HyperFrames, proxy wideo, przebiegi 
 ## Kontrakt produkcyjny FrameCore
 
 Opcjonalne `project.production` zawiera brief i wymagane materiały; `scene.beat` opisuje cel, stany i fokus. Zmiany używają dotychczasowych transakcji i undo. `framecore/production.py` waliduje kontrakt, reguły ruchu i układ wariantu; `review.py` generuje dowody z Chromium i przypisuje ocenę do pełnego odcisku projektu oraz SHA-256 plików. Raporty i checklisty są artefaktami poza historią montażu. `RenderJobs.start` sprawdza bramkę, a eksport kopiuje pliki do zamrożonego katalogu. `delivery.py` pakuje ten eksport. HTTP i MCP korzystają z tej samej implementacji; MCP przekazuje również obraz planszy klatek. [Pełny przepływ i ograniczenia](docs/PRODUCTION_PIPELINE.md).
+
+## Agent dashboardu i dowody ruchu
+
+`AgentControl` posiada połączenie w pamięci, jeden wątek zadania i sygnał anulowania. Adapter OpenRouter wysyła opis projektu do stałego endpointu; Codex/Claude są lokalnymi podprocesami zwracającymi JSON. Wynik jest ograniczony do komend edytora i przechodzi `propose_changes` oraz opcjonalnie `apply_proposal`, z rewizją i zaznaczeniem zamrożonym przy starcie. Klucz API nie jest zapisywany. Endpointy konfiguracji nie są narzędziami modelu MCP.
+
+`motion_evidence` adresuje czasy scen, składa ważoną nakładkę z rzeczywistych PNG i porównuje dwa zapisane harmonogramy klatek. Korzysta z obecnego renderera; nie uruchamia Rust/Skia. Pomiar `quality` dotyczy SHA-256 ukończonego MP4 i nie stanowi oceny kreatywnej.

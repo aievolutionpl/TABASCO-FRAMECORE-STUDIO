@@ -98,7 +98,7 @@ class Handler(StudioHandler):
                 parts = path.strip("/").split("/")
                 import re
                 from .model import identifier
-                if len(parts) != 4 or not re.fullmatch(r"frame-\d{3}\.png|contact-sheet\.jpg|review\.json",parts[-1]):
+                if len(parts) != 4 or not re.fullmatch(r"frame-\d{3}\.png|diff-\d{3}\.png|onion\.png|contact-sheet\.jpg|review\.json",parts[-1]):
                     return self._err(404,"Nie znaleziono klatki")
                 identifier(parts[2])
                 file = store.directory(parts[1])/"reviews"/parts[2]/parts[-1]
@@ -126,7 +126,12 @@ class Handler(StudioHandler):
                 if not self.headers.get("Content-Type", "").startswith("application/json"): return self._err(415, "Wymagana treść JSON")
                 body = json.loads(self.rfile.read(length) or b"{}")
                 if not isinstance(body, dict): raise EditorError("Treść żądania musi być obiektem")
-                if path == "/api/demo":
+                if path == "/api/agent/status": result=self.server.agent.status()
+                elif path == "/api/agent/connect": result=self.server.agent.connect(body.get("provider"),body.get("model",""),body.get("api_key",""))
+                elif path == "/api/agent/disconnect": result=self.server.agent.stop(disconnect=True)
+                elif path == "/api/agent/stop": result=self.server.agent.stop()
+                elif path == "/api/agent/run": result=self.server.agent.start(body.get("project_id"),body.get("expected_revision"),body.get("prompt"),body.get("auto_apply",False))
+                elif path == "/api/demo":
                     from .demo import create_demo
                     result = create_demo(self.server.store)
                 elif path == "/api/create": result = self.server.api.call("create_project", body, "human")
@@ -150,7 +155,13 @@ class Server(ThreadingHTTPServer):
         self.store = store
         self.jobs = RenderJobs(store)
         self.api = API(store, self.jobs)
+        from .agent_control import AgentControl
+        self.agent = AgentControl(store)
 
+
+    def server_close(self):
+        self.agent.stop(disconnect=True)
+        super().server_close()
 
 def start_background(store, port=0):
     server = Server(store, port)

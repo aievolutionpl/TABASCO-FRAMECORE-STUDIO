@@ -52,3 +52,7 @@ Przewodnik `docs/references/AI_Evolution_Opus_55_Video_Studio_Guide_PL.pdf` zost
 ## Motion Video Kit
 
 Zasady filmu biznesowego i filtry pomiarowe zaadaptowano z [echris6/motion-video-kit](https://github.com/echris6/motion-video-kit/tree/255562b04b1e5ecaa4ba98e5c9aa191d5ba7f6fa), commit `255562b04b1e5ecaa4ba98e5c9aa191d5ba7f6fa`, Copyright (c) 2026 echris6, MIT. [Pełna oryginalna licencja](licenses/Motion-Video-Kit-MIT.txt). Adaptacja obejmuje `framecore/quality.py`, `framecore/playbook.py`, instrukcje i polski skill; nie zawiera cudzych filmów referencyjnych. [Zakres i ograniczenia](docs/MOTION_VIDEO_KIT.md).
+
+## fframes
+
+Adresowanie klatek, liniowe wagi onion skin i porównanie pikseli zaadaptowano z [dmtrKovalenko/fframes](https://github.com/dmtrKovalenko/fframes/tree/b7fc055f7028f4380ed6102d33040fd1bf491036), commit `b7fc055f7028f4380ed6102d33040fd1bf491036`. Copyright (c) 2025–2026 Dmitriy Kovalenko, MIT. [Pełna licencja](licenses/fframes-MIT.txt). Implementacja w `framecore/motion_evidence.py`; [zakres](docs/FFRAMES.md). Nie redystrybuujemy filmu demonstracyjnego ani fontów i muzyki tego repozytorium.

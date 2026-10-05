@@ -1,0 +1,73 @@
+{
+  "project_id": "fc_31c62f0b0d3d",
+  "baseline_id": "review_34094dc44520",
+  "review_id": "review_b7479e04d69f",
+  "baselineRevision": 6,
+  "revision": 7,
+  "threshold": 16,
+  "maxDiffRatio": 0.001,
+  "frames": [
+    {
+      "time": 0.0,
+      "changedRatio": 0.017432484567901235,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-000.png"
+    },
+    {
+      "time": 0.32963,
+      "changedRatio": 0.017432484567901235,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-001.png"
+    },
+    {
+      "time": 0.659259,
+      "changedRatio": 0.017434413580246912,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-002.png"
+    },
+    {
+      "time": 0.988889,
+      "changedRatio": 0.017434413580246912,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-003.png"
+    },
+    {
+      "time": 1.318519,
+      "changedRatio": 0.017434413580246912,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-004.png"
+    },
+    {
+      "time": 1.648148,
+      "changedRatio": 0.017432484567901235,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-005.png"
+    },
+    {
+      "time": 1.977778,
+      "changedRatio": 0.017428626543209876,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-006.png"
+    },
+    {
+      "time": 2.307407,
+      "changedRatio": 0.01742283950617284,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-007.png"
+    },
+    {
+      "time": 2.637037,
+      "changedRatio": 0.017418981481481483,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-008.png"
+    },
+    {
+      "time": 2.966667,
+      "changedRatio": 0.017418981481481483,
+      "matched": false,
+      "diffUrl": "/reviews/fc_31c62f0b0d3d/review_b7479e04d69f/diff-009.png"
+    }
+  ],
+  "matched": false,
+  "limitations": "Zmiana pikseli nie oznacza pogorszenia ani poprawy. Porównano tylko zapisane klatki. Baseline jest wskazanym przeglądem, nie automatyczną akceptacją jakości."
+}

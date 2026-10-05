@@ -71,3 +71,7 @@ FrameCore udostępnia również kontrakt produkcyjny, beaty, reguły ruchu, prze
 ## Pomiary filmu i playbook
 
 `get_motion_playbook` nie wymaga projektu: zwraca polskie reguły, receptury i prompt niezależnego krytyka. `analyze_export` wymaga `project_id`, `job_id` ukończonego eksportu oraz opcjonalnie `profile` calm/punchy/mute (domyślnie calm). Zapisuje raport pomiarowy, bez zmiany projektu i jego historii. `get_quality_report` wymaga projektu i zadania; odrzuca raport, jeśli SHA-256 MP4 uległo zmianie. Nie wymagają `expected_revision`, ponieważ dotyczą zamrożonego eksportu, a nie bieżącego montażu. Schematy MCP publikują wymagany `job_id`. Raport jest dostępny w ograniczonej ścieżce `/exports/<project>/<job>/quality-report.json` i dołączany do kolejnego ZIP. [Parametry i ograniczenia](docs/MOTION_VIDEO_KIT.md).
+
+## Laboratorium ruchu — fframes
+
+`resolve_frame_time` tłumaczy `spec` (scena@czas, procent, klatka, sekundy) na czas globalny. `create_motion_strip` wymaga rewizji, przyjmuje `start`, `end`, `count` 2–24 i generuje przegląd z planszą oraz onion PNG. MCP zwraca oba obrazy także przez `get_review`. `list_reviews` opisuje zapisane harmonogramy. `compare_reviews` wymaga `baseline_id`, `review_id`, opcjonalnie `threshold` i `max_diff_ratio`; porównuje identyczne harmonogramy i rozmiary, zapisuje diff PNG i raport. [Parametry i przykłady](docs/FFRAMES.md). [Połączenie i sterowanie z dashboardu](docs/AGENT_DASHBOARD.md) korzysta z odrębnych tras HTTP chronionych tokenem.

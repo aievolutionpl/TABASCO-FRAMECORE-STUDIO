@@ -34,7 +34,7 @@ def frame_times(p, times=None):
     last = max(0, p["duration"]-frame)
     if times is not None:
         if not isinstance(times, list) or not 1 <= len(times) <= 64: raise EditorError("Wybierz 1–64 czasy klatek")
-        return sorted(set(round(number(t, "time", 0, last), 6) for t in times))
+        return sorted(set(round(min(last, number(t, "time", 0, last+1e-6)), 6) for t in times))
     # Prioritise beat midpoints, then both sides of cuts and motion completion.
     core = {0, round(last, 6)}
     for s in p["scenes"]: core.add(round(min(last, s["start"]+s["duration"]/2), 6))
