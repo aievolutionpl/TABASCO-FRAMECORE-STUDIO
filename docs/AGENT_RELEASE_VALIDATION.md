@@ -20,6 +20,8 @@ Pełny lokalny zestaw: 298 przypadków, 274 zaliczone w pierwszym końcowym prze
 
 GitHub Actions odtworzył timeout oczekiwania na link eksportu, obecny także na poprzednim `main`. Test akceptacyjny został uzupełniony o odczyt rzeczywistego zadania: błąd renderera kończy test natychmiast z diagnostyką; trwający render ma limit 600 sekund dla wolniejszych runnerów, a po ukończeniu sprawdzany jest także link pobierania w interfejsie.
 
+Dalsza diagnostyka CI ujawniła błąd wczytywania MP4 przez przeglądarkę renderera. Renderer preferuje teraz Chrome/Edge z kodekami H.264/AAC, a CI instaluje Chrome. Lokalny zestaw trzech testów przeglądarkowych po tej zmianie przeszedł, podobnie jak osiem testów agenta i kampanii. Dodano obsługę żądań zakresu bajtów dla przewijania lokalnych mediów oraz test regresji zapobiegający ponownym seekom po końcu źródła.
+
 MP4 sprawdzono przez FFprobe (1920 × 1080, 30 fps, 30.000 s, H.264 i AAC) oraz ogląd sześciu rzeczywistych klatek. Renderowanie dużych lokalnych obrazów na Windows korzysta z obsługi plików przez Playwright, eliminując zależność eksportu od połączeń loopback.
 
 ## Granice

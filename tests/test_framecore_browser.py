@@ -253,3 +253,48 @@ def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
             assert errors==[] and external==[]
             browser.close()
     finally:srv.shutdown();srv.server_close()
+
+@pytest.mark.browser
+def test_capture_does_not_seek_repeatedly_after_media_end(tmp_path):
+    import io
+    import wave
+    from framecore.server import import_asset
+    from framecore.composition import compile_project
+
+    data = io.BytesIO()
+    with wave.open(data, 'wb') as audio:
+        audio.setnchannels(1)
+        audio.setsampwidth(2)
+        audio.setframerate(8000)
+        audio.writeframes(b'\0\0' * 8000)
+    store = Store(tmp_path / 'projects')
+    state = store.create('End of source', duration=4)
+    pid = state['project']['id']
+    state = import_asset(store, pid, data.getvalue(), 'sound.wav', expected_revision=state['project']['revision'])
+    state = store.execute(pid, 'add_audio', {
+        'assetId': state['project']['assets'][0]['id'], 'duration': 1,
+    }, state['project']['revision'])
+    # Imported metadata can outlast the duration decoded by the browser.
+    state['project']['assets'][0]['duration'] = 4
+    state['project']['elements'][0]['duration'] = 4
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch()
+        page = browser.new_page()
+        page.route('http://media.test/**', lambda route: route.fulfill(
+            body=data.getvalue(), content_type='audio/wav'))
+        page.set_content(compile_project(state['project'], 'http://media.test/'))
+        page.evaluate('window.__ready')
+        page.evaluate('window.__CAPTURE__ = true')
+        # Once the clamped end position has been reached, subsequent frames
+        # must not assign currentTime again and wait for a nonexistent seeked.
+        seeks = page.evaluate('''async () => {
+            const media=document.querySelector('audio'); let seeks=0;
+            Object.defineProperty(media,'currentTime',{get:()=>media.duration-.001,set:()=>seeks++});
+            await Promise.race([
+                (async()=>{await window.seek(2.1);await window.seek(2.2)})(),
+                new Promise((_,reject)=>setTimeout(()=>reject(Error('Redundant seek stalled capture')),1000))
+            ]);
+            return seeks;
+        }''')
+        assert seeks == 0
+        browser.close()

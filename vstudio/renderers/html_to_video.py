@@ -32,6 +32,7 @@ import glob
 import http.server
 import io
 import mimetypes
+import re
 import os
 import shutil
 import subprocess
@@ -101,6 +102,8 @@ def launch_browser(pw, preferred: str | None, extra_args: list[str] | None = Non
         attempts.append({"executable_path": preferred} if os.path.exists(preferred) else {"channel": preferred})
     # Prefer browsers with H.264/AAC codecs for imported MP4 media.
     attempts += [{"channel":"chrome"},{"channel":"msedge"},{}]
+    if shutil.which("chromium"):
+        attempts.append({"executable_path": shutil.which("chromium")})
     root = os.path.expanduser("~/AppData/Local/ms-playwright")
     for pattern in ("chromium_headless_shell-*/*/headless_shell.exe", "chromium-*/chrome-win/chrome.exe"):
         for exe in sorted(glob.glob(os.path.join(root, pattern)), reverse=True):
@@ -121,6 +124,7 @@ def install_vendor_routes(target) -> None:
     """
     import json
     import mimetypes
+import re
     import re
 
     index = os.environ.get("VSTUDIO_VENDOR_INDEX")
@@ -305,7 +309,24 @@ def main() -> int:
                     if not file.is_relative_to(local_root) or not file.is_file():
                         route.fulfill(status=404, body='Not found')
                         return
-                    route.fulfill(path=str(file), content_type=mimetypes.guess_type(file)[0] or 'application/octet-stream')
+                    content_type = mimetypes.guess_type(file)[0] or 'application/octet-stream'
+                    size = file.stat().st_size
+                    byte_range = route.request.headers.get('range', '')
+                    match = re.fullmatch(r'bytes=(\d*)-(\d*)', byte_range)
+                    if match and size:
+                        first, last = match.groups()
+                        start = int(first) if first else max(0, size - int(last or 0))
+                        end = min(int(last), size - 1) if first and last else size - 1
+                        if start > end:
+                            route.fulfill(status=416, headers={'Content-Range': f'bytes */{size}'}, body='')
+                            return
+                        with file.open('rb') as source:
+                            source.seek(start)
+                            body = source.read(end - start + 1)
+                        route.fulfill(status=206, body=body, content_type=content_type,
+                                      headers={'Accept-Ranges': 'bytes', 'Content-Range': f'bytes {start}-{end}/{size}'})
+                    else:
+                        route.fulfill(path=str(file), content_type=content_type, headers={'Accept-Ranges': 'bytes'})
                 ctx.route(f'http://127.0.0.1:{port}/**', local_asset)
             if use_clock:
                 pg.clock.install(time=0)
