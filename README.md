@@ -19,6 +19,28 @@ Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek]
 
 </div>
 
+## Agent w studiu i nowa kampania
+
+**Rozmawiaj z własnym modelem bez wychodzenia z edytora.** W **Integracjach** wybierz OpenRouter lub OpenAI, zapisz klucz lokalnie, pobierz modele i sprawdź obsługę narzędzi. Panel **Twój agent** czyta projekt, wykonuje polecenia montażowe i pokazuje każdą operację. Zmiany trafiają do wspólnej historii cofania. Istniejący panel zadań Codex/Claude, Company brain oraz narzędzia produkcyjne pozostają dostępne.
+
+Samouczek **Jak zacząć** prowadzi przez projekt, materiały, montaż, agenta i eksport. Integracje pokazują także gotowość FFmpeg/Chromium i konfigurację MCP dopasowaną do tego komputera. [Instrukcja użytkownika i agenta](docs/AGENT_QUICKSTART.md).
+
+[![Reklama FrameCore — Twój pomysł. Wspólna rama.](assets/framecore-agent-campaign-poster.jpg)](assets/framecore-agent-campaign.mp4)
+
+**[Obejrzyj reklamę 30 s](assets/framecore-agent-campaign.mp4)** · [Sześć scen](assets/framecore-agent-campaign-frames.jpg) · [Pochodzenie materiałów i prompty](docs/CAMPAIGN_ASSETS.md)
+
+Film ma sześć scen po **5 sekund**, sześć różnych animacji nagłówków, trzy nowe tła generowane AI i lokalnie przygotowany podkład. Eksport: 1920 × 1080, 30 fps, H.264 + AAC. Tła **FrameCore Cinema** są dostępne w bibliotece studia z odrębną informacją o pochodzeniu. Utwórz własną, edytowalną kopię:
+
+```bash
+python framecore.py sample --campaign
+```
+
+`python scripts/render-campaign.py` tworzy projekt i eksportuje tę reklamę do `assets/framecore-agent-campaign.mp4`. Na Windows możesz uruchamiać studio przez `START-STUDIO.cmd`. Materiały AI dołączone do repozytorium nie oznaczają, że aplikacja ma skonfigurowany generator obrazów lub wideo.
+
+![Wbudowana rozmowa z agentem i wspólny montaż](assets/framecore-studio-v2.png)
+
+Testy obejmują onboarding i rozmowę w Chromium, rzeczywistą edycję przez narzędzia, konflikty rewizji, zatrzymanie, ochronę konfiguracji i eksport. Szczegóły oraz granice walidacji: [wydanie agenta](docs/AGENT_RELEASE_VALIDATION.md).
+
 ## Dopracowany edytor
 
 Grafitowy interfejs, większe opisy i ciepłe akcenty Tabasco pomagają skupić się na filmie. Biblioteka ma **ulubione materiały i filtrowanie kolekcji**; panel tekstu pokazuje typografię przed geometrią. Sześć przycisków wyrównuje element w kadrze, a wybór animacji uruchamia krótki podgląd na zaznaczonym klipie.
@@ -170,3 +192,7 @@ Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współp
 Poniższa ilustracja została dostarczona do projektu. Przedstawia jego ideę i identyfikację; aktualny interfejs pokazuje zrzut ekranu na początku README.
 
 ![TABASCO CREATIVES + FRAMECORE — STUDIO: człowiek i agent AI wspólnie tworzą film](assets/tabasco-framecore-collaboration.jpg)
+
+## Rozwój AI Studio — etap P0
+
+Panel **Analiza materiałów** tworzy miniatury, contact sheets, proxy oraz waveform i wykrywa ciszę. Wyniki są buforowane poza projektem i dostępne dla UI oraz agentów przez API/MCP. [Obsługa i ograniczenia](docs/MEDIA_ENGINE.md) · [Audyt i plan P0/P1/P2](docs/AI_STUDIO_AUDIT.md).

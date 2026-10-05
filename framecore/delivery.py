@@ -44,7 +44,7 @@ def package(store, jobs, pid, job_id):
     (directory/"CREDITS.md").write_text("\n".join(credits),encoding="utf-8")
     target = directory/"delivery.zip"
     temp = directory/"delivery.tmp"
-    from vstudio.locking import file_lock
+    from .persistence import file_lock
     with file_lock(directory/".delivery-lock"):
         with ZipFile(temp,"w",ZIP_DEFLATED) as archive:
             for file in sorted(directory.rglob("*")):

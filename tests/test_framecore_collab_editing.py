@@ -115,6 +115,7 @@ def test_capcut_style_manual_media_and_editable_story(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(executable_path=shutil.which('chromium'))
             page=browser.new_page(viewport={'width':1512,'height':982});page.on('pageerror',lambda e:errors.append(str(e)))
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.goto(f'http://127.0.0.1:{srv.server_port}');page.wait_for_function('document.querySelector("#player").ready')
             page.locator(f'[data-clip="{eid}"]').click();page.click('[data-edit="replace"]')
             page.select_option('#replacementAsset',b);page.click('[data-edit="apply-replace"]');page.locator('#modal').wait_for(state='hidden')
@@ -145,3 +146,26 @@ def test_capcut_style_manual_media_and_editable_story(tmp_path):
             assert not errors
             browser.close()
     finally:srv.shutdown();srv.server_close()
+
+
+def test_integrated_agent_swaps_same_editable_clip(tmp_path,monkeypatch):
+    from framecore.agent import AgentService
+    store,api,pid,a,b,eid=setup(tmp_path)
+    service=AgentService(api,tmp_path/'agent.json');service.save({'provider':'openrouter','api_key':'test-key'})
+    before=deepcopy(store.read(pid)['project']['elements'][0]);calls=[]
+    def model(config,path,payload):
+        calls.append(payload)
+        if len(calls)==1:
+            import json
+            assert 'replace_clip_asset' in {t['function']['name'] for t in payload['tools']}
+            args={'element_id':eid,'asset_id':b,'expected_revision':store.read(pid)['project']['revision']}
+            return {'choices':[{'message':{'content':'','tool_calls':[{'id':'swap','type':'function','function':{'name':'replace_clip_asset','arguments':json.dumps(args)}}]}}]}
+        return {'choices':[{'message':{'content':'Podmieniono zdjęcie. Montaż zachowany.'}}]}
+    monkeypatch.setattr(service,'_request',model)
+    job=service.start(pid,'Podmień zdjęcie, zachowaj montaż.')
+    deadline=time.monotonic()+5
+    while service.get(job['id'])['status']=='running' and time.monotonic()<deadline:time.sleep(.02)
+    result=service.get(job['id'])
+    assert result['status']=='complete' and result['events'][0]['ok']
+    assert store.read(pid)['project']['elements'][0]=={**before,'assetId':b,'sourceStart':0}
+    assert store.read(pid)['history'][-1]['actor']=='agent'

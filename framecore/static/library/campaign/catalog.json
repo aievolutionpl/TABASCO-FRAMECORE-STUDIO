@@ -1,0 +1,64 @@
+{
+  "assets": [
+    {
+      "license": "AI-generated",
+      "name": "Wspólna rama",
+      "collection": "FrameCore Cinema",
+      "promptFile": "docs/CAMPAIGN_ASSETS.md",
+      "id": "campaign-shared-frame",
+      "source": "Built-in image_gen",
+      "source_kind": "generated",
+      "kind": "scene",
+      "licenseFile": "licenses/FrameCore-Generated-Assets.txt",
+      "sha256": "199b553c84edef57dbd6d15f7519684b0d1ceb45f39ba345c319a201520096bc",
+      "tags": [
+        "film",
+        "kampania",
+        "cinema",
+        "tło",
+        "pomarańczowy"
+      ],
+      "file": "framecore/static/library/campaign/shared-frame.png"
+    },
+    {
+      "license": "AI-generated",
+      "name": "Karty w ruchu",
+      "collection": "FrameCore Cinema",
+      "promptFile": "docs/CAMPAIGN_ASSETS.md",
+      "id": "campaign-motion-cards",
+      "source": "Built-in image_gen",
+      "source_kind": "generated",
+      "kind": "scene",
+      "licenseFile": "licenses/FrameCore-Generated-Assets.txt",
+      "sha256": "b4a588e271ac07d5ba1619084c073e448d51aa07b28ebe7bf3843f542667f359",
+      "tags": [
+        "film",
+        "kampania",
+        "cinema",
+        "tło",
+        "pomarańczowy"
+      ],
+      "file": "framecore/static/library/campaign/motion-cards.png"
+    },
+    {
+      "license": "AI-generated",
+      "name": "Otwarta rama",
+      "collection": "FrameCore Cinema",
+      "promptFile": "docs/CAMPAIGN_ASSETS.md",
+      "id": "campaign-open-frame",
+      "source": "Built-in image_gen",
+      "source_kind": "generated",
+      "kind": "scene",
+      "licenseFile": "licenses/FrameCore-Generated-Assets.txt",
+      "sha256": "8c24ecf7cf9bd1d40c74cd80e8b2146b04a5cc2e6a62cc615d13894efb282e8e",
+      "tags": [
+        "film",
+        "kampania",
+        "cinema",
+        "tło",
+        "pomarańczowy"
+      ],
+      "file": "framecore/static/library/campaign/open-frame.png"
+    }
+  ]
+}

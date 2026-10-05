@@ -14,6 +14,13 @@ node_modules/
 # Środowisko
 .env
 .env.*
+.framecore-agent.json
+*.log
+demo-agent-*.json
+demo-agent-*.png
+framecore-mcp.config.json
+.serena/
+/scripts/demo-agent.py
 *.pem
 *.key
 

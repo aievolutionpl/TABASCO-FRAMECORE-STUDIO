@@ -49,9 +49,15 @@ Użyj `resolve_frame_time` dla sceny@50% albo sceny@end, potem `capture_frame` d
 
 „Zmień typografię”: odczytaj `list_fonts`, użyj `set_property` z `property: style.fontFamily` dla tekstu lub `set_brand` dla całej marki. Osadzone fonty zawierają polskie znaki i nie potrzebują CDN. Sprawdź łamanie wierszy przez `capture_frame`.
 
+## Szybki onboarding
+
+Przeczytaj `docs/AGENT_QUICKSTART.md`. W interfejsie dostępne są **Jak zacząć**, **Integracje** i **Twój agent**. OpenRouter/OpenAI obsługują rozmowę i wywołania narzędzi montażowych. Wbudowany agent tekstowy korzysta z tego samego API i historii, ale nie ogląda klatek i nie ma dostępu do terminala. Klucze pozostają w lokalnej konfiguracji serwera; nie zapisuj ich w projekcie ani dokumentacji.
+
+Dla reklamy stosuj jeden komunikat na scenę, 3–6 sekund na scenę, kontrastową typografię i różne animacje bez nadmiaru efektów. Biblioteka FrameCore Cinema zawiera trzy tła AI (`kind: scene`) z odrębną informacją o pochodzeniu. Nie opisuj ich jako ikon MIT.
+
 ## Granice
 
-Nie ma skonfigurowanego dostawcy AI ani transkrypcji. Lokalny asystent w interfejsie jest parserem poleceń czasu i animacji. Panel połączenia umożliwia także OpenRouter API lub lokalny Codex/Claude CLI; konto i klucz wymagają konfiguracji przez użytkownika. Kontrola struktury nie mierzy automatycznie jakości montażu, kontrastu ani łamania wierszy. Import dowolnych dokumentów HTML HyperFrames, marketplace, ripple/slip i edytor krzywych animacji pozostają kolejnymi etapami.
+Generowanie mediów i transkrypcja wymagają osobnych adapterów. Wbudowana rozmowa obsługuje OpenRouter i OpenAI po skonfigurowaniu klucza. Lokalny asystent w interfejsie jest parserem poleceń czasu i animacji. Panel połączenia umożliwia także OpenRouter API lub lokalny Codex/Claude CLI; konto i klucz wymagają konfiguracji przez użytkownika. Kontrola struktury nie mierzy automatycznie jakości montażu, kontrastu ani łamania wierszy. Import dowolnych dokumentów HTML HyperFrames, marketplace, ripple/slip i edytor krzywych animacji pozostają kolejnymi etapami.
 
 ## Company brain klienta
 

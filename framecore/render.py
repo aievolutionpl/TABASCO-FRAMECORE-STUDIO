@@ -10,7 +10,7 @@ import threading
 from copy import deepcopy
 from pathlib import Path
 
-from vstudio.locking import atomic_write, file_lock
+from .persistence import atomic_write, file_lock
 
 from .composition import compile_project
 from .model import EditorError, uid
@@ -104,8 +104,6 @@ class RenderJobs:
             cmd = [sys.executable, str(renderer), str(html), "-o", str(video), "--size", f'{p["canvas"]["width"]}x{p["canvas"]["height"]}',
                    "--fps", str(p["canvas"]["fps"]), "--duration", str(p["duration"]), "--crf", "18" if quality == "final" else "26",
                    "--preset", "veryfast"]
-            if shutil.which("chromium"):
-                cmd += ["--browser", shutil.which("chromium")]
             with (directory / "render.log").open("w") as log:
                 cp = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=1800)
             if cp.returncode:

@@ -83,6 +83,7 @@ def test_export_measurement_button_download_and_mobile(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982});page.on('pageerror',lambda e:errors.append(str(e)))
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.goto(base);page.wait_for_function('document.querySelector("#player").ready')
             page.click('#export');page.click('#startExport')
             page.locator('[data-measure-job]').wait_for(timeout=60000)

@@ -49,7 +49,7 @@ Bramka przeglądu jest włączana przy zbudowaniu lekcji. Roboczy eksport nadal 
 
 Każdy zapis wymaga `project_id` i `expected_revision`. `get_storytelling_playbook` działa bez projektu. Fazy to `hook`, `familiar`, `disruption`, `mechanism`, `discovery`, `consequence`, `recap`. `assemble_visual_lesson` przyjmuje siedem scen w tej kolejności, bez luk i nakładania przedziałów czasu. Odczytaj aktualny projekt przed zmianą, respektuj blokady i używaj propozycji przy większych przebudowach.
 
-Dashboard przekazuje agentowi te same komendy i zasady. Nie uruchomiono konkretnego modelu z nazwy widocznej w grafice; obsługiwane połączenia pozostają Codex, Claude CLI i OpenRouter. Przed oddaniem filmu człowiekowi agent powinien zostawić opisy scen, materiały i edytowalne klipy, wskazać brakujący lektor lub inne zasoby oraz przejrzeć rzeczywiste klatki. Nie ma automatycznego przełącznika „gotowa lekcja” opartego wyłącznie na planie.
+Dashboard przekazuje agentowi te same komendy i zasady. Nie uruchomiono konkretnego modelu z nazwy widocznej w grafice; obsługiwane połączenia obejmują panel rozmowy OpenAI/OpenRouter oraz zadania Codex, Claude CLI i OpenRouter. Przed oddaniem filmu człowiekowi agent powinien zostawić opisy scen, materiały i edytowalne klipy, wskazać brakujący lektor lub inne zasoby oraz przejrzeć rzeczywiste klatki. Nie ma automatycznego przełącznika „gotowa lekcja” opartego wyłącznie na planie.
 
 ## Przykład i sprawdzenie
 

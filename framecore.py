@@ -13,6 +13,7 @@ def main():
     examples = parser.add_mutually_exclusive_group()
     examples.add_argument("--creator-pack", action="store_true", help="Utwórz przykład z lokalną biblioteką materiałów (sample)")
     examples.add_argument("--production", action="store_true", help="Utwórz edytowalny przykład pipeline’u produkcyjnego (sample)")
+    examples.add_argument("--campaign", action="store_true", help="Utwórz reklamę 30 s: sześć scen po 5 sekund")
     args = parser.parse_args()
     store = Store(args.root) if args.root else Store()
     if args.command == "mcp":
@@ -24,7 +25,11 @@ def main():
         print(json.dumps(store.list(), indent=2, ensure_ascii=False))
     elif args.command == "sample":
         from framecore.sample import create_sample, create_creator_pack
-        state = create_creator_pack(store,"production-pipeline") if args.production else create_creator_pack(store) if args.creator_pack else create_sample(store)
+        if args.campaign:
+            from framecore.campaign import create_campaign
+            state = create_campaign(store)
+        else:
+            state = create_creator_pack(store,"production-pipeline") if args.production else create_creator_pack(store) if args.creator_pack else create_sample(store)
         print(json.dumps({"project_id":state["project"]["id"], "name":state["project"]["metadata"]["name"]},ensure_ascii=False))
     else:
         from framecore.server import Server

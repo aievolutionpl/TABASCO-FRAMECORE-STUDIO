@@ -125,3 +125,13 @@ python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py te
 - Profil Company brain zachował font DM Sans i kolory klienta po przygotowaniu lekcji. Plan nie nadpisuje jego kopii informacji. Test potwierdza atomowe odrzucenie nieznanych pól opisów i cofnięcie całego montażu.
 - Przykład `examples/visual-lesson` pozostawia oddzielne teksty, kształty, logo oraz ścieżkę wyjaśnień. Roboczy render: **21 s, 640 × 360, 24 FPS, H.264, bez audio**. Obejrzano rzeczywiste zrzuty interfejsu oraz planszę ośmiu klatek; pomiar nie wykrył przekroczeń tekstu lub kadru. Powrót do trzech badanych czasów dał identyczne piksele.
 - To adaptacja zasad z grafiki użytkownika, nie test deklarowanego tam modelu. Opis narracji nie generuje głosu, a pole przejścia nie tworzy automatycznej animacji. Dźwięk, ciągłość postaci i trafność wyjaśnienia wymagają dalszej produkcji oraz oceny człowieka.
+
+### Połączenie z nowszym main
+
+Podczas publikacji wykryto nowsze zmiany na GitHubie: panel rozmowy OpenAI/OpenRouter, onboarding, lokalną analizę materiałów i poprawki renderera. Rozwiązano konflikty z zachowaniem obu zestawów funkcji. Dodatkowy test panelu rozmowy wykonał rzeczywisty zapis komendy podmiany z kontrolowaną odpowiedzią modelu i zachował geometrię klipu oraz aktora `agent` w historii. Nie wykonuje płatnego wywołania dostawcy.
+
+Pierwszy przebieg po połączeniu ujawnił trzy testy używające brakującej domyślnej instalacji Chromium Playwright. Korzystają teraz ze wspólnego wyboru przeglądarki renderera, tak jak pozostałe testy. Ponowiony zestaw onboardingu, analizy mediów i wspólnego montażu: **13/13, 37,89 s**; regresja przewijania po końcu źródła: **1/1, 1,59 s**.
+
+Starsze moduły sprawdzono osobno: **197 zaliczonych, 46 pominiętych, 47,06 s**. Pominięcia dotyczą opcjonalnych scenariuszy wymagających lokalnego GSAP/konfiguracji przeglądarki oraz warunków środowiska. Test ruchu używa teraz wspólnego wyboru dostępnej przeglądarki zamiast zakładać obecność konkretnej instalacji Playwright. Nie jest to deklaracja wykonania pominiętych scenariuszy.
+
+Końcowy pełny przebieg po połączeniu i poprawkach: **68/68 testów FrameCore, 274,36 s, bez pominięć** (`python -m pytest tests/test_framecore*.py -o addopts="" -q`). Łącznie z osobnym przebiegiem starszych modułów: **265 zaliczonych, 46 pominiętych, bez pozostałych błędów**. Uruchomione studio potwierdziło gotowość Playera, obecność podmiany i lekcji w API, analizę mediów oraz zintegrowany panel agenta, bez błędów JavaScript w sprawdzonym otwarciu.

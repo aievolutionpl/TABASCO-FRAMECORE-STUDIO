@@ -1,5 +1,11 @@
 # Architektura TABASCO CREATIVES + FRAMECORE — STUDIO
 
+## Wbudowana rozmowa 0.2
+
+`framecore/agent.py` obsługuje iteracyjne tool calling przez OpenRouter lub OpenAI. Serwer utrzymuje jeden aktywny przebieg, limit 16 tur, możliwość zatrzymania i krótką historię rozmowy w RAM. Konfiguracja dostawcy pozostaje poza dokumentem projektu. Narzędzia wywołują wspólne `API.call` z aktorem `agent`, przypiętym identyfikatorem projektu i kontrolą rewizji. Narzędzia powłoki, dowolnego importu plików oraz globalnej biblioteki marek nie są udostępnione temu agentowi.
+
+`framecore/static/agent-studio.js` dostarcza rozmowę, konfigurację oraz onboarding. Starszy `agent_control.py` zachowuje niezależny przepływ propozycji przez CLI i OpenRouter. Ich endpointy oraz identyfikatory interfejsu są rozdzielone; wspólną granicą edycji jest Store.
+
 To projekt współpracy nad lokalnym studiem filmowym. Człowiek i agent korzystają z jednego zapisu projektu, zestawu walidowanych komend i historii cofania. Dotychczasowe narzędzia CLI vstudio pozostają dostępne.
 
 ## Decyzje po przeglądzie projektów
@@ -59,3 +65,7 @@ Opcjonalne `project.production` zawiera brief i wymagane materiały; `scene.beat
 ## Company brain w FrameCore
 
 `framecore.brands.BrandLibrary` przechowuje formularze i obrazy w `_brands` przy projektach, z blokadą biblioteki, zapisem atomowym i własną wersją. `apply_brand_profile` kopiuje obrazy, sprawdza SHA-256 i wykonuje jeden zapis `attach_brand_snapshot`: `brandProfile`, konfigurację `brand` oraz materiały w jednej historii projektu. Stare kopie i formaty są niezależne od późniejszych zmian lub usunięcia biblioteki. Dashboard i MCP mają ten sam interfejs biblioteki. Szkic agenta jest osobnym zadaniem procesu, ze stanem `draft`, bez automatycznego zapisu ani dostępu do sieci; montaż dostaje zamrożony `companyBrain`.
+
+## Fundamenty Media Engine (P0)
+
+`framecore.persistence` przejmuje własność zapisu i blokad; `vstudio.locking` zachowuje zgodne re-eksporty. `media_import` oddziela import od HTTP, a `media.MediaEngine` generuje pochodne w cache adresowanym zawartością bez zmiany dokumentu projektu. API/MCP i `static/media-ui.js` korzystają z tego samego kontraktu. [Media Engine](docs/MEDIA_ENGINE.md) · [Audyt](docs/AI_STUDIO_AUDIT.md).

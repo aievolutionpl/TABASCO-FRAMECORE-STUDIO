@@ -138,6 +138,7 @@ def test_company_brain_settings_upload_apply_research_and_mobile(tmp_path,monkey
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982});page.on('pageerror',lambda e:errors.append(str(e)))
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             base=f'http://127.0.0.1:{srv.server_port}';page.goto(base)
             page.wait_for_function('document.querySelector("#player").ready')
             page.click('#settings');page.fill('[data-company-field="name"]','Usługi Test')
@@ -161,6 +162,7 @@ def test_company_brain_settings_upload_apply_research_and_mobile(tmp_path,monkey
             page.click('[data-company="draft"]');expect(page.locator('[data-company-field="about"]')).to_have_value('Opis od agenta')
             assert BrandLibrary(store).list()['profiles'][0]['about']=='Montaż i serwis'
             page.click('[data-company="save"]');page.locator('#companyUpload').wait_for()
+            page.wait_for_function("async()=> (await (await fetch('/api/brands')).json()).profiles[0].about === 'Opis od agenta'")
             assert BrandLibrary(store).list()['profiles'][0]['about']=='Opis od agenta'
             assert store.read(pid)['project']['brandProfile']['about']=='Montaż i serwis'
             assert page.request.post(base+'/api/brand-upload/'+p['brandProfile']['id']+'?version=1&name=x.png',data=picture()).status==403

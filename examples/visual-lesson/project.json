@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "id": "fc_f2eaf0eef9ad",
-  "revision": 18,
+  "revision": 25,
   "metadata": {
     "name": "Człowiek + agent · wspólny montaż",
     "brief": "",
     "workflow": "Lekcja przez historię",
     "createdAt": "2026-10-05T20:41:07.552479+00:00",
-    "updatedAt": "2026-10-05T20:42:27.156744+00:00"
+    "updatedAt": "2026-10-05T20:47:51.808830+00:00"
   },
   "canvas": {
     "width": 640,

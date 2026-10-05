@@ -117,16 +117,17 @@
       n.style.transform=`perspective(1200px) rotateY(${flip}deg) translate(${dx}px,${dy}px) rotate(${keyed(e,'rotation',local)+tilt+extraRotate}deg) scale(${keyed(e,'scale',local)*scale})`;
       if (media && ['video','audio'].includes(e.type)) {
         const sourceTime=Math.max(0,e.sourceStart+local);
+        const targetTime=Math.min(sourceTime,Math.max(0,media.duration-.001));
         media.muted=e.type==='video'||track.muted||!!window.__CAPTURE__;
         if(e.type==='audio') {const a=e.audio||{gain:1,fadeIn:0,fadeOut:0};media.volume=clamp(a.gain*Math.min(1,a.fadeIn?Math.max(0,local)/a.fadeIn:1,a.fadeOut?Math.max(0,e.duration-local)/a.fadeOut:1));}
         if(!visible || !playing) media.pause();
-        if(visible && media.readyState>=1 && Math.abs(media.currentTime-sourceTime)>.04) {
+        if(visible && media.readyState>=1 && Math.abs(media.currentTime-targetTime)>.04) {
           if(window.__CAPTURE__) waits.push(new Promise(resolve=>{
-            const done=()=>{media.removeEventListener('seeked',done);resolve();};
-            media.addEventListener('seeked',done,{once:true}); media.currentTime=Math.min(sourceTime,Math.max(0,media.duration-.001));
-            setTimeout(done,3000);
+            const done=()=>{clearTimeout(timer);media.removeEventListener('seeked',done);resolve();};
+            const timer=setTimeout(done,3000);
+            media.addEventListener('seeked',done,{once:true}); media.currentTime=targetTime;
           }));
-          else media.currentTime=Math.min(sourceTime,Math.max(0,media.duration-.001));
+          else media.currentTime=targetTime;
         }
         if(visible&&playing) media.play().catch(()=>{});
       }
@@ -152,7 +153,7 @@
     if(!media)return Promise.resolve();
     if(media.tagName==='IMG')return media.decode();
     if(media.readyState>=2)return Promise.resolve();
-    return new Promise((resolve,reject)=>{media.addEventListener('loadeddata',resolve,{once:true});media.addEventListener('error',()=>reject(new Error('Media load failed')),{once:true});});
+    return new Promise((resolve,reject)=>{media.addEventListener('loadeddata',resolve,{once:true});media.addEventListener('error',()=>reject(new Error(`Media load failed (code ${media.error?.code}): ${media.currentSrc}`)),{once:true});});
   })).then(()=>paint(0)).then(()=>{window.READY=true;});
   paint(0);
 })();

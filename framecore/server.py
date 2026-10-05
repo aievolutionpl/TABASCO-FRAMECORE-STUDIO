@@ -9,51 +9,16 @@ import threading
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-from PIL import Image
 from http.server import ThreadingHTTPServer
 from vstudio.dashboard.server import Handler as StudioHandler
 from .api import API
 from .composition import compile_project
-from .model import EditorError, uid
+from .model import EditorError
 from .motion import registry
-from .render import RenderJobs, probe
+from .render import RenderJobs
 
 STATIC = Path(__file__).parent / "static"
-MEDIA_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
-               ".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime", ".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/mp4"}
-
-
-def import_asset(store, pid, data, filename, role="media", expected_revision=None, actor="human"):
-    suffix = Path(filename).suffix.lower()
-    if suffix not in MEDIA_TYPES or not data or len(data) > 100_000_000:
-        raise EditorError("Dodaj PNG/JPG/WebP, MP4/WebM/MOV lub WAV/MP3/M4A do 100 MB")
-    pdir = store.directory(pid)
-    # Confirm the project exists before writing a file.
-    state = store.read(pid)
-    aid = uid("asset")
-    file = f"assets/{aid}{suffix}"
-    path = pdir / file
-    path.write_bytes(data)
-    try:
-        kind = MEDIA_TYPES[suffix].split("/")[0]
-        duration = None
-        has_audio = False
-        if kind == "image":
-            with Image.open(path) as image:
-                image.verify()
-        else:
-            info = probe(path)
-            streams = info["streams"]
-            has_audio = any(s["codec_type"] == "audio" for s in streams)
-            if kind == "video" and not any(s["codec_type"] == "video" for s in streams) or kind == "audio" and not any(s["codec_type"] == "audio" for s in streams):
-                raise EditorError("Zawartość pliku nie odpowiada typowi materiału")
-            duration = float(info["format"]["duration"])
-        a = {"id": aid, "name": Path(filename).name[:200], "kind": kind, "file": file, "mime": MEDIA_TYPES[suffix],
-             "duration": duration, "hasAudio": has_audio, "role": role, "provenance": {"source": "user_upload"}, "license": "user_provided"}
-        return store.execute(pid, "add_asset", {"asset": a}, expected_revision if expected_revision is not None else state["project"]["revision"], actor)
-    except Exception:
-        path.unlink(missing_ok=True)
-        raise
+from .media_import import MEDIA_TYPES, import_asset
 
 
 class Handler(StudioHandler):
@@ -88,6 +53,16 @@ class Handler(StudioHandler):
                 if not asset: return self._err(404, "Nie znaleziono materiału marki")
                 return self._file(library.directory(bid) / asset["file"])
             if path == "/api/projects": return self._json(200, {"projects": store.list()})
+            if path == "/api/assistant/status": return self._json(200, self.server.assistant.status())
+            if path == "/api/runtime":
+                from .runtime import diagnostics
+                return self._json(200, diagnostics())
+            if path == "/api/mcp-config":
+                import sys
+                root = Path(__file__).resolve().parents[1]
+                return self._json(200, {"mcpServers":{"framecore":{"command":sys.executable,
+                    "args":[str(root / 'framecore.py'), 'mcp', '--root', str(store.root.resolve())], 'cwd':str(root)}}})
+            if path.startswith("/api/assistant/job/"): return self._json(200, self.server.assistant.get(path.split("/")[-1]))
             if path == "/api/motion": return self._json(200, {"components": registry()})
             if path == "/api/tools": return self._json(200, {"tools": self.server.api.tools()})
             if path.startswith("/api/project/"): return self._json(200, store.read(path.split("/")[-1]))
@@ -96,6 +71,11 @@ class Handler(StudioHandler):
             if path.startswith("/composition/"):
                 pid = path.split("/")[-1]
                 return self._send(200, compile_project(store.read(pid)["project"], f"/assets/{pid}/").encode(), "text/html; charset=utf-8")
+            if path.startswith("/media/"):
+                parts = path.strip('/').split('/')
+                if len(parts) != 4:
+                    return self._err(404, "Nie znaleziono pliku analizy")
+                return self._file(self.server.api.media.artifact(parts[1], parts[2], parts[3]))
             if path.startswith("/assets/"):
                 _, _, pid, name = path.split("/")
                 p = store.read(pid)["project"]
@@ -164,6 +144,11 @@ class Handler(StudioHandler):
                 elif path == "/api/create": result = self.server.api.call("create_project", body, "human")
                 elif path == "/api/command": result = self.server.api.call(body["name"], body.get("args", {}), "human")
                 elif path == "/api/export": result = self.server.api.call("export", body, "human")
+                elif path == "/api/assistant/settings": result = self.server.assistant.save(body)
+                elif path == "/api/assistant/test": result = self.server.assistant.test()
+                elif path == "/api/assistant/models": result = self.server.assistant.models()
+                elif path == "/api/assistant/run": result = self.server.assistant.start(body.get("project_id"), body.get("prompt"))
+                elif path == "/api/assistant/cancel": result = self.server.assistant.cancel(body.get("job_id"))
                 else: return self._err(404, "Nie znaleziono")
             self._json(200, result)
         except (EditorError, KeyError, ValueError, TypeError) as exc:
@@ -174,6 +159,7 @@ class Handler(StudioHandler):
 
 class Server(ThreadingHTTPServer):
     daemon_threads = True
+    request_queue_size = 128
     allow_reuse_address = True
 
     def __init__(self, store, port=8877):
@@ -182,11 +168,14 @@ class Server(ThreadingHTTPServer):
         self.store = store
         self.jobs = RenderJobs(store)
         self.api = API(store, self.jobs)
+        from .agent import AgentService
+        self.assistant = AgentService(self.api)
         from .agent_control import AgentControl
         self.agent = AgentControl(store)
 
 
     def server_close(self):
+        self.assistant.stop_all()
         self.agent.stop(disconnect=True)
         super().server_close()
 

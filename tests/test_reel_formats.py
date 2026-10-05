@@ -245,7 +245,8 @@ class TestMotionKitInBrowser:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
-            br = pw.chromium.launch()
+            from vstudio.renderers.html_to_video import launch_browser
+            br = launch_browser(pw, None)
             pg = br.new_page(viewport={"width": 540, "height": 960})
             pg.set_content("<html><body style='margin:0;background:#000'><div id='cap' style='top:40%'></div></body></html>")
             pg.add_script_tag(content=KIT.read_text(encoding="utf-8"))
@@ -333,10 +334,10 @@ class TestReelTemplatesAreClean:
         sup = supervisor.check(pdir, pr, depth="quick", save=False)
         if sup["metrics"].get("thinned"):
             pytest.skip("runner zbyt wolny: nadzorca rzadziej próbkuje klatki, więc wynik nie jest porównywalny")
-        assert sup["verdict"] == "pass" and not [f for f in sup["findings"] if f["severity"] in ("error", "warn")], sup["findings"]
+        assert sup["verdict"] == "pass" and not [f for f in sup["findings"] if f["severity"] in ("error", "warn")], json.dumps(sup["findings"], ensure_ascii=False, indent=2)
         rep = director.review(pdir, pr, depth="quick", save=False)
         bad = [f for f in rep["findings"] if f["severity"] in ("error", "warn")]
-        assert rep["verdict"] == "pass" and not bad, bad
+        assert rep["verdict"] == "pass" and not bad, json.dumps(bad, ensure_ascii=False, indent=2)
         m = rep["metrics"]
         assert m["gaps"] == [] and m["looks"] >= dscan.required_looks(pr["duration"]) and m["hook"] >= 0.08
         assert not m.get("thinned") and not m.get("motion_skipped"), m

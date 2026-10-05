@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -12,6 +13,7 @@ from playwright.sync_api import sync_playwright
 
 from framecore.server import start_background
 from framecore.store import Store
+from vstudio.renderers.html_to_video import launch_browser
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -29,8 +31,9 @@ def test_editable_reel_human_external_agent_undo_export(tmp_path):
     errors=[]
     try:
         with sync_playwright() as pw:
-            browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
+            browser=launch_browser(pw, None)
             page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base)
             page.wait_for_function('document.querySelector("#player").ready')
@@ -82,8 +85,18 @@ def test_editable_reel_human_external_agent_undo_export(tmp_path):
             page.wait_for_function('document.querySelector("[data-property=x]").value==="140"')
             # UI export freezes the same model used by the live agent.
             page.click('#export')
-            page.click('#startExport')
-            page.wait_for_selector('a[href$="framecore.mp4"]',timeout=180000)
+            with page.expect_response(lambda response: response.url.endswith('/api/export')) as started:
+                page.click('#startExport')
+            job=started.value.json()
+            assert started.value.ok,job
+            deadline=time.monotonic()+600
+            while time.monotonic()<deadline:
+                job=srv.jobs.get(job['id'])
+                assert job['status']!='failed',job.get('error')
+                if job['status']=='complete':break
+                page.wait_for_timeout(500)
+            assert job['status']=='complete',f'Render deadline exceeded: {job}'
+            page.wait_for_selector('a[href$="framecore.mp4"]',timeout=10000)
             download=page.locator('a[href$="framecore.mp4"]').get_attribute('href')
             with urlopen(base+download) as response:
                 assert response.status==200
@@ -125,6 +138,7 @@ def test_polish_editor_new_tools_and_deterministic_motion(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base)
             page.wait_for_function('document.querySelector("#player").ready')
@@ -185,6 +199,7 @@ def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
             def offline(route):
                 if route.request.url.startswith(base) or route.request.url.startswith('data:'):route.continue_()
@@ -198,7 +213,7 @@ def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
             page.select_option('[data-property="style.fontFamily"]','Playfair Display')
             page.wait_for_function('document.querySelector("[data-property=\\"style.fontFamily\\"]").value==="Playfair Display"')
             page.click('[data-tab="Library"]')
-            assert page.locator('[data-builtin]').count()==84
+            assert page.locator('[data-builtin]').count()==87
             page.fill('#librarySearch','rakieta')
             assert page.locator('[data-builtin]').count()==3
             page.click('[data-builtin="fluent-rocket"]')
@@ -239,3 +254,48 @@ def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
             assert errors==[] and external==[]
             browser.close()
     finally:srv.shutdown();srv.server_close()
+
+@pytest.mark.browser
+def test_capture_does_not_seek_repeatedly_after_media_end(tmp_path):
+    import io
+    import wave
+    from framecore.server import import_asset
+    from framecore.composition import compile_project
+
+    data = io.BytesIO()
+    with wave.open(data, 'wb') as audio:
+        audio.setnchannels(1)
+        audio.setsampwidth(2)
+        audio.setframerate(8000)
+        audio.writeframes(b'\0\0' * 8000)
+    store = Store(tmp_path / 'projects')
+    state = store.create('End of source', duration=4)
+    pid = state['project']['id']
+    state = import_asset(store, pid, data.getvalue(), 'sound.wav', expected_revision=state['project']['revision'])
+    state = store.execute(pid, 'add_audio', {
+        'assetId': state['project']['assets'][0]['id'], 'duration': 1,
+    }, state['project']['revision'])
+    # Imported metadata can outlast the duration decoded by the browser.
+    state['project']['assets'][0]['duration'] = 4
+    state['project']['elements'][0]['duration'] = 4
+    with sync_playwright() as pw:
+        browser = launch_browser(pw, None)
+        page = browser.new_page()
+        page.route('http://media.test/**', lambda route: route.fulfill(
+            body=data.getvalue(), content_type='audio/wav'))
+        page.set_content(compile_project(state['project'], 'http://media.test/'))
+        page.evaluate('window.__ready')
+        page.evaluate('window.__CAPTURE__ = true')
+        # Once the clamped end position has been reached, subsequent frames
+        # must not assign currentTime again and wait for a nonexistent seeked.
+        seeks = page.evaluate('''async () => {
+            const media=document.querySelector('audio'); let seeks=0;
+            Object.defineProperty(media,'currentTime',{get:()=>media.duration-.001,set:()=>seeks++});
+            await Promise.race([
+                (async()=>{await window.seek(2.1);await window.seek(2.2)})(),
+                new Promise((_,reject)=>setTimeout(()=>reject(Error('Redundant seek stalled capture')),1000))
+            ]);
+            return seeks;
+        }''')
+        assert seeks == 0
+        browser.close()

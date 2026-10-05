@@ -1,0 +1,10 @@
+FRAMECORE CAMPAIGN ASSETS — AI-GENERATED CONTENT
+
+The campaign PNG files in framecore/static/library/campaign were generated
+using the built-in image generation tool for this project. They are not
+third-party MIT icon artwork and do not have an upstream Git commit.
+
+The project contributors permit their use, modification and redistribution
+with FrameCore and in videos created with FrameCore, to the extent they hold
+rights in these outputs. No exclusivity or copyright eligibility is claimed.
+No warranty is provided. See docs/CAMPAIGN_ASSETS.md for provenance and prompts.
