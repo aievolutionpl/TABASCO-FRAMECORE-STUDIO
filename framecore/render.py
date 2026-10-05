@@ -10,7 +10,7 @@ import threading
 from copy import deepcopy
 from pathlib import Path
 
-from vstudio.locking import atomic_write, file_lock
+from .persistence import atomic_write, file_lock
 
 from .composition import compile_project
 from .model import EditorError, uid

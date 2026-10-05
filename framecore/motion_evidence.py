@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 import numpy as np
 from PIL import Image
-from vstudio.locking import atomic_write
+from .persistence import atomic_write
 from .model import EditorError, number
 from .review import create_review, load_review
 

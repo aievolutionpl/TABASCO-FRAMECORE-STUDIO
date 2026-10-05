@@ -9,7 +9,7 @@ import shutil
 from urllib.parse import urlparse
 
 from PIL import Image
-from vstudio.locking import atomic_write, file_lock
+from .persistence import atomic_write, file_lock
 from .model import EditorError, identifier, now, uid
 
 TEXT_FIELDS = ('name', 'website', 'industry', 'about', 'offer', 'audience', 'positioning', 'tone',

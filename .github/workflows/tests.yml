@@ -7,31 +7,45 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    env:
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
           cache: pip
-
-      - name: FFmpeg (render, dźwięk, wydanie)
+      - name: FFmpeg Linux
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
+      - name: FFmpeg Windows
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg --no-progress -y
       - name: Zależności
         run: pip install -r requirements.txt pytest
-
-      - name: Chromium dla Playwright
+      - name: Chromium i Chrome Linux
+        if: runner.os == 'Linux'
         run: python -m playwright install --with-deps chromium chrome
-
-      # Testy przeglądarkowe potrzebują GSAP 3.12.5 (strony ładują go z CDN; test podstawia lokalną kopię z npm)
+      - name: Chromium Windows (Chrome preinstalled on runner)
+        if: runner.os == 'Windows'
+        run: python -m playwright install chromium
       - name: GSAP 3.12.5
+        shell: bash
         run: |
           npm pack gsap@3.12.5 --silent
           tar xzf gsap-3.12.5.tgz
-          echo "GSAP_JS=$PWD/package/dist/gsap.min.js" >> "$GITHUB_ENV"
-
+          python -c "import os; from pathlib import Path; open(os.environ['GITHUB_ENV'],'a',encoding='utf-8').write('GSAP_JS='+str(Path('package/dist/gsap.min.js').resolve())+'\n')"
       - name: Testy
-        run: python -m pytest -q
+        run: python -m pytest -q --junitxml=output/pytest-results.xml
+      - name: Raport testów
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-${{ runner.os }}
+          path: output/pytest-results.xml

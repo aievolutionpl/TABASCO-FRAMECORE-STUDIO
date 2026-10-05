@@ -7,7 +7,7 @@ import math
 import re
 import subprocess
 from pathlib import Path
-from vstudio.locking import atomic_write, file_lock
+from .persistence import atomic_write, file_lock
 from .model import EditorError, now
 from .render import probe
 

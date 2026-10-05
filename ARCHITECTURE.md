@@ -65,3 +65,7 @@ Opcjonalne `project.production` zawiera brief i wymagane materiały; `scene.beat
 ## Company brain w FrameCore
 
 `framecore.brands.BrandLibrary` przechowuje formularze i obrazy w `_brands` przy projektach, z blokadą biblioteki, zapisem atomowym i własną wersją. `apply_brand_profile` kopiuje obrazy, sprawdza SHA-256 i wykonuje jeden zapis `attach_brand_snapshot`: `brandProfile`, konfigurację `brand` oraz materiały w jednej historii projektu. Stare kopie i formaty są niezależne od późniejszych zmian lub usunięcia biblioteki. Dashboard i MCP mają ten sam interfejs biblioteki. Szkic agenta jest osobnym zadaniem procesu, ze stanem `draft`, bez automatycznego zapisu ani dostępu do sieci; montaż dostaje zamrożony `companyBrain`.
+
+## Fundamenty Media Engine (P0)
+
+`framecore.persistence` przejmuje własność zapisu i blokad; `vstudio.locking` zachowuje zgodne re-eksporty. `media_import` oddziela import od HTTP, a `media.MediaEngine` generuje pochodne w cache adresowanym zawartością bez zmiany dokumentu projektu. API/MCP i `static/media-ui.js` korzystają z tego samego kontraktu. [Media Engine](docs/MEDIA_ENGINE.md) · [Audyt](docs/AI_STUDIO_AUDIT.md).

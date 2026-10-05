@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 
 from PIL import Image, ImageDraw
-from vstudio.locking import atomic_write, file_lock
+from .persistence import atomic_write, file_lock
 from .model import EditorError, identifier, number, now, uid
 from .production import CHECKLIST, asset_manifest, fingerprint, require_assets
 

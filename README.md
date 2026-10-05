@@ -182,3 +182,7 @@ Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współp
 Poniższa ilustracja została dostarczona do projektu. Przedstawia jego ideę i identyfikację; aktualny interfejs pokazuje zrzut ekranu na początku README.
 
 ![TABASCO CREATIVES + FRAMECORE — STUDIO: człowiek i agent AI wspólnie tworzą film](assets/tabasco-framecore-collaboration.jpg)
+
+## Rozwój AI Studio — etap P0
+
+Panel **Analiza materiałów** tworzy miniatury, contact sheets, proxy oraz waveform i wykrywa ciszę. Wyniki są buforowane poza projektem i dostępne dla UI oraz agentów przez API/MCP. [Obsługa i ograniczenia](docs/MEDIA_ENGINE.md) · [Audyt i plan P0/P1/P2](docs/AI_STUDIO_AUDIT.md).

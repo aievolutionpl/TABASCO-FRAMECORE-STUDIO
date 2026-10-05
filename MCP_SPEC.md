@@ -81,3 +81,7 @@ FrameCore udostępnia również kontrakt produkcyjny, beaty, reguły ruchu, prze
 ## Profile marek i company brain
 
 Wspólny edytor udostępnia `list_brand_profiles`, `get_brand_profile`, `save_brand_profile`, `upload_brand_asset`, `remove_brand_asset`, `delete_brand_profile` oraz `apply_brand_profile`. Biblioteka ma własny `expected_version`; przypisanie do projektu wymaga także `expected_revision`. Kontekst klatki zwraca `companyBrain`, a projekt zachowuje kopię profilu i materiałów. [Schemat, research i przykłady](docs/COMPANY_BRAIN.md).
+
+## Analiza mediów
+
+`analyze_media(project_id, asset_id)` uruchamia lokalną analizę; `get_media_analysis(project_id, asset_id)` zwraca stan i wynik. Nie zmieniają projektu ani rewizji. Polluj do `ready`/`failed`; nie zakładaj gotowości na podstawie przyjęcia zadania. Pełny kontrakt: [Media Engine](docs/MEDIA_ENGINE.md).

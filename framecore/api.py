@@ -4,13 +4,15 @@ from .model import EditorError
 from .motion import registry
 from .providers import PROVIDERS
 
-READS = {"get_project", "get_selection", "get_timeline", "get_frame_context", "list_assets", "list_projects", "list_motion", "get_history", "get_providers", "get_job", "preview", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "inspect_project", "capture_frame"}
+READS = {"get_media_analysis", "get_project", "get_selection", "get_timeline", "get_frame_context", "list_assets", "list_projects", "list_motion", "get_history", "get_providers", "get_job", "preview", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "inspect_project", "capture_frame"}
 WRITES = {"add_scene", "duplicate_scene", "add_text", "add_video", "add_image", "add_audio", "add_caption", "add_shape",
           "move_element", "resize_element", "set_property", "trim_clip", "split_clip", "move_clip", "delete_clip", "apply_motion",
           "set_brand", "set_format", "style_captions", "set_track", "assemble_storyboard", "rename_project",
           "undo", "redo", "propose_changes", "apply_proposal", "cancel_proposal", "set_selection", "set_playhead",
           "add_icon", "add_library_asset", "set_background", "apply_template", "duplicate_clip", "set_audio", "set_keyframes", "set_duration"}
 FIELDS = {
+    "get_media_analysis": {"asset_id": "string"},
+    "analyze_media": {"asset_id": "string"},
     "add_library_asset": {"asset_id":"string", "start":"number", "duration":"number", "x":"number", "y":"number", "width":"number", "height":"number"},
     "set_background": {"background_id":"string", "animated":"boolean"},
     "add_icon": {"icon_id":"string", "start":"number", "duration":"number", "x":"number", "y":"number", "width":"number", "height":"number"},
@@ -74,11 +76,16 @@ FIELDS.update({
 class API:
     def __init__(self, store, jobs):
         self.store, self.jobs = store, jobs
+        from .media import MediaEngine
+        self.media = MediaEngine(store)
 
     def call(self, name, args=None, actor="agent"):
         args = dict(args or {})
         pid = args.pop("project_id", None)
         revision = args.pop("expected_revision", None)
+        if name in {"get_media_analysis", "analyze_media"}:
+            method = self.media.start if name == "analyze_media" else self.media.status
+            return method(pid, args["asset_id"])
         if name in BRAND_TOOLS:
             from .brands import BrandLibrary
             brands = BrandLibrary(self.store)
@@ -146,7 +153,7 @@ class API:
         if name == "create_project": return self.store.create(args.get("name", "Nowy projekt"), args.get("format", "9:16"), args.get("duration", 15), args.get("brief", ""), args.get("workflow", "Premiera produktu"))
         if name == "add_asset":
             from pathlib import Path
-            from .server import import_asset
+            from .media_import import import_asset
             source = Path(args["source_file"]).resolve()
             import_root = (self.store.root.parent / "imports").resolve()
             if not source.is_relative_to(import_root) or not source.is_file():
@@ -199,7 +206,7 @@ class API:
         raise EditorError(f"Nieznane narzędzie: {name}", "unknown_tool")
 
     def tools(self):
-        names = sorted(READS | WRITES | BRAND_TOOLS | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery", "analyze_export", "create_motion_strip", "compare_reviews"})
+        names = sorted(READS | WRITES | BRAND_TOOLS | {"analyze_media", "create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery", "analyze_export", "create_motion_strip", "compare_reviews"})
         result = []
         for name in names:
             props = {"project_id": {"type": "string"}, "expected_revision": {"type": "integer"}}
@@ -234,6 +241,7 @@ class API:
             if name == "resolve_frame_time": required.append("spec")
             if name == "compare_reviews": required += ["baseline_id","review_id"]
             if name == "analyze_export": props["profile"] = {"type":"string", "enum":["calm","punchy","mute"]}
+            if name in {"get_media_analysis", "analyze_media"}: required.append("asset_id")
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
                          "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"],
                          "set_format": ["format"], "set_brand": ["brand"], "style_captions": ["style"],
