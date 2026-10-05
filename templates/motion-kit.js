@@ -81,7 +81,7 @@
   VS.captions = (function () {
     var C = { el: null, data: null, opts: {}, line: -2, spans: [] };
     var CSS = '.vs-cap{position:absolute;left:0;right:0;display:flex;flex-wrap:wrap;justify-content:center;gap:0 .26em;pointer-events:none;text-align:center;' +
-      'font-family:var(--cap-font,"Archivo Black","Inter","Helvetica Neue",Arial,sans-serif);font-weight:900;font-size:var(--cap-size,9vw);line-height:1.04;' +
+      'font-family:var(--cap-font,"Archivo Black","Inter","Helvetica Neue",Arial,sans-serif);font-weight:900;font-size:var(--cap-size,9vw);line-height:1.5;' +
       'color:var(--cap-color,#fff);text-transform:var(--cap-case,uppercase);letter-spacing:-.01em;text-shadow:0 .035em .3em rgba(0,0,0,.45);padding:0 6%;box-sizing:border-box}' +
       '.vs-w{display:inline-block;transform-origin:50% 72%;will-change:transform}.vs-w.hl{color:var(--cap-hl,#FFD60A)}';
     var pop = VS.spring(300, 21);
