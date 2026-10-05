@@ -1,5 +1,11 @@
 # Architektura TABASCO CREATIVES + FRAMECORE — STUDIO
 
+## Wbudowana rozmowa 0.2
+
+`framecore/agent.py` obsługuje iteracyjne tool calling przez OpenRouter lub OpenAI. Serwer utrzymuje jeden aktywny przebieg, limit 16 tur, możliwość zatrzymania i krótką historię rozmowy w RAM. Konfiguracja dostawcy pozostaje poza dokumentem projektu. Narzędzia wywołują wspólne `API.call` z aktorem `agent`, przypiętym identyfikatorem projektu i kontrolą rewizji. Narzędzia powłoki, dowolnego importu plików oraz globalnej biblioteki marek nie są udostępnione temu agentowi.
+
+`framecore/static/agent-studio.js` dostarcza rozmowę, konfigurację oraz onboarding. Starszy `agent_control.py` zachowuje niezależny przepływ propozycji przez CLI i OpenRouter. Ich endpointy oraz identyfikatory interfejsu są rozdzielone; wspólną granicą edycji jest Store.
+
 To projekt współpracy nad lokalnym studiem filmowym. Człowiek i agent korzystają z jednego zapisu projektu, zestawu walidowanych komend i historii cofania. Dotychczasowe narzędzia CLI vstudio pozostają dostępne.
 
 ## Decyzje po przeglądzie projektów

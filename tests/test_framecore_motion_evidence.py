@@ -67,6 +67,7 @@ def test_motion_lab_dashboard_scene_strip(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982});page.on('pageerror',lambda e:errors.append(str(e)))
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.goto(f'http://127.0.0.1:{srv.server_port}');page.wait_for_function('document.querySelector("#player").ready')
             page.click('[data-tab="Production"]');page.get_by_text('Laboratorium ruchu · fframes',exact=True).click()
             scene=store.read(pid)['project']['scenes'][0]['id'];page.select_option('#motionScene',scene);page.fill('#motionCount','6')

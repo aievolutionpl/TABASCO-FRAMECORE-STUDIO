@@ -205,6 +205,7 @@ class Server(ThreadingHTTPServer):
 
 
     def server_close(self):
+        self.assistant.stop_all()
         self.agent.stop(disconnect=True)
         super().server_close()
 

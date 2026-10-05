@@ -201,7 +201,7 @@ def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
             page.select_option('[data-property="style.fontFamily"]','Playfair Display')
             page.wait_for_function('document.querySelector("[data-property=\\"style.fontFamily\\"]").value==="Playfair Display"')
             page.click('[data-tab="Library"]')
-            assert page.locator('[data-builtin]').count()==84
+            assert page.locator('[data-builtin]').count()==87
             page.fill('#librarySearch','rakieta')
             assert page.locator('[data-builtin]').count()==3
             page.click('[data-builtin="fluent-rocket"]')

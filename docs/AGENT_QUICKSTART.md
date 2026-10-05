@@ -34,4 +34,6 @@ Agent HTTP: `GET /api/assistant/status`, `POST /api/assistant/settings`, `POST /
 
 ## Co jest faktycznie zintegrowane
 
+**Twój agent** to iteracyjna rozmowa OpenRouter/OpenAI z narzędziami edytora (`/api/assistant/*`). Istniejący panel **Agent AI** obsługuje zadania i propozycje zmian przez Codex CLI, Claude CLI lub OpenRouter (`/api/agent/*`), z osobnym połączeniem przechowywanym tylko w RAM. Przejdziesz do niego z Integracji przyciskiem **Codex / Claude · zadania**. Profile marek, Company brain, pipeline produkcyjny i laboratorium ruchu pozostają dostępne w swoich panelach.
+
 OpenRouter i OpenAI: rozmowa tekstowa oraz wywołania narzędzi edytora. Generowanie obrazów, wideo, głosu i transkrypcja nadal wymagają osobnych adapterów dostawców. Nowe materiały kampanii zostały wygenerowane podczas przygotowania wydania, a następnie dołączone lokalnie do biblioteki — nie są wynikiem działającego generatora wewnątrz aplikacji.

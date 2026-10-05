@@ -311,4 +311,5 @@ async function init(){
  setInterval(async()=>{if(!p()||busy||pendingSelections||uploading||drag||playing||$('#modal').open||document.activeElement?.matches('input,textarea,select,[contenteditable=true]'))return;try{if(activeTab==='Production'&&Date.now()-lastProductionStatusCheck>5000){lastProductionStatusCheck=Date.now();await productionUI.refreshStatus();}const version=selectionVersion,projectId=p().id,revision=p().revision;const next=await request('/api/project/'+projectId);if(busy||pendingSelections||version!==selectionVersion||p().id!==projectId||p().revision!==revision)return;if(next.project.revision!==p().revision||JSON.stringify(next.session)!==JSON.stringify(state.session)||JSON.stringify(next.proposals.map(x=>[x.id,x.status]))!==JSON.stringify(state.proposals.map(x=>[x.id,x.status]))){state=next;update();}}catch(err){$('#saveState').textContent='Połącz ponownie ze studiem';}},800);
 }
 window.framecoreContext = () => p();
+window.framecoreAgentDashboard = () => {setTab('AI'); agentUI.connectModal();};
 init().catch(e=>{toast(e.message);$('#projectMenu').textContent='Studio niedostępne';console.error(e);});

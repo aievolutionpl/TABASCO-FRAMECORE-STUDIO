@@ -109,6 +109,8 @@ def test_openrouter_request_and_real_cli_process_adapters(tmp_path,monkeypatch):
         real_which=shutil.which
         with monkeypatch.context() as scoped:
             scoped.setattr(module.shutil,'which',lambda name: str(script) if name==provider else real_which(name))
+            # Windows does not execute shebang files; still launch a real child process.
+            if sys.platform == 'win32': scoped.setattr(module,'cli_entry',lambda name: [sys.executable,str(script)])
             c.connect(provider)
             answer=c._request(c.connection,'{"project":{"revision":2}}',threading.Event())
             assert module.parse_result(answer)==result(eid)
@@ -135,6 +137,7 @@ def test_dashboard_connection_task_stop_and_key_not_stored(tmp_path,monkeypatch)
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982});page.on('pageerror',lambda e:errors.append(str(e)))
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.goto(base);page.wait_for_function('document.querySelector("#player").ready')
             page.click('#agentTab');page.click('[data-connect]')
             page.fill('#agentModel','openai/test-model');page.fill('#agentApiKey','test-key-not-real');page.click('[data-agent-action="connect"]')

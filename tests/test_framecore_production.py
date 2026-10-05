@@ -114,6 +114,7 @@ def test_production_ui_review_export_and_delivery(tmp_path):
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch(executable_path=shutil.which('chromium'));page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)));page.goto(base)
             page.wait_for_function('document.querySelector("#player").ready');page.click('[data-tab="Production"]')
             page.fill('[data-production-field="product"]','FrameCore')

@@ -17,6 +17,7 @@ def test_polished_interface_editing_and_mobile_keyboard(tmp_path):
         with sync_playwright() as pw:
             browser=pw.chromium.launch(**({'executable_path':shutil.which('chromium')} if shutil.which('chromium') else {}))
             page=browser.new_page(viewport={'width':1512,'height':982})
+            page.add_init_script("localStorage.setItem('framecore-onboarding-v2', 'done')")
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base);page.wait_for_function('document.querySelector("#player").ready')
             assert page.locator('.wordmark-lockup').evaluate('el=>el.complete && el.naturalWidth>0')

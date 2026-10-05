@@ -1,5 +1,7 @@
 # Agent i API MCP FrameCore
 
+Wbudowana rozmowa OpenRouter/OpenAI korzysta z tego samego `API.call` co MCP. Jej endpointy mają prefiks `/api/assistant/`, a istniejący dashboard zadań Codex/Claude/OpenRouter używa `/api/agent/`. [Onboarding i kontrakt HTTP](docs/AGENT_QUICKSTART.md). `GET /api/mcp-config` zwraca konfigurację z rzeczywistym interpreterem, katalogiem repozytorium i bieżącym `--root`; dostępna jest też w Integracjach.
+
 MCP używa JSON-RPC 2.0 przez standardowe wejście i wyjście, po jednym komunikacie w wierszu. Uruchom `.venv/bin/python framecore.py mcp` w katalogu repozytorium. Na Windows użyj `.venv\Scripts\python.exe`. Interfejs HTTP i MCP wywołują ten sam zapis oraz komendy; agent nie musi klikać w przeglądarce.
 
 ## Konfiguracja klienta

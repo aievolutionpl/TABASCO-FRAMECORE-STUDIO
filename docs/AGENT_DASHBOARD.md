@@ -1,5 +1,7 @@
 # Agent za sterami dashboardu
 
+Ten dokument opisuje panel zadań i propozycji **Agent AI**. Nowa, iteracyjna rozmowa **Twój agent** ma osobny [onboarding i konfigurację](AGENT_QUICKSTART.md). W Integracjach można przejść do obu trybów; panel opisany tutaj zachowuje klucz tylko w RAM, a nowa rozmowa może zapisać go lokalnie lub odczytać ze zmiennej środowiskowej.
+
 W panelu **Agent AI** kliknij **Podłącz agenta**. Wybierz OpenRouter API, OpenAI przez Codex CLI albo Claude przez Claude Code CLI. Po połączeniu wpisz polecenie i użyj **Zleć agentowi**.
 
 ![Panel połączenia agenta](../assets/framecore-agent-connect.png)
