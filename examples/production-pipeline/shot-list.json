@@ -1,0 +1,50 @@
+[
+  {
+    "id": "scene_0de105e7fc80",
+    "name": "BEAT 01",
+    "start": 0,
+    "duration": 2,
+    "message": "",
+    "visualPurpose": "",
+    "motionIntent": "",
+    "audioIntent": "",
+    "beat": {
+      "purpose": "Najpierw historia.",
+      "entryState": "Widz poznaje początek historii",
+      "exitState": "Najpierw historia.",
+      "focusElementId": "el_10f021efc01c"
+    }
+  },
+  {
+    "id": "scene_8e2f15685e3d",
+    "name": "BEAT 02",
+    "start": 2,
+    "duration": 2,
+    "message": "",
+    "visualPurpose": "",
+    "motionIntent": "",
+    "audioIntent": "",
+    "beat": {
+      "purpose": "Zobacz każdą klatkę.",
+      "entryState": "Najpierw historia.",
+      "exitState": "Zobacz każdą klatkę.",
+      "focusElementId": "el_040d517f8931"
+    }
+  },
+  {
+    "id": "scene_3da51f2a323a",
+    "name": "BEAT 03",
+    "start": 4,
+    "duration": 2,
+    "message": "",
+    "visualPurpose": "",
+    "motionIntent": "",
+    "audioIntent": "",
+    "beat": {
+      "purpose": "Nadaj pomysłowi formę.",
+      "entryState": "Zobacz każdą klatkę.",
+      "exitState": "Nadaj pomysłowi formę.",
+      "focusElementId": "el_3323de790de2"
+    }
+  }
+]

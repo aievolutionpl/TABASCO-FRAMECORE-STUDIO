@@ -1,0 +1,19 @@
+[
+  {
+    "id": "manrope",
+    "family": "Manrope",
+    "category": "Bezszeryfowa",
+    "file": "framecore/static/library/fonts/manrope.ttf",
+    "weight": [
+      200,
+      800
+    ],
+    "license": "OFL-1.1",
+    "licenseFile": "licenses/fonts/manrope-OFL.txt",
+    "source": "https://github.com/google/fonts",
+    "commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+    "upstreamFile": "ofl/manrope/Manrope[wght].ttf",
+    "sha256": "3ae11c49db0455a3cc33e37d380f20fdb8c7f8b41dc07625c177e3d87a9d6ae6",
+    "polish": true
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "profile": "calm",
+  "targets": {
+    "label": "Spokojny",
+    "targetLufs": -16,
+    "minimumLra": 1.5,
+    "truePeakDbfs": -1,
+    "frozenSecondsPer30": 1,
+    "maximumHoldSeconds": 0.6
+  },
+  "duration": 6.0,
+  "motion": {
+    "sampleFps": 10,
+    "threshold": 0.35,
+    "intervals": [
+      {
+        "start": 0.5,
+        "end": 1.9,
+        "duration": 1.4
+      },
+      {
+        "start": 2.5,
+        "end": 3.9,
+        "duration": 1.4
+      },
+      {
+        "start": 4.5,
+        "end": 5.9,
+        "duration": 1.4
+      }
+    ],
+    "frozenSeconds": 4.2,
+    "longestHold": 1.4
+  },
+  "audio": {
+    "present": true,
+    "integratedLufs": -36.3,
+    "rangeLu": 1.3,
+    "truePeakDbfs": -21.2
+  },
+  "warnings": [
+    {
+      "code": "frozen_total",
+      "message": "Dużo prawie nieruchomego obrazu; sprawdź rytm i cel pauz"
+    },
+    {
+      "code": "long_hold",
+      "time": 0.5,
+      "message": "Zastój dłuższy niż 0,6 s poza ostatnimi 1,5 s; sprawdź, czy jest zamierzony"
+    },
+    {
+      "code": "long_hold",
+      "time": 2.5,
+      "message": "Zastój dłuższy niż 0,6 s poza ostatnimi 1,5 s; sprawdź, czy jest zamierzony"
+    },
+    {
+      "code": "loudness",
+      "message": "Głośność odbiega od orientacyjnego celu -16 LUFS; oceń miks odsłuchem"
+    }
+  ],
+  "limitations": "Pomiar różnic luminancji przy 10 FPS i szerokości 320 px może pominąć drobny ruch. Pauzy i końcowe CTA wymagają oceny człowieka. LUFS i szczyty nie zastępują odsłuchu; brak pomiaru kontrastu, koloru marki i relacji efektów do muzyki. Raport nie zatwierdza filmu.",
+  "project_id": "fc_6f7a18f7a0c7",
+  "job_id": "render_39173834d7ab",
+  "revision": 20,
+  "sha256": "c6959d4d455dd3f510a543f3e5057e594fad2c6cc0f7e7164eadc58c8f96605f",
+  "createdAt": "2026-10-05T11:42:10.741574+00:00",
+  "url": "/exports/fc_6f7a18f7a0c7/render_39173834d7ab/quality-report.json"
+}

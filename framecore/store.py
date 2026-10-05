@@ -11,6 +11,8 @@ from .model import EditorError, identifier, now, project, uid, validate
 ACTION_LABELS = {"add_library_asset":"Dodano materiał biblioteki", "set_background":"Zmieniono tło", "add_text":"Dodano tekst", "add_image":"Dodano obraz", "add_video":"Dodano wideo", "add_audio":"Dodano dźwięk", "add_caption":"Dodano napis", "add_shape":"Dodano kształt", "add_asset":"Dodano materiał", "add_icon":"Dodano ikonę", "move_element":"Przesunięto element", "resize_element":"Zmieniono rozmiar", "set_property":"Zmieniono właściwość", "move_clip":"Przesunięto klip", "trim_clip":"Przycięto klip", "split_clip":"Podzielono klip", "delete_clip":"Usunięto klip", "duplicate_clip":"Duplikowano klip", "apply_motion":"Zmieniono animację", "set_format":"Zmieniono format", "set_brand":"Zmieniono markę", "style_captions":"Zmieniono styl napisów", "set_track":"Zmieniono ścieżkę", "assemble_storyboard":"Zbudowano montaż", "rename_project":"Zmieniono nazwę projektu", "set_duration":"Zmieniono długość projektu", "set_keyframes":"Zmieniono klatki kluczowe", "set_audio":"Zmieniono dźwięk", "apply_template":"Zastosowano szablon", "add_scene":"Dodano scenę", "duplicate_scene":"Duplikowano scenę"}
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1] / "output" / ".framecore"
+ACTION_LABELS.update(set_production_contract="Zapisano brief produkcyjny", set_scene_beat="Zmieniono beat sceny",
+                     annotate_story_beats="Opisano stany i beaty", apply_motion_rules="Zastosowano reguły ruchu")
 
 
 class Store:
@@ -137,6 +139,29 @@ class Store:
                 self._save(s)
         return self.read(pid)
 
+    def create_variant(self, pid, revision, format):
+        import shutil
+        from .production import annotate_beats, reflow
+        source = self.read(pid)["project"]
+        if isinstance(revision, bool) or not isinstance(revision,int) or revision != source["revision"]:
+            raise EditorError("Konflikt rewizji przed utworzeniem wariantu", "revision_conflict")
+        variant = reflow(deepcopy(source), format)
+        variant["id"] = uid("fc"); variant["revision"] = 0
+        variant["metadata"].update(name=source["metadata"]["name"] + " · " + format, createdAt=now(), updatedAt=now(),
+                                  variantOf={"project_id":pid,"revision":revision,"layout":"story-reflow","format":format})
+        variant.setdefault("production", {}).update(requireReview=True)
+        variant["production"].setdefault("product", source["metadata"]["name"])
+        variant["production"].setdefault("message", source["metadata"]["brief"][:2000] or source["metadata"]["name"])
+        annotate_beats(variant); validate(variant)
+        directory = self.directory(variant["id"]); (directory/"assets").mkdir(parents=True)
+        try:
+            for a in variant["assets"]: shutil.copy2(self.directory(pid)/a["file"], directory/a["file"])
+            self._save({"project":variant,"history":[],"cursor":0,"session":{"selection":[],"playhead":0},"proposals":{}})
+        except Exception:
+            shutil.rmtree(directory)
+            raise
+        return self.read(variant["id"])
+
     def context(self, pid):
         s = self.read(pid)
         p, session = s["project"], s["session"]
@@ -147,5 +172,5 @@ class Store:
                 "selection": session["selection"], "selected": [e for e in p["elements"] if e["id"] in session["selection"]],
                 "playhead": t, "frame": round(t * p["canvas"]["fps"]), "visible": visible,
                 "transcript": [{"text": e["text"], "start": e["start"], "duration": e["duration"]} for e in p["elements"] if e["type"] == "caption"],
-                "assets": p["assets"], "brand": p["brand"], "scenes": p["scenes"], "tracks": p["tracks"],
+                "assets": p["assets"], "brand": p["brand"], "companyBrain": p.get("brandProfile"), "scenes": p["scenes"], "tracks": p["tracks"],
                 "recentActions": s["history"][max(0, s["cursor"] - 10):s["cursor"]]}

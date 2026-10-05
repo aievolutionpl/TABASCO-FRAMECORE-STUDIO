@@ -67,13 +67,13 @@ def create_sample(store):
     return store.read(pid)
 
 
-def create_creator_pack(store):
+def create_creator_pack(store, sample_directory="creator-pack"):
     """Nowa kopia edytowalnego pokazu; istniejące projekty pozostają zachowane."""
     import json
     import shutil
     from copy import deepcopy
     from .model import validate
-    source=Path(__file__).resolve().parents[1]/'examples/creator-pack'
+    source=Path(__file__).resolve().parents[1]/'examples'/sample_directory
     p=json.loads((source/'project.json').read_text(encoding='utf-8'))
     validate(p)
     state=store.create(p['metadata']['name'],'16:9',p['duration'])

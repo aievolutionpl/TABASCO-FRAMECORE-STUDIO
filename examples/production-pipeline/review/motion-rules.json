@@ -1,0 +1,56 @@
+{
+  "el_10f021efc01c": {
+    "id": "premium-blur-reveal",
+    "duration": 0.65,
+    "easing": "cubic-out"
+  },
+  "el_66a3889b6af3": {
+    "id": "soft-fade",
+    "duration": 1.0,
+    "easing": "quint-out"
+  },
+  "el_3e97a4c5f55c": {
+    "id": "soft-fade",
+    "duration": 0.35,
+    "easing": "quad-out"
+  },
+  "el_040d517f8931": {
+    "id": "premium-blur-reveal",
+    "duration": 0.65,
+    "easing": "cubic-out"
+  },
+  "el_40c721e2faa7": {
+    "id": "soft-fade",
+    "duration": 1.0,
+    "easing": "quint-out"
+  },
+  "el_6fc15097508b": {
+    "id": "soft-fade",
+    "duration": 0.35,
+    "easing": "quad-out"
+  },
+  "el_3323de790de2": {
+    "id": "premium-blur-reveal",
+    "duration": 0.65,
+    "easing": "cubic-out"
+  },
+  "el_c0ee85bc5cb3": {
+    "id": "soft-fade",
+    "duration": 1.0,
+    "easing": "quint-out"
+  },
+  "el_114dc770f89e": {
+    "id": "soft-fade",
+    "duration": 0.35,
+    "easing": "quad-out"
+  },
+  "el_99a6ca13c8e1": {
+    "id": "soft-fade",
+    "duration": 1.0,
+    "easing": "quint-out"
+  },
+  "el_41af7266e173": {
+    "id": "soft-fade",
+    "duration": 0.6
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "id": "review_d48bed203a09",
+  "project_id": "fc_6f7a18f7a0c7",
+  "revision": 20,
+  "fingerprint": "ccd6ebc1f5e7c6bd6280b0c2e8cfba86ea8db759ebbe377cde8fdad5092b809b",
+  "createdAt": "2026-10-05T09:34:02.413782+00:00",
+  "assetHashes": {
+    "asset_c35fcd09b3a3": "df7b09aa18301507e6fb8c279df66d9afa465b6fed3e63d2efa84dacebdbbf79",
+    "asset_f1d9b5c2be9f": "1a6e2d6681865c8834b29576398f82045b170177e4e745d7bce210e80cc98561",
+    "asset_da79fdee3d1b": "4636925a1dfc76a45dc83c08b983699d39143a0978f794a4e2dfb6cbffdcd7ab",
+    "asset_b582748ff1f3": "7321b81725e7e605d2eaf31a72ac956b988bf5e76a34bd55d935dace32e7dcad",
+    "asset_799054eb88f7": "71b586df6dcd7f5c9f214df6aace05aa726d56cce410ae3cc618d8fdd1708737"
+  },
+  "frames": [
+    {
+      "time": 0,
+      "file": "frame-000.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-000.png",
+      "issues": []
+    },
+    {
+      "time": 0.033333,
+      "file": "frame-001.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-001.png",
+      "issues": []
+    },
+    {
+      "time": 0.35,
+      "file": "frame-002.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-002.png",
+      "issues": []
+    },
+    {
+      "time": 0.6,
+      "file": "frame-003.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-003.png",
+      "issues": []
+    },
+    {
+      "time": 0.65,
+      "file": "frame-004.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-004.png",
+      "issues": []
+    },
+    {
+      "time": 1.0,
+      "file": "frame-005.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-005.png",
+      "issues": []
+    },
+    {
+      "time": 1.966667,
+      "file": "frame-006.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-006.png",
+      "issues": []
+    },
+    {
+      "time": 2.033333,
+      "file": "frame-007.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-007.png",
+      "issues": []
+    },
+    {
+      "time": 2.35,
+      "file": "frame-008.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-008.png",
+      "issues": []
+    },
+    {
+      "time": 2.65,
+      "file": "frame-009.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-009.png",
+      "issues": []
+    },
+    {
+      "time": 3.0,
+      "file": "frame-010.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-010.png",
+      "issues": []
+    },
+    {
+      "time": 3.966667,
+      "file": "frame-011.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-011.png",
+      "issues": []
+    },
+    {
+      "time": 4.033333,
+      "file": "frame-012.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-012.png",
+      "issues": []
+    },
+    {
+      "time": 4.35,
+      "file": "frame-013.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-013.png",
+      "issues": []
+    },
+    {
+      "time": 4.65,
+      "file": "frame-014.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-014.png",
+      "issues": []
+    },
+    {
+      "time": 5.0,
+      "file": "frame-015.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-015.png",
+      "issues": []
+    },
+    {
+      "time": 5.966667,
+      "file": "frame-016.png",
+      "url": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/frame-016.png",
+      "issues": []
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "verdict": "approved",
+  "checklist": {
+    "readability": true,
+    "hierarchy": true,
+    "brand": true,
+    "continuity": true,
+    "audio": true
+  },
+  "notes": "Agent obejrzał planszę: czytelne teksty, logo, jeden punkt uwagi, wejścia i cięcia. Materiały lokalne zgodne z briefem. Audio proceduralne na wspólnej osi: zweryfikowano czas, obecność, poziomy i brak clippingu w roboczym MP4; nie deklarujemy odsłuchu przez użytkownika.",
+  "sheetUrl": "/reviews/fc_6f7a18f7a0c7/review_d48bed203a09/contact-sheet.jpg",
+  "limitations": "Próbkowane klatki; automatyczna kontrola pola tekstu i kadru. Hierarchię, zgodność marki, ciągłość i dźwięk oceń samodzielnie.",
+  "reviewer": "agent",
+  "reviewedAt": "2026-10-05T09:39:37.480745+00:00"
+}

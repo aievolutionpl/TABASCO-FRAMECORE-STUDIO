@@ -45,3 +45,17 @@ Eksport zamraża projekt i materiały. Przeglądarka zapisuje obraz, a FFmpeg sk
 ## Kolejne etapy
 
 Import i ponowna edycja dowolnych źródeł HyperFrames, proxy wideo, przebiegi falowe, marketplace, ripple/slip, krzywe animacji, prawdziwe integracje dostawców i dopasowanie transkrypcji pozostają do wykonania. Obecne szablony są lokalnymi planami startowymi, a nie generowaniem przez model językowy.
+
+## Kontrakt produkcyjny FrameCore
+
+Opcjonalne `project.production` zawiera brief i wymagane materiały; `scene.beat` opisuje cel, stany i fokus. Zmiany używają dotychczasowych transakcji i undo. `framecore/production.py` waliduje kontrakt, reguły ruchu i układ wariantu; `review.py` generuje dowody z Chromium i przypisuje ocenę do pełnego odcisku projektu oraz SHA-256 plików. Raporty i checklisty są artefaktami poza historią montażu. `RenderJobs.start` sprawdza bramkę, a eksport kopiuje pliki do zamrożonego katalogu. `delivery.py` pakuje ten eksport. HTTP i MCP korzystają z tej samej implementacji; MCP przekazuje również obraz planszy klatek. [Pełny przepływ i ograniczenia](docs/PRODUCTION_PIPELINE.md).
+
+## Agent dashboardu i dowody ruchu
+
+`AgentControl` posiada połączenie w pamięci, jeden wątek zadania i sygnał anulowania. Adapter OpenRouter wysyła opis projektu do stałego endpointu; Codex/Claude są lokalnymi podprocesami zwracającymi JSON. Wynik jest ograniczony do komend edytora i przechodzi `propose_changes` oraz opcjonalnie `apply_proposal`, z rewizją i zaznaczeniem zamrożonym przy starcie. Klucz API nie jest zapisywany. Endpointy konfiguracji nie są narzędziami modelu MCP.
+
+`motion_evidence` adresuje czasy scen, składa ważoną nakładkę z rzeczywistych PNG i porównuje dwa zapisane harmonogramy klatek. Korzysta z obecnego renderera; nie uruchamia Rust/Skia. Pomiar `quality` dotyczy SHA-256 ukończonego MP4 i nie stanowi oceny kreatywnej.
+
+## Company brain w FrameCore
+
+`framecore.brands.BrandLibrary` przechowuje formularze i obrazy w `_brands` przy projektach, z blokadą biblioteki, zapisem atomowym i własną wersją. `apply_brand_profile` kopiuje obrazy, sprawdza SHA-256 i wykonuje jeden zapis `attach_brand_snapshot`: `brandProfile`, konfigurację `brand` oraz materiały w jednej historii projektu. Stare kopie i formaty są niezależne od późniejszych zmian lub usunięcia biblioteki. Dashboard i MCP mają ten sam interfejs biblioteki. Szkic agenta jest osobnym zadaniem procesu, ze stanem `draft`, bez automatycznego zapisu ani dostępu do sieci; montaż dostaje zamrożony `companyBrain`.

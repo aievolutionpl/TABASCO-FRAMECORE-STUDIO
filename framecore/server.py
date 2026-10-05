@@ -57,6 +57,14 @@ def import_asset(store, pid, data, filename, role="media", expected_revision=Non
 
 
 class Handler(StudioHandler):
+    def _send(self, code, body, ctype, extra=None):
+        # Rejected uploads can leave unread bytes. Never treat them as a second
+        # HTTP request on a persistent POST connection.
+        if self.command == "POST":
+            self.close_connection = True
+            extra = {**(extra or {}), "Connection": "close"}
+        return super()._send(code, body, ctype, extra)
+
     def _route_get(self, path, qs):
         store = self.server.store
         try:
@@ -68,6 +76,17 @@ class Handler(StudioHandler):
                 if not file.is_relative_to(STATIC.resolve()) or not file.is_file() or file.suffix not in {".js", ".css", ".svg", ".ttf", ".png"}:
                     return self._err(404, "Nie znaleziono")
                 return self._send(200, file.read_bytes(), mimetypes.guess_type(file)[0] or "application/octet-stream")
+            if path == "/api/brands":
+                from .brands import BrandLibrary
+                return self._json(200, BrandLibrary(store).list())
+            if path.startswith("/brand-assets/"):
+                from .brands import BrandLibrary
+                _, _, bid, aid = path.split("/")
+                library = BrandLibrary(store)
+                profile = library.get(bid)
+                asset = next((a for a in profile["assets"] if a["id"] == aid), None)
+                if not asset: return self._err(404, "Nie znaleziono materiału marki")
+                return self._file(library.directory(bid) / asset["file"])
             if path == "/api/projects": return self._json(200, {"projects": store.list()})
             if path == "/api/assistant/status": return self._json(200, self.server.assistant.status())
             if path == "/api/runtime":
@@ -95,11 +114,24 @@ class Handler(StudioHandler):
                 return self._file(store.directory(pid) / a["file"])
             if path.startswith("/exports/"):
                 parts = path.strip("/").split("/")
-                if len(parts) != 4 or parts[-1] != "framecore.mp4": return self._err(404, "Nie znaleziono")
+                if len(parts) != 4 or parts[-1] not in {"framecore.mp4", "delivery.zip", "quality-report.json"}: return self._err(404, "Nie znaleziono")
                 from .model import identifier
                 identifier(parts[2])
-                file = store.directory(parts[1]) / "exports" / parts[2] / "framecore.mp4"
+                file = store.directory(parts[1]) / "exports" / parts[2] / parts[-1]
                 if not file.is_file(): return self._err(404, "Nie znaleziono")
+                if parts[-1] == "quality-report.json":
+                    from .quality import get_report
+                    return self._json(200,get_report(store,self.server.jobs,parts[1],parts[2]))
+                return self._file(file)
+            if path.startswith("/reviews/"):
+                parts = path.strip("/").split("/")
+                import re
+                from .model import identifier
+                if len(parts) != 4 or not re.fullmatch(r"frame-\d{3}\.png|diff-\d{3}\.png|onion\.png|contact-sheet\.jpg|review\.json",parts[-1]):
+                    return self._err(404,"Nie znaleziono klatki")
+                identifier(parts[2])
+                file = store.directory(parts[1])/"reviews"/parts[2]/parts[-1]
+                if not file.is_file(): return self._err(404,"Nie znaleziono klatki")
                 return self._file(file)
             return self._err(404, "Nie znaleziono")
         except (EditorError, ValueError) as exc:
@@ -113,8 +145,15 @@ class Handler(StudioHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             path = unquote(urlparse(self.path).path)
-            if length < 0 or length > (100_000_000 if path.startswith("/api/upload/") else 4_000_000): return self._err(413, "Żądanie jest zbyt duże")
-            if path.startswith("/api/upload/"):
+            limit = 20_000_000 if path.startswith("/api/brand-upload/") else 100_000_000 if path.startswith("/api/upload/") else 4_000_000
+            if length < 0 or length > limit: return self._err(413, "Żądanie jest zbyt duże")
+            if path.startswith("/api/brand-upload/"):
+                from urllib.parse import parse_qs
+                from .brands import BrandLibrary
+                qs = parse_qs(urlparse(self.path).query)
+                result = BrandLibrary(self.server.store).upload(path.split("/")[-1], int(qs["version"][0]),
+                    self.rfile.read(length), qs.get("name", ["upload"])[0], qs.get("role", ["reference"])[0])
+            elif path.startswith("/api/upload/"):
                 from urllib.parse import parse_qs
                 qs = parse_qs(urlparse(self.path).query)
                 result = import_asset(self.server.store, path.split("/")[-1], self.rfile.read(length),
@@ -123,7 +162,13 @@ class Handler(StudioHandler):
                 if not self.headers.get("Content-Type", "").startswith("application/json"): return self._err(415, "Wymagana treść JSON")
                 body = json.loads(self.rfile.read(length) or b"{}")
                 if not isinstance(body, dict): raise EditorError("Treść żądania musi być obiektem")
-                if path == "/api/demo":
+                if path == "/api/agent/status": result=self.server.agent.status()
+                elif path == "/api/agent/connect": result=self.server.agent.connect(body.get("provider"),body.get("model",""),body.get("api_key",""))
+                elif path == "/api/agent/disconnect": result=self.server.agent.stop(disconnect=True)
+                elif path == "/api/agent/stop": result=self.server.agent.stop()
+                elif path == "/api/agent/brand-draft": result=self.server.agent.start_brand(body.get("profile"), body.get("notes"))
+                elif path == "/api/agent/run": result=self.server.agent.start(body.get("project_id"),body.get("expected_revision"),body.get("prompt"),body.get("auto_apply",False))
+                elif path == "/api/demo":
                     from .demo import create_demo
                     result = create_demo(self.server.store)
                 elif path == "/api/create": result = self.server.api.call("create_project", body, "human")
@@ -155,7 +200,13 @@ class Server(ThreadingHTTPServer):
         self.api = API(store, self.jobs)
         from .agent import AgentService
         self.assistant = AgentService(self.api)
+        from .agent_control import AgentControl
+        self.agent = AgentControl(store)
 
+
+    def server_close(self):
+        self.agent.stop(disconnect=True)
+        super().server_close()
 
 def start_background(store, port=0):
     server = Server(store, port)

@@ -1,0 +1,631 @@
+{
+  "schemaVersion": 1,
+  "id": "fc_6f7a18f7a0c7",
+  "revision": 20,
+  "metadata": {
+    "name": "Od briefu do filmu \u2014 FrameCore",
+    "brief": "",
+    "workflow": "Premiera produktu",
+    "createdAt": "2026-10-05T09:33:53.949494+00:00",
+    "updatedAt": "2026-10-05T09:33:54.540230+00:00"
+  },
+  "canvas": {
+    "width": 960,
+    "height": 540,
+    "fps": 30,
+    "background": "#081b29",
+    "backgroundPreset": "aurora-breath",
+    "backgroundAnimated": true
+  },
+  "duration": 6,
+  "assets": [
+    {
+      "id": "asset_c35fcd09b3a3",
+      "name": "Pomys\u0142 3D",
+      "kind": "image",
+      "file": "assets/asset_c35fcd09b3a3.png",
+      "mime": "image/png",
+      "duration": null,
+      "role": "illustration",
+      "license": "MIT",
+      "provenance": {
+        "source": "framecore_builtin",
+        "library_id": "fluent-light-bulb",
+        "version": 1,
+        "collection": "Fluent Emoji 3D",
+        "sha256": "df7b09aa18301507e6fb8c279df66d9afa465b6fed3e63d2efa84dacebdbbf79",
+        "upstream": "https://github.com/microsoft/fluentui-emoji",
+        "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc"
+      }
+    },
+    {
+      "id": "asset_f1d9b5c2be9f",
+      "name": "Monta\u017c 3D",
+      "kind": "image",
+      "file": "assets/asset_f1d9b5c2be9f.png",
+      "mime": "image/png",
+      "duration": null,
+      "role": "illustration",
+      "license": "MIT",
+      "provenance": {
+        "source": "framecore_builtin",
+        "library_id": "fluent-clapper-board",
+        "version": 1,
+        "collection": "Fluent Emoji 3D",
+        "sha256": "1a6e2d6681865c8834b29576398f82045b170177e4e745d7bce210e80cc98561",
+        "upstream": "https://github.com/microsoft/fluentui-emoji",
+        "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc"
+      }
+    },
+    {
+      "id": "asset_da79fdee3d1b",
+      "name": "Rakieta 3D",
+      "kind": "image",
+      "file": "assets/asset_da79fdee3d1b.png",
+      "mime": "image/png",
+      "duration": null,
+      "role": "illustration",
+      "license": "MIT",
+      "provenance": {
+        "source": "framecore_builtin",
+        "library_id": "fluent-rocket",
+        "version": 1,
+        "collection": "Fluent Emoji 3D",
+        "sha256": "4636925a1dfc76a45dc83c08b983699d39143a0978f794a4e2dfb6cbffdcd7ab",
+        "upstream": "https://github.com/microsoft/fluentui-emoji",
+        "commit": "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc"
+      }
+    },
+    {
+      "id": "asset_b582748ff1f3",
+      "name": "FrameCore-logo.png",
+      "kind": "image",
+      "file": "assets/asset_b582748ff1f3.png",
+      "mime": "image/png",
+      "duration": null,
+      "hasAudio": false,
+      "role": "logo",
+      "provenance": {
+        "source": "user_upload"
+      },
+      "license": "user_provided"
+    },
+    {
+      "id": "asset_799054eb88f7",
+      "name": "Rytm procesu.wav",
+      "kind": "audio",
+      "file": "assets/asset_799054eb88f7.wav",
+      "mime": "audio/wav",
+      "duration": 6.0,
+      "hasAudio": true,
+      "role": "audio",
+      "provenance": {
+        "source": "user_upload"
+      },
+      "license": "user_provided"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene_0de105e7fc80",
+      "name": "BEAT 01",
+      "start": 0,
+      "duration": 2,
+      "message": "",
+      "visualPurpose": "",
+      "motionIntent": "",
+      "audioIntent": "",
+      "beat": {
+        "purpose": "Najpierw historia.",
+        "entryState": "Widz poznaje pocz\u0105tek historii",
+        "exitState": "Najpierw historia.",
+        "focusElementId": "el_10f021efc01c"
+      }
+    },
+    {
+      "id": "scene_8e2f15685e3d",
+      "name": "BEAT 02",
+      "start": 2,
+      "duration": 2,
+      "message": "",
+      "visualPurpose": "",
+      "motionIntent": "",
+      "audioIntent": "",
+      "beat": {
+        "purpose": "Zobacz ka\u017cd\u0105 klatk\u0119.",
+        "entryState": "Najpierw historia.",
+        "exitState": "Zobacz ka\u017cd\u0105 klatk\u0119.",
+        "focusElementId": "el_040d517f8931"
+      }
+    },
+    {
+      "id": "scene_3da51f2a323a",
+      "name": "BEAT 03",
+      "start": 4,
+      "duration": 2,
+      "message": "",
+      "visualPurpose": "",
+      "motionIntent": "",
+      "audioIntent": "",
+      "beat": {
+        "purpose": "Nadaj pomys\u0142owi form\u0119.",
+        "entryState": "Zobacz ka\u017cd\u0105 klatk\u0119.",
+        "exitState": "Nadaj pomys\u0142owi form\u0119.",
+        "focusElementId": "el_3323de790de2"
+      }
+    }
+  ],
+  "elements": [
+    {
+      "id": "el_10f021efc01c",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "Najpierw historia.",
+      "start": 0,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 65,
+      "y": 125,
+      "width": 505,
+      "height": 180,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 58,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.65,
+        "easing": "cubic-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_66a3889b6af3",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_c35fcd09b3a3",
+      "text": "Tw\u00f3j nag\u0142\u00f3wek",
+      "start": 0,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 615,
+      "y": 155,
+      "width": 235,
+      "height": 235,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 62.400000000000006,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 1.0,
+        "easing": "quint-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_3e97a4c5f55c",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": null,
+      "assetId": null,
+      "text": "BRIEF / RZECZYWISTE MATERIA\u0141Y",
+      "start": 0,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 65,
+      "y": 465,
+      "width": 830,
+      "height": 35,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 22,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#A5D8C8",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.35,
+        "easing": "quad-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_040d517f8931",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "Zobacz ka\u017cd\u0105 klatk\u0119.",
+      "start": 2,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 65,
+      "y": 125,
+      "width": 505,
+      "height": 180,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 58,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.65,
+        "easing": "cubic-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_40c721e2faa7",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_f1d9b5c2be9f",
+      "text": "Tw\u00f3j nag\u0142\u00f3wek",
+      "start": 2,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 615,
+      "y": 155,
+      "width": 235,
+      "height": 235,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 62.400000000000006,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 1.0,
+        "easing": "quint-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_6fc15097508b",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": null,
+      "assetId": null,
+      "text": "PRZEGL\u0104D / POPRAWKI",
+      "start": 2,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 65,
+      "y": 465,
+      "width": 830,
+      "height": 35,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 22,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#A5D8C8",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.35,
+        "easing": "quad-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_3323de790de2",
+      "type": "text",
+      "trackId": "text",
+      "sceneId": null,
+      "assetId": null,
+      "text": "Nadaj pomys\u0142owi form\u0119.",
+      "start": 4,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 65,
+      "y": 125,
+      "width": 505,
+      "height": 180,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 58,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "premium-blur-reveal",
+        "duration": 0.65,
+        "easing": "cubic-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_c0ee85bc5cb3",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_da79fdee3d1b",
+      "text": "Tw\u00f3j nag\u0142\u00f3wek",
+      "start": 4,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 615,
+      "y": 155,
+      "width": 235,
+      "height": 235,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 62.400000000000006,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 1.0,
+        "easing": "quint-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_114dc770f89e",
+      "type": "caption",
+      "trackId": "caption",
+      "sceneId": null,
+      "assetId": null,
+      "text": "OSOBNY UK\u0141AD / EKSPORT",
+      "start": 4,
+      "duration": 2,
+      "sourceStart": 0,
+      "x": 65,
+      "y": 465,
+      "width": 830,
+      "height": 35,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 22,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#A5D8C8",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.35,
+        "easing": "quad-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_99a6ca13c8e1",
+      "type": "image",
+      "trackId": "image",
+      "sceneId": null,
+      "assetId": "asset_b582748ff1f3",
+      "text": "Tw\u00f3j nag\u0142\u00f3wek",
+      "start": 0,
+      "duration": 6,
+      "sourceStart": 0,
+      "x": 855,
+      "y": 24,
+      "width": 55,
+      "height": 55,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 62.400000000000006,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 1.0,
+        "easing": "quint-out"
+      },
+      "effects": [],
+      "keyframes": []
+    },
+    {
+      "id": "el_41af7266e173",
+      "type": "audio",
+      "trackId": "audio",
+      "sceneId": null,
+      "assetId": "asset_799054eb88f7",
+      "text": "Tw\u00f3j nag\u0142\u00f3wek",
+      "start": 0,
+      "duration": 6,
+      "sourceStart": 0,
+      "x": 76.8,
+      "y": 86.4,
+      "width": 806.4,
+      "height": 118.8,
+      "scale": 1,
+      "rotation": 0,
+      "opacity": 1,
+      "style": {
+        "fontSize": 62.400000000000006,
+        "fontFamily": "Manrope",
+        "fontWeight": 700,
+        "color": "#f5f3ec",
+        "align": "left",
+        "background": "transparent",
+        "radius": 0
+      },
+      "motion": {
+        "id": "soft-fade",
+        "duration": 0.6
+      },
+      "effects": [],
+      "keyframes": [],
+      "audio": {
+        "gain": 0.7,
+        "fadeIn": 0.25,
+        "fadeOut": 0.5
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "id": "video",
+      "name": "Nagrania",
+      "kind": "video",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "image",
+      "name": "Obrazy i logo",
+      "kind": "image",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "shape",
+      "name": "Kszta\u0142ty",
+      "kind": "shape",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "text",
+      "name": "Teksty",
+      "kind": "text",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "caption",
+      "name": "Napisy",
+      "kind": "caption",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    },
+    {
+      "id": "audio",
+      "name": "D\u017awi\u0119k",
+      "kind": "audio",
+      "muted": false,
+      "hidden": false,
+      "locked": false
+    }
+  ],
+  "brand": {
+    "name": "TABASCO CREATIVES + FRAMECORE",
+    "colors": {
+      "background": "#151719",
+      "text": "#f5f3ec",
+      "accent": "#f48d6e"
+    },
+    "font": "Manrope",
+    "logoAssetId": "asset_b582748ff1f3",
+    "captionStyle": "minimal",
+    "motionStyle": "premium",
+    "ctaStyle": "pill"
+  },
+  "exportProfiles": [
+    "9:16",
+    "4:5",
+    "1:1",
+    "16:9"
+  ],
+  "production": {
+    "product": "FrameCore Studio",
+    "message": "Film powstaje z historii, materia\u0142\u00f3w i sprawdzonych klatek.",
+    "facts": [
+      "Materia\u0142y i fonty s\u0105 lokalne",
+      "Klatki renderuje Chromium",
+      "Warianty s\u0105 osobnymi projektami"
+    ],
+    "references": [
+      "docs/references/AI_Evolution_Opus_55_Video_Studio_Guide_PL.pdf"
+    ],
+    "rejectionCriteria": [
+      "Uci\u0119ty tekst",
+      "Brak logo",
+      "Nieczytelny g\u0142\u00f3wny komunikat"
+    ],
+    "requiredAssets": [
+      {
+        "label": "Logo FrameCore",
+        "assetId": "asset_b582748ff1f3"
+      }
+    ],
+    "requireReview": true
+  }
+}

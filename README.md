@@ -19,6 +19,32 @@ Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek]
 
 </div>
 
+## Dopracowany edytor
+
+Grafitowy interfejs, większe opisy i ciepłe akcenty Tabasco pomagają skupić się na filmie. Biblioteka ma **ulubione materiały i filtrowanie kolekcji**; panel tekstu pokazuje typografię przed geometrią. Sześć przycisków wyrównuje element w kadrze, a wybór animacji uruchamia krótki podgląd na zaznaczonym klipie.
+
+Na telefonie biblioteka i właściwości otwierają się jako panele. Obsługują klawiaturę, Escape i powrót do przycisku, który je otworzył. Tworzenie projektu, wybór istniejącego projektu i eksport są dostępne również w małym widoku. [Biblioteka na telefonie](assets/framecore-editor-mobile.png) · [Właściwości](assets/framecore-editor-mobile-properties.png).
+
+W panelu **Marka → Dodaj logo FrameCore** umieścisz nowy znak w filmie. To zwykły edytowalny klip: możesz zmieniać jego pozycję, rozmiar i ruch albo cofnąć dodanie.
+
+## Profile marek · Company brain
+
+W **Ustawieniach** zapiszesz profile firm: opis, produkty i usługi, odbiorców, ton komunikacji, design guidelines, kolory, font, logo oraz zdjęcia referencyjne. Wybierz profil przy pracy nad filmem — projekt otrzyma własną kopię informacji i materiałów, a agent wykorzysta ten kontekst do montażu. Zmiana biblioteki nie zmieni wcześniejszych projektów.
+
+![Profile marek: informacje o firmie i oferta](assets/framecore-company-brain.png)
+
+Agent może przygotować szkic na podstawie dostarczonych treści i źródeł; przeglądasz go w formularzu przed zapisem. Agent zewnętrzny z narzędziami researchu zapisuje profile przez MCP. [Instrukcja profili marek i API](docs/COMPANY_BRAIN.md).
+
+## Produkcja na podstawie dowodów
+
+Nowy panel **Produkcja** prowadzi przez brief reżyserski, wymagane prawdziwe materiały i storyboard opisany jako stany oraz beaty. **Plansza rzeczywistych klatek** pokazuje momenty scen i przejścia; pomiar wykrywa tekst poza polem oraz elementy poza kadrem. Zatwierdzasz checklistę i zapisujesz uwagi do konkretnej rewizji. Opcjonalna bramka zatrzyma finalny eksport po zmianach aż do nowego przeglądu.
+
+Reguły ruchu różnicują czas i krzywą dla napisów, tekstu i ilustracji. Warianty **16:9, 9:16, 4:5 i 1:1** powstają jako niezależne projekty z osobnym układem startowym oraz własną oceną. Po renderze pobierzesz **ZIP: film, projekt, materiały, brief, shot list, reguły ruchu, przegląd i informacje o licencjach**.
+
+![Panel Produkcja: brief i wspólny montaż](assets/framecore-production.png)
+
+[Jak korzystać z pipeline’u](docs/PRODUCTION_PIPELINE.md) · [Film 6 sekund](assets/framecore-production-demo.mp4) · [Paczka przykładu](assets/framecore-production-delivery.zip) · [Edytowalny projekt](examples/production-pipeline/project.json) · [Dostarczony przewodnik PDF](docs/references/AI_Evolution_Opus_55_Video_Studio_Guide_PL.pdf).
+
 ## Jak działa projekt
 
 **Pomysł → materiały → plan scen → wspólny montaż → podgląd → MP4.**
@@ -101,17 +127,31 @@ Lokalny asystent rozpoznaje konkretne polecenia czasu i animacji. Swobodne polec
 
 Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apache-2.0, ikony Phosphor i Tabler oraz ilustracje Fluent — MIT, Lucide — ISC/MIT, a fonty — SIL OFL 1.1. Teksty licencji zachowujemy w oryginale. Własne zdjęcia, nagrania, fonty i ilustracje podlegają prawom ich autorów. Przesłana ilustracja poniżej jest materiałem identyfikacji projektu; licencja kodu nie przenosi praw do niej.
 
+## Reżyseria i pomiary filmu — Motion Video Kit
+
+Zaadaptowaliśmy najlepsze zasady z [motion-video-kit](https://github.com/echris6/motion-video-kit): ciągłość obiektu między scenami, hierarchię ruchu, przyczynę → skutek i niezależną ocenę poprawek. Polski [skill filmu biznesowego](skills/business-motion-film/SKILL.md) oraz `get_motion_playbook` pomagają agentowi zaplanować lepszy montaż.
+
+Po eksporcie kliknij **Zmierz rytm i dźwięk**. Raport pokazuje czasy zastojów, LUFS i szczyty audio, z profilami spokojnym, dynamicznym i świadomą ciszą. Przegląd klatek sprawdza też powtarzalność pikseli po przewijaniu. Raport wiąże się z SHA-256 MP4 i trafia do następnego ZIP. Pomiary wspierają ocenę; nie zastępują obejrzenia filmu ani odsłuchu.
+
+[Instrukcja i zakres adaptacji](docs/MOTION_VIDEO_KIT.md) · [Przykładowy pomiar](assets/framecore-motion-quality.json) · [Dziennik rund](skills/business-motion-film/references/REVIEW_LEDGER.md).
+
+## Agent za sterami i laboratorium ruchu
+
+W panelu **Agent AI → Podłącz agenta** wybierz OpenRouter API, OpenAI przez lokalny Codex CLI albo Claude przez Claude Code CLI. Zleć polecenie; domyślnie otrzymasz propozycję. Włącz **Agent stosuje zmiany samodzielnie**, aby przekazać mu montaż z możliwością cofania. Logowanie CLI albo klucz OpenRouter trzeba skonfigurować na komputerze uruchamiającym studio. [Połączenie i zasady rozliczeń](docs/AGENT_DASHBOARD.md).
+
+Z [fframes](https://github.com/dmtrKovalenko/fframes) zaadaptowaliśmy adresy klatek scen, plansze i nakładki pokazujące tor ruchu oraz porównania obrazów przed/po. Znajdziesz je w **Produkcja → Laboratorium ruchu** i przez MCP. [Instrukcja i zakres adaptacji](docs/FFRAMES.md).
+
 ## Testy
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py tests/test_framecore_motion_evidence.py tests/test_framecore_agent_control.py -q
 ```
 
 Test przeglądarkowy importuje materiały, uruchamia osobny proces agenta MCP, sprawdza wspólną historię i eksportuje rzeczywisty film 15 sekund w rozdzielczości 1080 × 1920 z dźwiękiem. Wyniki dotyczą wykonanego przebiegu i są opisane w dokumencie walidacji.
 
 ## Logo — Wspólna rama
 
-Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współpracy tworzą wspólny film. [Logo SVG](assets/framecore-logo.svg) · [wariant odwrócony](assets/framecore-logo-reversed.svg) · [plansza identyfikacji](assets/framecore-logo-board.png) · [zasady użycia](docs/IDENTYFIKACJA.md).
+Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współpracy tworzą wspólny film. [Logo SVG](assets/framecore-logo.svg) · [wariant odwrócony](assets/framecore-logo-reversed.svg) · [logo PNG](assets/framecore-logo-primary.png) · [układ pionowy](assets/framecore-logo-stacked.svg) · [plansza identyfikacji](assets/framecore-brand-kit.png) · [zasady użycia](docs/IDENTYFIKACJA.md).
 
 ## Współpraca
 

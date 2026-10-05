@@ -27,6 +27,12 @@ Własne szablony obejmują premierę produktu, reklamę społecznościową, film
 
 Ruch tła i elementów jest liczony z czasu filmu, więc przewijanie i eksport odtwarzają tę samą kompozycję. Eksport osadza użyte fonty w HTML jako dane; nie korzysta z fontów systemowych dla rodzin lokalnych. Pliki ikon i ilustracji są kopiowane do projektu oraz zamrożonego eksportu.
 
+## Wygodniejsza biblioteka
+
+Gwiazdka przy materiale zapisuje go w **Zapisanych**. Ulubione są preferencją tej przeglądarki i nie zmieniają historii montażu. Lista kolekcji pozwala wybrać Phosphor, Tabler, Lucide lub Fluent Emoji; można łączyć ją z wyszukiwaniem i filtrem typu.
+
+Po wyborze animacji odtwarzany jest krótki fragment od początku zaznaczonego klipu. Karty pokazują poglądowy ruch; faktyczny efekt oceniaj w podglądzie filmu. Preferencja ograniczonego ruchu wyłącza dekoracyjne animacje kart.
+
 ## Przykład do dalszej edycji
 
 ```bash

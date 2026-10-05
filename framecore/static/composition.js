@@ -64,7 +64,7 @@
     }
   }
   const clamp = (v,a=0,b=1) => Math.max(a,Math.min(b,v));
-  const ease = u => 1-Math.pow(1-u,3);
+  const ease = (u,curve='cubic-out') => curve==='linear'?u:1-Math.pow(1-u,{'quad-out':2,'cubic-out':3,'quint-out':5}[curve]||3);
   function keyed(e,prop,t) {
     const points=(e.keyframes||[]).filter(k=>k.property===prop).sort((a,b)=>a.time-b.time);
     if(!points.length)return e[prop];
@@ -79,7 +79,7 @@
       const local=time-e.start, visible=!track.hidden && local>=0 && local<e.duration;
       n.style.visibility=visible?'visible':'hidden';
       let alpha=1, dx=0,dy=0,scale=1,blur=0,extraRotate=0,flip=0,glow=0;
-      const m=e.motion, phase=local+(e.motionOffset||0), u=m?clamp(phase/m.duration):1, z=ease(u);
+      const m=e.motion, phase=local+(e.motionOffset||0), u=m?clamp(phase/m.duration):1, z=ease(u,m?.easing);
       if(m) switch(m.id) {
         case 'premium-blur-reveal': alpha=z;dy=(1-z)*28;blur=(1-z)*18;break;
         case 'impact-rise':alpha=z;dy=(1-z)*90;scale=.85+.15*z;break;
