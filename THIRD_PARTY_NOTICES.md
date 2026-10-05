@@ -48,3 +48,7 @@ Niezmienione pliki TTF na licencji SIL Open Font License 1.1. [Źródło](https:
 [Katalog plików i sum SHA-256](framecore/static/library/catalog.json) pozwala zweryfikować każdy pobrany plik. Fonty nie zostały przetworzone ani przemianowane. Własne receptury teł, animacje i szablony mają licencję MIT projektu. Powielone pliki w przykładzie `examples/creator-pack/assets/` zachowują pochodzenie opisane w jego `project.json`; stosują się te same licencje.
 
 Przewodnik `docs/references/AI_Evolution_Opus_55_Video_Studio_Guide_PL.pdf` został dostarczony przez użytkownika jako materiał źródłowy. Zachowano go w oryginale; licencja kodu nie przenosi automatycznie praw do tego dokumentu. Przykład `examples/production-pipeline/` zachowuje pochodzenie i licencje materiałów w manifestach; ilustracje i fonty mają te same licencje opisane powyżej.
+
+## Motion Video Kit
+
+Zasady filmu biznesowego i filtry pomiarowe zaadaptowano z [echris6/motion-video-kit](https://github.com/echris6/motion-video-kit/tree/255562b04b1e5ecaa4ba98e5c9aa191d5ba7f6fa), commit `255562b04b1e5ecaa4ba98e5c9aa191d5ba7f6fa`, Copyright (c) 2026 echris6, MIT. [Pełna oryginalna licencja](licenses/Motion-Video-Kit-MIT.txt). Adaptacja obejmuje `framecore/quality.py`, `framecore/playbook.py`, instrukcje i polski skill; nie zawiera cudzych filmów referencyjnych. [Zakres i ograniczenia](docs/MOTION_VIDEO_KIT.md).

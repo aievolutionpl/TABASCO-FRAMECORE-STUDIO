@@ -67,3 +67,7 @@ Odczyt: `/api/projects`, `/api/project/<id>`, `/api/context/<id>`, `/api/motion`
 ## Pipeline produkcyjny
 
 FrameCore udostępnia również kontrakt produkcyjny, beaty, reguły ruchu, przegląd klatek, ocenę konkretnej rewizji i niezależne warianty formatów. [Pola i przykłady narzędzi](docs/PRODUCTION_PIPELINE.md). `create_review` oraz `get_review` zwracają planszę JPEG jako blok obrazu MCP obok raportu JSON. Używaj aktualnego `expected_revision`; przy braku wymaganych materiałów lub nieaktualnej ocenie serwer zatrzyma odpowiedni etap. `package_delivery` przyjmuje `job_id` ukończonego eksportu tego projektu.
+
+## Pomiary filmu i playbook
+
+`get_motion_playbook` nie wymaga projektu: zwraca polskie reguły, receptury i prompt niezależnego krytyka. `analyze_export` wymaga `project_id`, `job_id` ukończonego eksportu oraz opcjonalnie `profile` calm/punchy/mute (domyślnie calm). Zapisuje raport pomiarowy, bez zmiany projektu i jego historii. `get_quality_report` wymaga projektu i zadania; odrzuca raport, jeśli SHA-256 MP4 uległo zmianie. Nie wymagają `expected_revision`, ponieważ dotyczą zamrożonego eksportu, a nie bieżącego montażu. Schematy MCP publikują wymagany `job_id`. Raport jest dostępny w ograniczonej ścieżce `/exports/<project>/<job>/quality-report.json` i dołączany do kolejnego ZIP. [Parametry i ograniczenia](docs/MOTION_VIDEO_KIT.md).

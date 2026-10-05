@@ -1,6 +1,7 @@
 """Actual browser evidence; manual review is explicit and bound to frozen content."""
 from copy import deepcopy
 import io
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -84,6 +85,7 @@ def create_review(store, pid, expected_revision, times=None):
     rid = uid("review"); out = root / "reviews" / rid; out.mkdir(parents=True)
     server, _ = start_background(store)
     frames, errors, thumbs = [], [], []
+    pixel_hashes = {}; determinism = []
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(**({"executable_path": shutil.which("chromium")} if shutil.which("chromium") else {}))
@@ -99,8 +101,18 @@ def create_review(store, pid, expected_revision, times=None):
                     filename = f"frame-{i:03}.png"
                     data = page.screenshot(path=str(out/filename))
                     frames.append({"time": t, "file": filename, "url": f"/reviews/{pid}/{rid}/{filename}", "issues": issues})
-                    image = Image.open(io.BytesIO(data)).convert("RGB"); image.thumbnail((300, 220))
+                    image = Image.open(io.BytesIO(data)).convert("RGB")
+                    pixel_hashes[t] = hashlib.sha256(image.tobytes()).hexdigest()
+                    image.thumbnail((300, 220))
                     thumbs.append(image)
+                # Return from a different position and reverse seek order for 3 actual samples.
+                for t in reversed(sorted({selected_times[0], selected_times[len(selected_times)//2], selected_times[-1]})):
+                    page.evaluate("t=>window.seek(t)", selected_times[0] if t != selected_times[0] else selected_times[-1])
+                    page.evaluate("t=>window.seek(t)", t)
+                    pixels = Image.open(io.BytesIO(page.screenshot())).convert("RGB").tobytes()
+                    same = hashlib.sha256(pixels).hexdigest() == pixel_hashes[t]
+                    determinism.append({"time":t, "identicalPixels":same})
+                    if not same: errors.append({"code":"seek_inconsistent", "element_id":None, "time":t, "message":"Powrót do tego samego czasu dał inne piksele"})
             finally: browser.close()
     except Exception:
         shutil.rmtree(out)
@@ -119,9 +131,9 @@ def create_review(store, pid, expected_revision, times=None):
         raise EditorError("Materiały zmieniły się podczas przeglądu", "revision_conflict")
     report = {"id": rid, "project_id": pid, "revision": p["revision"], "fingerprint": fingerprint(p),
               "createdAt": now(), "assetHashes": {a["id"]: a["sha256"] for a in initial_assets},
-              "frames": frames, "errors": errors, "warnings": inspect(p)["issues"], "verdict": "pending",
+              "frames": frames, "determinism":determinism, "errors": errors, "warnings": inspect(p)["issues"], "verdict": "pending",
               "checklist": {}, "notes": "", "sheetUrl": f"/reviews/{pid}/{rid}/contact-sheet.jpg",
-              "limitations": "Próbkowane klatki; automatyczna kontrola pola tekstu i kadru. Hierarchię, zgodność marki, ciągłość i dźwięk oceń samodzielnie."}
+              "limitations": "Próbkowane klatki; kontrola pola tekstu, kadru i powrotu do maksymalnie 3 czasów. To nie jest wyczerpujący test determinizmu. Hierarchię, zgodność marki, ciągłość i dźwięk oceń samodzielnie."}
     atomic_write(out/"review.json", json.dumps(report, ensure_ascii=False, indent=2))
     artifacts = {"brief.json":p.get("production",{}), "assets-manifest.json":asset_manifest(p,root),
                  "shot-list.json":p["scenes"], "motion-rules.json":{e["id"]:e.get("motion") for e in p["elements"]},

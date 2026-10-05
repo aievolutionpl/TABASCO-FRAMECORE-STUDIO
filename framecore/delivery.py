@@ -32,6 +32,9 @@ def package(store, jobs, pid, job_id):
     if job["project_id"] != pid or job["status"] != "complete":
         raise EditorError("Wybierz ukończony eksport tego projektu")
     directory = store.directory(pid)/"exports"/job_id
+    if (directory/"quality-report.json").is_file():
+        from .quality import get_report
+        get_report(store,jobs,pid,job_id)
     p = json.loads((directory/"project.json").read_text(encoding="utf-8"))
     credits = ["# Materiały filmu", "", "Źródła i licencje według zamrożonego projektu. Materiały użytkownika wymagają jego praw do dystrybucji.", ""]
     for a in p["assets"]:
@@ -45,7 +48,7 @@ def package(store, jobs, pid, job_id):
     with file_lock(directory/".delivery-lock"):
         with ZipFile(temp,"w",ZIP_DEFLATED) as archive:
             for file in sorted(directory.rglob("*")):
-                if file.is_file() and (file.name in {"framecore.mp4","project.json","brief.json","assets-manifest.json","font-manifest.json","shot-list.json","motion-rules.json","CREDITS.md","index.html"}
+                if file.is_file() and (file.name in {"framecore.mp4","project.json","brief.json","assets-manifest.json","font-manifest.json","shot-list.json","motion-rules.json","CREDITS.md","index.html","quality-report.json"}
                                        or file.is_relative_to(directory/"assets") or file.is_relative_to(directory/"review") or file.is_relative_to(directory/"licenses")):
                     archive.write(file,str(file.relative_to(directory)))
         temp.replace(target)

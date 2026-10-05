@@ -42,13 +42,14 @@ FIELDS = {
     "duplicate_scene": {"scene_id": "string", "start": "number"},
     "rename_project": {"name": "string"},
 }
-READS.update({"get_production_status", "get_review"})
+READS.update({"get_production_status", "get_review", "get_motion_playbook", "get_quality_report"})
 WRITES.update({"set_production_contract", "set_scene_beat", "annotate_story_beats", "apply_motion_rules"})
 FIELDS.update({
     "set_production_contract": {"contract":"object"}, "set_scene_beat":{"scene_id":"string", "beat":"object"},
     "create_review":{"times":"array"}, "get_review":{"review_id":"string"},
     "review_verdict":{"review_id":"string", "verdict":"string", "checklist":"object", "notes":"string"},
     "create_format_variant":{"format":"string"}, "package_delivery":{"job_id":"string"},
+    "analyze_export":{"job_id":"string", "profile":"string"}, "get_quality_report":{"job_id":"string"},
 })
 FIELDS["apply_motion"]["easing"]="string"
 
@@ -81,6 +82,13 @@ class API:
         if name == "list_backgrounds":
             from .backgrounds import catalog
             return {"backgrounds": catalog()}
+        if name == "get_motion_playbook":
+            from .playbook import PLAYBOOK
+            return PLAYBOOK
+        if name in {"analyze_export", "get_quality_report"}:
+            from .quality import analyze, get_report
+            if name == "analyze_export": return analyze(self.store,self.jobs,pid,args["job_id"],args.get("profile","calm"))
+            return get_report(self.store,self.jobs,pid,args["job_id"])
         if name == "get_editing_guide":
             from .inspection import GUIDE
             return {"instructions": GUIDE}
@@ -148,7 +156,7 @@ class API:
         raise EditorError(f"Nieznane narzędzie: {name}", "unknown_tool")
 
     def tools(self):
-        names = sorted(READS | WRITES | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery"})
+        names = sorted(READS | WRITES | {"create_project", "add_asset", "plan_storyboard", "render", "export", "generate_image", "generate_video", "generate_audio", "generate_voice", "transcribe", "create_review", "review_verdict", "create_format_variant", "package_delivery", "analyze_export"})
         result = []
         for name in names:
             props = {"project_id": {"type": "string"}, "expected_revision": {"type": "integer"}}
@@ -159,8 +167,10 @@ class API:
             if name == "create_project": props.update(name={"type": "string"}, format={"type": "string"}, duration={"type": "number"}, brief={"type": "string"}, workflow={"type": "string"})
             if name == "plan_storyboard": props.update(title={"type": "string"}, workflow={"type": "string"}, template_id={"type": "string"})
             if name.startswith("generate_") or name == "transcribe": props.update(provider_id={"type": "string"}, prompt={"type": "string"})
-            required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_providers", "create_project", "get_job"} else ["project_id"]
+            required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_motion_playbook", "get_providers", "create_project", "get_job"} else ["project_id"]
             if name in WRITES - {"set_selection", "set_playhead"} or name in {"render", "export", "add_asset", "create_review", "review_verdict", "create_format_variant"}: required.append("expected_revision")
+            if name in {"analyze_export", "get_quality_report", "package_delivery"}: required.append("job_id")
+            if name == "analyze_export": props["profile"] = {"type":"string", "enum":["calm","punchy","mute"]}
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
                          "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"],
                          "set_format": ["format"], "set_brand": ["brand"], "style_captions": ["style"],

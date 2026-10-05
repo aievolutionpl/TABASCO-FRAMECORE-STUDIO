@@ -119,10 +119,18 @@ Lokalny asystent rozpoznaje konkretne polecenia czasu i animacji. Swobodne polec
 
 Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apache-2.0, ikony Phosphor i Tabler oraz ilustracje Fluent — MIT, Lucide — ISC/MIT, a fonty — SIL OFL 1.1. Teksty licencji zachowujemy w oryginale. Własne zdjęcia, nagrania, fonty i ilustracje podlegają prawom ich autorów. Przesłana ilustracja poniżej jest materiałem identyfikacji projektu; licencja kodu nie przenosi praw do niej.
 
+## Reżyseria i pomiary filmu — Motion Video Kit
+
+Zaadaptowaliśmy najlepsze zasady z [motion-video-kit](https://github.com/echris6/motion-video-kit): ciągłość obiektu między scenami, hierarchię ruchu, przyczynę → skutek i niezależną ocenę poprawek. Polski [skill filmu biznesowego](skills/business-motion-film/SKILL.md) oraz `get_motion_playbook` pomagają agentowi zaplanować lepszy montaż.
+
+Po eksporcie kliknij **Zmierz rytm i dźwięk**. Raport pokazuje czasy zastojów, LUFS i szczyty audio, z profilami spokojnym, dynamicznym i świadomą ciszą. Przegląd klatek sprawdza też powtarzalność pikseli po przewijaniu. Raport wiąże się z SHA-256 MP4 i trafia do następnego ZIP. Pomiary wspierają ocenę; nie zastępują obejrzenia filmu ani odsłuchu.
+
+[Instrukcja i zakres adaptacji](docs/MOTION_VIDEO_KIT.md) · [Przykładowy pomiar](assets/framecore-motion-quality.json) · [Dziennik rund](skills/business-motion-film/references/REVIEW_LEDGER.md).
+
 ## Testy
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py -q
 ```
 
 Test przeglądarkowy importuje materiały, uruchamia osobny proces agenta MCP, sprawdza wspólną historię i eksportuje rzeczywisty film 15 sekund w rozdzielczości 1080 × 1920 z dźwiękiem. Wyniki dotyczą wykonanego przebiegu i są opisane w dokumencie walidacji.

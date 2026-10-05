@@ -4,10 +4,10 @@
 
 ## Wyniki wykonanych testów
 
-Nowy zestaw FrameCore: **30 testów przeszło, bez pominięć**. Polecenie:
+Nowy zestaw FrameCore: **34 testy przeszły, bez pominięć**. Polecenie:
 
 ```bash
-python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py -o addopts='' -q
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py -o addopts='' -q
 ```
 
 Sprawdzono wspólną edycję przez HTTP i osobny proces MCP, zaznaczenie, propozycje, cofanie, ponowną edycję człowieka, trwałość historii, konflikty rewizji i atomowość błędnych operacji. Import przez interfejs obejmował obraz produktu, logo oraz MP4 z dźwiękiem.
@@ -78,3 +78,9 @@ To działający etap rozbudowy, a nie wszystkie fazy z briefu. Test osobnego pro
 Dostawcy AI i automatyczna transkrypcja wymagają integracji. Plan scen jest szablonem lokalnym. Nie obsługujemy jeszcze dowolnego importu źródeł HyperFrames, marketplace, ripple/slip, własnych krzywych Béziera ani automatycznego dopasowania transkrypcji.
 
 Kontrola struktury nie zastępuje oceny wizualnej i odsłuchu. Pełny historyczny zestaw repozytorium wykonano przed dołączeniem Creator Pack: **233 testy przeszły, 24 nie przeszły** (257 łącznie). Wszystkie 24 błędy dotyczą testów animacji otwierających `file://`, blokowanych przez politykę zarządzanego Chromium. Dwie nieaktualne asercje dokumentacji i nazwy profilu zostały poprawione. Wynik 30/30 dotyczy aktualnego zestawu FrameCore; cały historyczny zestaw pozostaje zablokowany w opisanej części.
+
+## Adaptacja Motion Video Kit
+
+Pełny aktualny zestaw: **34/34 testy**. Nowe przypadki sprawdzają rzeczywisty statyczny i ruchomy MP4, ciszę i głośność, SHA-256 zamrożonego filmu niezależnie od edycji projektu, raport w ZIP oraz przycisk pomiaru i pobranie JSON na komputerze i telefonie. Test z celowo wprowadzoną zależnością od historii seek wykrywa inne piksele i blokuje zatwierdzenie przeglądu.
+
+Pokaz 6 s: **4,2 s** prawie nieruchomego obrazu przy 10 FPS, najdłuższy przedział **1,4 s**, **−36,3 LUFS**, **−21,2 dBFS true peak**. To demonstracja wykrywania problemów, a nie film spełniający wszystkie nowe kryteria. Trzy badane powroty do czasu (0 / 3 / 5,95 s) dały identyczne piksele. Świeży krytyk niezależnie wyciągnął 24 próbki i 12 dokładnych klatek, potwierdził potrzebę poprawy identyfikacji, CTA i rytmu. [Pełna recenzja](MOTION_VIDEO_KIT_REVIEW.md). Audio nie było odsłuchane.

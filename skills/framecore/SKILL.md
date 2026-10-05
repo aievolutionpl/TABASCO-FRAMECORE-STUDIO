@@ -29,6 +29,10 @@ Wprowadzaj tylko poprawki związane z nazwanym problemem z przeglądu, poprzez `
 
 `create_format_variant` tworzy niezależny projekt z układem startowym dla formatu; złożone sceny mogą wymagać ręcznej korekty. Wykonaj osobny przegląd wariantu. `package_delivery` wymaga ukończonego eksportu i pakuje jego zamrożone artefakty. Kontrakt nie pozwala wykonywać dowolnego kodu HTML/JS modelu.
 
+## Film biznesowy i mierzalna jakość
+
+Przy reklamie, premierze albo explainerze zastosuj [skill filmu biznesowego](../business-motion-film/SKILL.md) i odczytaj `get_motion_playbook`. Po ukończonym eksporcie `analyze_export` z `job_id` mierzy zastoje obrazu, LUFS, zakres LU i szczyt dBFS. Profil: calm, punchy lub mute. `get_quality_report` odczytuje raport ważny dla SHA-256 konkretnego MP4. Wykonaj pomiar przed `package_delivery`, aby raport znalazł się w ZIP. Montażysta nie powinien sam zatwierdzać jakości kreatywnej; przekaż artefakty niezależnej ocenie i zachowaj dziennik problemów oraz ich weryfikacji. Te reguły są instrukcjami, nie automatycznym systemem wielu agentów.
+
 ## Przykłady
 
 „Przesuń zaznaczony nagłówek o 0,4 sekundy wcześniej i nadaj mocniejsze wejście”: odczytaj zaznaczenie, zaproponuj `move_clip` i `apply_motion` (`impact-rise`, 0.5 s), przejrzyj propozycję, zastosuj zgodnie z poleceniem użytkownika, obejrzyj klatkę.
