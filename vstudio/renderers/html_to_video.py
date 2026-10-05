@@ -99,7 +99,8 @@ def launch_browser(pw, preferred: str | None, extra_args: list[str] | None = Non
     attempts: list[dict] = []
     if preferred:
         attempts.append({"executable_path": preferred} if os.path.exists(preferred) else {"channel": preferred})
-    attempts += [{}, {"channel": "chrome"}, {"channel": "msedge"}]
+    # Prefer browsers with H.264/AAC codecs for imported MP4 media.
+    attempts += [{"channel":"chrome"},{"channel":"msedge"},{}]
     root = os.path.expanduser("~/AppData/Local/ms-playwright")
     for pattern in ("chromium_headless_shell-*/*/headless_shell.exe", "chromium-*/chrome-win/chrome.exe"):
         for exe in sorted(glob.glob(os.path.join(root, pattern)), reverse=True):

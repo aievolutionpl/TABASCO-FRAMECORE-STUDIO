@@ -24,7 +24,7 @@ jobs:
         run: pip install -r requirements.txt pytest
 
       - name: Chromium dla Playwright
-        run: python -m playwright install --with-deps chromium
+        run: python -m playwright install --with-deps chromium chrome
 
       # Testy przeglądarkowe potrzebują GSAP 3.12.5 (strony ładują go z CDN; test podstawia lokalną kopię z npm)
       - name: GSAP 3.12.5
