@@ -11,7 +11,7 @@ from .model import EditorError, identifier, now, project, uid, validate
 ACTION_LABELS = {"add_library_asset":"Dodano materiał biblioteki", "set_background":"Zmieniono tło", "add_text":"Dodano tekst", "add_image":"Dodano obraz", "add_video":"Dodano wideo", "add_audio":"Dodano dźwięk", "add_caption":"Dodano napis", "add_shape":"Dodano kształt", "add_asset":"Dodano materiał", "add_icon":"Dodano ikonę", "move_element":"Przesunięto element", "resize_element":"Zmieniono rozmiar", "set_property":"Zmieniono właściwość", "move_clip":"Przesunięto klip", "trim_clip":"Przycięto klip", "split_clip":"Podzielono klip", "delete_clip":"Usunięto klip", "duplicate_clip":"Duplikowano klip", "apply_motion":"Zmieniono animację", "set_format":"Zmieniono format", "set_brand":"Zmieniono markę", "style_captions":"Zmieniono styl napisów", "set_track":"Zmieniono ścieżkę", "assemble_storyboard":"Zbudowano montaż", "rename_project":"Zmieniono nazwę projektu", "set_duration":"Zmieniono długość projektu", "set_keyframes":"Zmieniono klatki kluczowe", "set_audio":"Zmieniono dźwięk", "apply_template":"Zastosowano szablon", "add_scene":"Dodano scenę", "duplicate_scene":"Duplikowano scenę"}
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[1] / "output" / ".framecore"
-ACTION_LABELS.update(set_production_contract="Zapisano brief produkcyjny", set_scene_beat="Zmieniono beat sceny",
+ACTION_LABELS.update(replace_clip_asset="Podmieniono materiał klipu",add_track="Dodano ścieżkę",set_project_fps="Zmieniono FPS",assemble_visual_lesson="Zbudowano edytowalny plan lekcji",set_learning_brief="Zapisano cel lekcji",set_scene_learning="Opisano scenę lekcji",set_production_contract="Zapisano brief produkcyjny", set_scene_beat="Zmieniono beat sceny",
                      annotate_story_beats="Opisano stany i beaty", apply_motion_rules="Zastosowano reguły ruchu")
 
 
@@ -172,5 +172,5 @@ class Store:
                 "selection": session["selection"], "selected": [e for e in p["elements"] if e["id"] in session["selection"]],
                 "playhead": t, "frame": round(t * p["canvas"]["fps"]), "visible": visible,
                 "transcript": [{"text": e["text"], "start": e["start"], "duration": e["duration"]} for e in p["elements"] if e["type"] == "caption"],
-                "assets": p["assets"], "brand": p["brand"], "companyBrain": p.get("brandProfile"), "scenes": p["scenes"], "tracks": p["tracks"],
+                "lesson": p.get("lesson"), "assets": p["assets"], "brand": p["brand"], "companyBrain": p.get("brandProfile"), "scenes": p["scenes"], "tracks": p["tracks"],
                 "recentActions": s["history"][max(0, s["cursor"] - 10):s["cursor"]]}

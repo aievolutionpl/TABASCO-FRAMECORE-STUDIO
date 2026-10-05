@@ -19,7 +19,9 @@ GUIDE = """Pracujesz w TABASCO CREATIVES + FRAMECORE — STUDIO, projekcie wspó
 12. create_format_variant tworzy osobny układ startowy; każda kopia wymaga własnego przeglądu. package_delivery pakuje ukończony eksport z artefaktami.
 13. Odczytaj get_motion_playbook: zasady historii, sześć reguł ruchu i instrukcja niezależnej oceny. Nie wymyślaj opinii klientów, rezultatów ani ukończonych realizacji.
 14. Po ukończeniu eksportu użyj analyze_export z job_id i profile (calm/punchy/mute), a get_quality_report do powrotu do pomiaru. Raport dotyczy zamrożonego MP4 i nie zastępuje oceny ani odsłuchu.
-15. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
+15. replace_clip_asset zmienia źródło, zachowując geometrię, czas i animację. Krótsze źródło wymaga jawnego fit_source. add_track tworzy warstwę; move_clip track_id może wskazać tylko odblokowaną zgodną ścieżkę (obrazy i wideo mogą współdzielić ścieżkę).
+16. get_storytelling_playbook opisuje lekcję przez historię. plan_visual_lesson to plan startowy; assemble_visual_lesson zapisuje 7 edytowalnych scen. set_scene_learning dodaje narrację, cel, obraz i przejście. get_lesson_status sprawdza kompletność opisów, nie sens ani audio. Nie przedstawiaj planu jako gotowej lekcji.
+17. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
 """
 
 

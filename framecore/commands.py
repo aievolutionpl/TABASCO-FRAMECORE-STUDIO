@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from .model import EditorError, FORMATS, element, number, uid
+from .model import EditorError, FORMATS, element, number, uid, track_accepts
 
 STYLE_FIELDS = {"fontSize", "fontFamily", "fontWeight", "color", "align", "background", "radius"}
 PROPERTIES = {"text", "x", "y", "width", "height", "rotation", "scale", "opacity", "start", "duration", "sourceStart"}
@@ -60,7 +60,50 @@ def storyboard(duration=15, title="Your product", workflow="Product launch"):
 def mutate(p, name, args, session):
     if not isinstance(args, dict):
         raise EditorError("Argumenty komendy muszą być obiektem")
-    if name == "set_production_contract":
+    if name == "assemble_visual_lesson":
+        from .storytelling import assemble
+        assemble(p,args,session)
+    elif name == "set_learning_brief":
+        from .storytelling import fields, BRIEF_FIELDS
+        p["lesson"] = fields(args["brief"],BRIEF_FIELDS)
+    elif name == "set_scene_learning":
+        from .storytelling import fields, SCENE_FIELDS
+        scene=next((s for s in p["scenes"] if s["id"]==args.get("scene_id")),None)
+        if not scene:raise EditorError("Nie znaleziono sceny")
+        scene["lesson"]={**scene.get("lesson",{}),**fields(args["lesson"],SCENE_FIELDS)}
+    elif name == "set_project_fps":
+        fps=number(args["fps"],"FPS",1,60)
+        if not isinstance(fps,int):raise EditorError("FPS musi być liczbą całkowitą")
+        p["canvas"]["fps"]=fps
+    elif name == "add_track":
+        from .model import KINDS
+        kind=args.get("kind");label=args.get("name", "Nowa ścieżka")
+        if kind not in KINDS or not isinstance(label,str) or not label.strip() or len(label)>100 or len(p["tracks"])>=24:
+            raise EditorError("Podaj rodzaj i nazwę ścieżki; maksymalnie 24 ścieżki")
+        p["tracks"].append({"id":uid("track"),"name":label,"kind":kind,"muted":False,"hidden":False,"locked":False})
+    elif name == "replace_clip_asset":
+        e=target(p,args,session)
+        a=next((a for a in p["assets"] if a["id"]==args.get("asset_id")),None)
+        if e["type"] not in {"image","video","audio"} or not a or a["kind"] not in {"image","video","audio"}:
+            raise EditorError("Wybierz klip i poprawny materiał")
+        new_kind='audio' if e['type']=='audio' and (a['kind']=='audio' or a['kind']=='video' and a.get('hasAudio')) else a['kind']
+        if (e['type']=='audio') != (new_kind=='audio'):
+            raise EditorError("Dźwięk można podmienić tylko dźwiękiem; obraz lub wideo materiałem wizualnym")
+        fit=args.get('fit_source',False)
+        if not isinstance(fit,bool):raise EditorError("fit_source musi być wartością logiczną")
+        if a.get('duration') and a['duration']+.1<e['duration']:
+            if not fit:raise EditorError("Źródło jest krótsze niż klip; zaznacz dopasowanie długości")
+            e['duration']=a['duration'];e['keyframes']=slice_keyframes(e.get('keyframes',[]),0,e['duration'])
+            for k in ('fadeIn','fadeOut'):
+                if e.get('audio'):e['audio'][k]=min(e['audio'][k],e['duration'])
+        current_track=next(t for t in p['tracks'] if t['id']==e['trackId'])
+        if not track_accepts(current_track['kind'],new_kind):
+            track=next((t for t in p['tracks'] if t['kind']==new_kind and not t['locked']),None)
+            if not track:raise EditorError("Brak odblokowanej ścieżki dla tego materiału")
+            e['trackId']=track['id']
+        old=e['assetId'];e.update(assetId=a['id'],type=new_kind,sourceStart=0)
+        if p['brand'].get('logoAssetId')==old:p['brand']['logoAssetId']=a['id'] if new_kind=='image' else None
+    elif name == "set_production_contract":
         if not isinstance(args.get("contract"), dict): raise EditorError("Kontrakt musi być obiektem")
         p.setdefault("production", {}).update(deepcopy(args["contract"]))
     elif name == "set_scene_beat":
@@ -174,6 +217,9 @@ def mutate(p, name, args, session):
         e = target(p, args, session)
         e["start"] = args["start"]
         if "track_id" in args:
+            track=next((t for t in p['tracks'] if t['id']==args['track_id']),None)
+            if not track or not track_accepts(track['kind'],e['type']) or track['locked']:
+                raise EditorError("Wybierz odblokowaną zgodną ścieżkę (obrazy i wideo można mieszać)")
             e["trackId"] = args["track_id"]
     elif name == "trim_clip":
         e = target(p, args, session)
@@ -300,7 +346,7 @@ def mutate(p, name, args, session):
         raise EditorError(f"Nieobsługiwana komenda: {name}")
     # Editing a focused clip may remove it or move it outside its beat. Keep the
     # narrative description and ask for a new focus rather than blocking editing.
-    if name in {"delete_clip", "trim_clip", "move_clip", "split_clip", "duplicate_scene", "assemble_storyboard", "set_property"}:
+    if name in {"delete_clip", "trim_clip", "move_clip", "split_clip", "duplicate_scene", "assemble_storyboard", "set_property", "replace_clip_asset"}:
         for scene in p["scenes"]:
             beat = scene.get("beat")
             if not beat or not beat.get("focusElementId"): continue

@@ -111,3 +111,17 @@ Adapter researchu był sprawdzany z deterministycznymi odpowiedziami: szkic nie 
 Trzy zrzuty panelu wykonano z rzeczywistego serwera; obejrzano widok komputera i telefonu. Przeglądarka nie zgłosiła błędów JavaScript. Profil na zrzutach jest fikcyjnym przykładem. Po restarcie studia potwierdzono dostępność biblioteki, siedmiu narzędzi i nowego menu na działającym serwerze.
 
 Końcowy pełny przebieg FrameCore: **47/47 przeszło w 183,27 s**, bez pominięć. Uzupełniający przebieg interfejsu i marek po korekcie paska na telefonie: **6/6 w 11,42 s**. To weryfikacja modułów FrameCore, nie całego historycznego zestawu testów starszego silnika CLI.
+
+## Wspólny montaż i lekcja przez historię
+
+Końcowy zestaw FrameCore: **52/52 testy przeszły w 185,34 s, bez pominięć**. Polecenie:
+
+```bash
+python -m pytest tests/test_framecore.py tests/test_framecore_creator_pack.py tests/test_framecore_browser.py tests/test_framecore_interface.py tests/test_framecore_production.py tests/test_framecore_quality.py tests/test_framecore_motion_evidence.py tests/test_framecore_agent_control.py tests/test_framecore_brands.py tests/test_framecore_collab_editing.py -o addopts='' -q
+```
+
+- Podmiana zachowała identyfikator, geometrię, ruch i klatki kluczowe. Sprawdzono cofnięcie, propozycję agenta, odrzucenie zmiany zablokowanego klipu bez modyfikacji historii i rzeczywisty import MP4. Krótsze źródło wymaga jawnego dopasowania; test używa pliku skróconego przez FFmpeg.
+- Chromium wykonał natywne przeciąganie zdjęcia z biblioteki na klip i pustą nową ścieżkę, podmianę plikiem wgranym przez formularz, zbudowanie siedmiu scen i zapis tekstu lektora. Brak błędów JavaScript w sprawdzonym przebiegu; widok 320 px nie przepełniał dokumentu. Testy wcześniejszych paneli również pozostały zielone.
+- Profil Company brain zachował font DM Sans i kolory klienta po przygotowaniu lekcji. Plan nie nadpisuje jego kopii informacji. Test potwierdza atomowe odrzucenie nieznanych pól opisów i cofnięcie całego montażu.
+- Przykład `examples/visual-lesson` pozostawia oddzielne teksty, kształty, logo oraz ścieżkę wyjaśnień. Roboczy render: **21 s, 640 × 360, 24 FPS, H.264, bez audio**. Obejrzano rzeczywiste zrzuty interfejsu oraz planszę ośmiu klatek; pomiar nie wykrył przekroczeń tekstu lub kadru. Powrót do trzech badanych czasów dał identyczne piksele.
+- To adaptacja zasad z grafiki użytkownika, nie test deklarowanego tam modelu. Opis narracji nie generuje głosu, a pole przejścia nie tworzy automatycznej animacji. Dźwięk, ciągłość postaci i trafność wyjaśnienia wymagają dalszej produkcji oraz oceny człowieka.

@@ -27,6 +27,16 @@ Na telefonie biblioteka i właściwości otwierają się jako panele. Obsługuj�
 
 W panelu **Marka → Dodaj logo FrameCore** umieścisz nowy znak w filmie. To zwykły edytowalny klip: możesz zmieniać jego pozycję, rozmiar i ruch albo cofnąć dodanie.
 
+## Montaż ręczny i praca z agentem
+
+Przeciągaj media z biblioteki lub komputera na timeline. Upuść nowe zdjęcie albo nagranie na klip, aby podmienić źródło **bez utraty pozycji, czasu i animacji**. Miniatury, dodatkowe ścieżki, blokady, przyciąganie do krawędzi i duplikowanie pomagają dopracować film po pracy agenta. Te same operacje są dostępne przez MCP i w dashboardzie AI.
+
+W **Produkcja → Lekcja przez historię** przygotujesz siedem edytowalnych scen, osobny tekst lektora i opis przejść. Opcjonalny papierowy kierunek korzysta z kremu, koralu i Manrope; profile klientów domyślnie zachowują swój wygląd. Plan wymaga uzupełnienia przykładów, obrazu i audio oraz przeglądu przed finalnym eksportem. [Instrukcja montażu i nowych narzędzi](docs/COLLABORATIVE_EDITING.md).
+
+![Wspólny montaż: miniatury, ścieżki i podmiana źródła klipu](assets/framecore-collaborative-editor.png)
+
+[Przykład 21 sekund](assets/framecore-visual-lesson-demo.mp4) · [Edytowalny projekt i uruchomienie](examples/visual-lesson/README.md) · [Plan scen i tekst lektora](assets/framecore-lesson-inspector.png). To roboczy pokaz typograficzny bez nagranego lektora.
+
 ## Profile marek · Company brain
 
 W **Ustawieniach** zapiszesz profile firm: opis, produkty i usługi, odbiorców, ton komunikacji, design guidelines, kolory, font, logo oraz zdjęcia referencyjne. Wybierz profil przy pracy nad filmem — projekt otrzyma własną kopię informacji i materiałów, a agent wykorzysta ten kontekst do montażu. Zmiana biblioteki nie zmieni wcześniejszych projektów.

@@ -41,6 +41,10 @@ def identifier(value):
     return value
 
 
+def track_accepts(track_kind, clip_kind):
+    return track_kind==clip_kind or track_kind in {'image','video'} and clip_kind in {'image','video'}
+
+
 def project(name="Projekt bez nazwy", format="9:16", duration=15, brief="", workflow="Premiera produktu"):
     if format not in FORMATS:
         raise EditorError("Nieobsługiwany format")
@@ -79,6 +83,8 @@ def validate(p):
     number(p["duration"], "duration", .1, 600)
     from .production import validate_contract
     validate_contract(p)
+    from .storytelling import validate as validate_lesson
+    validate_lesson(p)
     for k in ("width", "height"):
         number(p["canvas"][k], k, 64, 4096)
         if not isinstance(p["canvas"][k], int) or p["canvas"][k] % 2:

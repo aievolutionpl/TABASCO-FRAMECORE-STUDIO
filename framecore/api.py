@@ -56,9 +56,19 @@ FIELDS.update({
 FIELDS["apply_motion"]["easing"]="string"
 
 for kind in ("text", "video", "image", "audio", "caption", "shape"):
-    FIELDS["add_" + kind] = {"assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object",
+    FIELDS["add_" + kind] = {"trackId":"string", "assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object",
         "x":"number", "y":"number", "width":"number", "height":"number", "scale":"number", "rotation":"number", "opacity":"number", "motion":None}
 
+
+READS.update({"get_storytelling_playbook","plan_visual_lesson","get_lesson_status"})
+WRITES.update({"replace_clip_asset","add_track","set_project_fps","assemble_visual_lesson","set_learning_brief","set_scene_learning"})
+FIELDS.update({
+    "replace_clip_asset":{"element_id":"string","asset_id":"string","fit_source":"boolean"},
+    "add_track":{"kind":"string","name":"string"},"set_project_fps":{"fps":"integer"},
+    "plan_visual_lesson":{"brief":"object","duration":"number"},
+    "assemble_visual_lesson":{"brief":"object","scenes":"array","duration":"number","replace":"boolean","paper_style":"boolean"},
+    "set_learning_brief":{"brief":"object"},"set_scene_learning":{"scene_id":"string","lesson":"object"},
+})
 
 BRAND_TOOLS = {"list_brand_profiles", "get_brand_profile", "save_brand_profile", "delete_brand_profile", "apply_brand_profile", "remove_brand_asset", "upload_brand_asset"}
 READS.update({"list_brand_profiles", "get_brand_profile"})
@@ -79,6 +89,11 @@ class API:
         args = dict(args or {})
         pid = args.pop("project_id", None)
         revision = args.pop("expected_revision", None)
+        if name in {"get_storytelling_playbook","plan_visual_lesson","get_lesson_status"}:
+            from .storytelling import PLAYBOOK,plan,status
+            if name=="get_storytelling_playbook":return PLAYBOOK
+            if name=="plan_visual_lesson":return plan(args['brief'],args.get('duration',self.store.read(pid)['project']['duration']))
+            return status(self.store.read(pid)['project'])
         if name in BRAND_TOOLS:
             from .brands import BrandLibrary
             brands = BrandLibrary(self.store)
@@ -223,6 +238,7 @@ class API:
             if name == "plan_storyboard": props.update(title={"type": "string"}, workflow={"type": "string"}, template_id={"type": "string"})
             if name.startswith("generate_") or name == "transcribe": props.update(provider_id={"type": "string"}, prompt={"type": "string"})
             required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_motion_playbook", "get_providers", "create_project", "get_job"} else ["project_id"]
+            if name=="get_storytelling_playbook":required=[]
             if name in BRAND_TOOLS - {"apply_brand_profile"}: required = []
             if name in BRAND_TOOLS - {"list_brand_profiles", "save_brand_profile"}: required += ["brand_id", "expected_version"] if name != "get_brand_profile" else ["brand_id"]
             if name == "save_brand_profile": required.append("profile")
@@ -233,6 +249,8 @@ class API:
             if name in {"analyze_export", "get_quality_report", "package_delivery"}: required.append("job_id")
             if name == "resolve_frame_time": required.append("spec")
             if name == "compare_reviews": required += ["baseline_id","review_id"]
+            required += {"replace_clip_asset":["asset_id"],"add_track":["kind","name"],"set_project_fps":["fps"],
+                         "plan_visual_lesson":["brief"],"assemble_visual_lesson":["brief"],"set_learning_brief":["brief"],"set_scene_learning":["scene_id","lesson"]}.get(name,[])
             if name == "analyze_export": props["profile"] = {"type":"string", "enum":["calm","punchy","mute"]}
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
                          "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"],
