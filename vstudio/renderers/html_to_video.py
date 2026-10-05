@@ -124,8 +124,6 @@ def install_vendor_routes(target) -> None:
     """
     import json
     import mimetypes
-import re
-    import re
 
     index = os.environ.get("VSTUDIO_VENDOR_INDEX")
     if not index or not os.path.exists(index):
