@@ -69,7 +69,7 @@ def main():
                 replies=[json.loads(line) for line in result.stdout.splitlines()]
                 assert 'replace_clip_asset' in {t['name'] for t in replies[1]['result']['tools']}
                 created=json.loads(replies[2]['result']['content'][0]['text'])
-                assert created['project']['name']=='Zażółć gęślą — próba MCP'
+                assert created['project']['metadata']['name']=='Zażółć gęślą — próba MCP'
                 print(json.dumps({'packaged_app':'ready','bundled_tools':True,'h264_aac_import_and_export':'passed','stdio_mcp':'passed','project_saved':True}))
             finally:
                 process.terminate()
