@@ -116,11 +116,16 @@ def emphasize(p, e, word=None, emoji=True, emoji_id=None, motion_id="emoji-pop",
     st = e["style"]
     size = max(64, min(w * .2, st["fontSize"] * 1.25))
     lines = e["text"].split("\n")
-    est = min(e["width"], max(len(line) for line in lines) * (st["fontSize"] * .52 + st.get("letterSpacing", 0)))
+    # Stand next to the line that holds the word (explicit line breaks), not the whole block.
+    target = clean(word)
+    row = next((i for i, line in enumerate(lines) if any(clean(x) == target for x in line.split())), 0)
+    glyph = st["fontSize"] * .52 + st.get("letterSpacing", 0)
+    est = min(e["width"], len(lines[row]) * glyph)
     x = {"left": e["x"] + est + size * .3, "center": e["x"] + e["width"] / 2 + est / 2 + size * .25,
          "right": e["x"] + e["width"] - est - size * 1.15}[st["align"]]
-    block = min(e["height"], len(lines) * st["fontSize"] * 1.08)
-    y = e["y"] + (e["height"] - block) / 2 - size * .45
+    line_h = st["fontSize"] * 1.08
+    block = min(e["height"], len(lines) * line_h)
+    y = e["y"] + (e["height"] - block) / 2 + row * line_h + line_h / 2 - size * .85
     x, y = max(0, min(w - size, x)), max(0, min(h - size, y))
     at = emphasis_time(e, word)
     clip = element(p, "image", assetId=asset["id"], sceneId=e.get("sceneId"), start=round(e["start"] + max(0, at - .05), 3),
