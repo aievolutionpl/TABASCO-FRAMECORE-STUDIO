@@ -1,6 +1,6 @@
 # MotionDuo Studio jako aplikacja
 
-Instalatory **0.3.1 desktop preview** są dostępne w [GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.1-desktop.1). Pierwsza seria ma status **desktop preview**: Windows x64, macOS Apple Silicon i macOS Intel. Linki na stronie produktu aktualizują się dopiero po publikacji rzeczywistych plików.
+Instalatory **0.3.2 desktop preview** są dostępne w [GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.2-desktop.1). Pierwsza seria ma status **desktop preview**: Windows x64, macOS Apple Silicon i macOS Intel. Linki na stronie produktu aktualizują się dopiero po publikacji rzeczywistych plików.
 
 ## Instalacja
 
@@ -12,7 +12,7 @@ Nie trzeba instalować Pythona, Git ani FFmpeg. Paczka zawiera własny Python, F
 
 To wydanie bez komercyjnego podpisu Windows i notaryzacji Apple. System może wymagać potwierdzenia konkretnej aplikacji. Na macOS użyj **Prywatność i ochrona → Otwórz mimo to** zgodnie z komunikatem systemu; nie wyłączaj ochrony globalnie. Instrukcje konkretnego wydania i sumy SHA-256 znajdują się przy plikach.
 
-Nowe wydanie zawiera logo MotionDuo, banner oraz odświeżony edytor. Nazwa producentów: **TABASCO CREATIVES + FRAMECORE**.
+Nowe wydanie zawiera logo MotionDuo, banner, panel efektów, przejścia dla poszczególnych scen i narzędzia timeline. [Instrukcja montażu](EDITING_EFFECTS.md). Nazwa producentów: **TABASCO CREATIVES + FRAMECORE**.
 
 ## Dane i aktualizacja
 

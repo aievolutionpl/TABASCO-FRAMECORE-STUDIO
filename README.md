@@ -28,6 +28,8 @@ Panel **Animacje** ma filtry i podgląd na żywo, a **Właściwości** — osobn
 
 ## Nowe efekty i narzędzia timeline
 
+![Panel efektów i timeline MotionDuo](assets/motionduo-effects-editor.png)
+
 Panel **Efekty** udostępnia **11 wariantów przejścia** i **7 looków klipu** z regulacją siły. Każda scena może mieć własne przejście i czas, a podgląd odtwarza fragment wokół cięcia. Wszystko działa offline i trafia do MP4.
 
 Na osi czasu znajdziesz pasek scen oraz **Narzędzia**: przycinanie początku lub końca do wskaźnika, usuwanie klipu ze zsunięciem kolejnych, usuwanie luk na ścieżce i wybieranie innego zakresu nagrania bez przesuwania klipu. Zmiany mają wspólne cofanie i są dostępne dla agenta przez MCP. [Instrukcja i komendy](docs/EDITING_EFFECTS.md). [Film demonstracyjny 8 s](assets/motionduo-effects-demo.mp4) pokazuje nowy render.
@@ -241,7 +243,7 @@ Panel **Analiza materiałów** tworzy miniatury, contact sheets, proxy oraz wave
 
 ## Nowa nazwa i wybór znaku
 
-Produkt nosi nazwę **MotionDuo Studio**, z podpisem **by TABASCO CREATIVES + FRAMECORE**. Wewnętrzny silnik, polecenia `framecore.py`, identyfikatory MCP i dotychczasowe katalogi projektów zachowują kompatybilność. Aktualne [instalatory 0.3.1 desktop preview](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.1-desktop.1) zawierają branding MotionDuo. Wcześniejsze instalatory 0.3.0, filmy i zrzuty przedstawiają poprzednią nazwę FrameCore Studio.
+Produkt nosi nazwę **MotionDuo Studio**, z podpisem **by TABASCO CREATIVES + FRAMECORE**. Wewnętrzny silnik, polecenia `framecore.py`, identyfikatory MCP i dotychczasowe katalogi projektów zachowują kompatybilność. Aktualne [instalatory 0.3.2 desktop preview](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.2-desktop.1) zawierają branding MotionDuo oraz nowe efekty i narzędzia timeline. Wcześniejsze instalatory 0.3.0, filmy i zrzuty przedstawiają poprzednią nazwę FrameCore Studio.
 
 <details>
 <summary>Wcześniejsza eksploracja: dziewięć koncepcji znaku</summary>

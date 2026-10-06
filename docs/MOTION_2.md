@@ -60,3 +60,5 @@ Tła pochodzą z kolekcji FrameCore Cinema (materiały generowane AI, [pochodzen
 - Gradient na tekście kinetycznym jest nakładany na każde słowo lub literę osobno.
 - Rozmycie ruchu działa tylko w finalnym eksporcie, nie w szkicu ani w podglądzie.
 - Przejścia scen działają na granicach scen z planu (`scenes`); projekt bez scen ma zwykłe cięcia.
+
+Panel **Efekty** rozszerza ten system o przejścia dla poszczególnych scen, looki klipów z regulacją siły oraz narzędzia timeline. [Aktualna instrukcja i API](EDITING_EFFECTS.md).
