@@ -68,7 +68,14 @@ def main():
         (native/'tool-manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
     if not browsers.is_dir() or not any(browsers.glob('chromium*')):raise RuntimeError('Najpierw pobierz Chromium do PLAYWRIGHT_BROWSERS_PATH')
     os.environ['PLAYWRIGHT_BROWSERS_PATH']=str(browsers);os.environ['FRAMECORE_NATIVE_DIR']=str(native)
-    if not args.skip_build:subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--clean',str(ROOT/'packaging/framecore.spec')],cwd=ROOT,check=True)
+    if not args.skip_build:
+        build=subprocess.run([sys.executable,'-m','PyInstaller','--noconfirm','--clean',str(ROOT/'packaging/framecore.spec')],cwd=ROOT,capture_output=True,text=True)
+        print(build.stdout);print(build.stderr,file=sys.stderr)
+        if build.returncode and os.environ.get('GITHUB_ACTIONS')=='true':
+            detail='\n'.join((build.stdout+'\n'+build.stderr).splitlines()[-60:])
+            detail=detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+            print('::error title=Native package build::'+detail)
+        build.check_returncode()
 
 
 if __name__=='__main__':main()
