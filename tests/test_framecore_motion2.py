@@ -169,7 +169,7 @@ def test_showcase_projects_are_editable_and_clean(tmp_path, name):
     kinds = {m["id"]: m["kind"] for m in api.call("list_motion")["components"]}
     used = {e["motion"]["id"] for e in p["elements"] if e.get("motion")}
     assert sum(kinds.get(m) == "kinetic" for m in used) >= 4
-    assert any(e.get("exit") for e in p["elements"]) and p["canvas"]["fx"]["motionBlur"] is True
+    assert any(e.get("exit") for e in p["elements"]) and any(sc.get("transition") for sc in p["scenes"])
     assert sum(e["type"] == "audio" for e in p["elements"]) == 1
     assert store.read(p["id"])["history"], "built through the shared command history"
 

@@ -164,7 +164,7 @@ def create_showreel(store):
         b.text(f"{i+1:02d} / 06", i * 4 + .1, 3.9, 1560, 64, 240, 60, {"id": "soft-fade", "duration": .3}, None,
                fontFamily="JetBrains Mono", fontSize=36, fontWeight=500, color="#9a958d", align="right")
     b("set_canvas_fx", fx={"grade": "cinematic", "vignette": .4, "grain": .18, "letterbox": 0, "transition": "light-leak",
-                           "transitionDuration": .9, "motionBlur": True})
+                           "transitionDuration": .9, "motionBlur": False})
     # A different shader-style transition on every cut (inspired by HyperFrames shader transitions).
     scenes_by_start = {round(sc["start"], 3): sc["id"] for sc in b.state["project"]["scenes"]}
     for start, transition, duration in ((4, "domain-warp", .9), (8, "whip-pan", .6), (12, "glitch", .5), (16, "ridged-burn", .9), (20, "sdf-iris", .8)):
@@ -203,7 +203,7 @@ def create_reel(store):
            fontFamily="JetBrains Mono", fontSize=48, fontWeight=500, color=MINT, align="center")
     b.text("FRAMECORE", 0, 12, 90, 150, 900, 70, {"id": "logo-settle", "duration": .8}, None, fontSize=40, letterSpacing=6, align="center")
     b("set_canvas_fx", fx={"grade": "vivid", "vignette": .3, "grain": .1, "letterbox": 0, "transition": "flash", "transitionDuration": .35,
-                           "motionBlur": True})
+                           "motionBlur": False})
     scenes_by_start = {round(sc["start"], 3): sc["id"] for sc in b.state["project"]["scenes"]}
     b("set_scene_transition", scene_id=scenes_by_start[4], transition_id="whip-pan", duration=.55)
     b("set_scene_transition", scene_id=scenes_by_start[8], transition_id="cinematic-zoom", duration=.7)

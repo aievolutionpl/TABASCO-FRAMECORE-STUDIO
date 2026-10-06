@@ -52,7 +52,7 @@ python scripts/render-showcase.py       # tworzy oba projekty, eksportuje MP4 i 
 
 | Film | Co pokazuje |
 | --- | --- |
-| [Showreel Motion 2.0](../assets/framecore-motion2-showreel.mp4) | Kinetyczne nagłówki z gradientem, maszynę do pisania, karaoke, karty z przesłoną/sprężyną/ukośnym wjazdem i glitchem ilustracji, neonowe dekodowanie, na każdym cięciu inne przejście ✦ (rozpływ, panorama, glitch, wypalenie, przesłona), look kinowy i rozmycie ruchu. |
+| [Showreel Motion 2.0](../assets/framecore-motion2-showreel.mp4) | Kinetyczne nagłówki z gradientem, maszynę do pisania, karaoke, karty z przesłoną/sprężyną/ukośnym wjazdem i glitchem ilustracji, neonowe dekodowanie, na każdym cięciu inne przejście ✦ (rozpływ, panorama, glitch, wypalenie, przesłona), look kinowy z ziarnem i winietą. |
 | [Rolka 9:16](../assets/framecore-motion2-reel.mp4) | Pionowy format, karaoke dużych napisów, sprężyste emoji, szybka panorama i kinowy zoom na cięciach. |
 
 Tła pochodzą z kolekcji FrameCore Cinema (materiały generowane AI, [pochodzenie](CAMPAIGN_ASSETS.md)); muzyka jest syntetyzowana proceduralnie w `framecore/showcase.py`; ilustracje to Microsoft Fluent Emoji (MIT).

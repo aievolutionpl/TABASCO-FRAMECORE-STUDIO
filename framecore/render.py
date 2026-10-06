@@ -104,11 +104,14 @@ class RenderJobs:
             cmd = [sys.executable, str(renderer), str(html), "-o", str(video), "--size", f'{p["canvas"]["width"]}x{p["canvas"]["height"]}',
                    "--fps", str(p["canvas"]["fps"]), "--duration", str(p["duration"]), "--crf", "18" if quality == "final" else "26",
                    "--preset", "veryfast"]
-            if quality == "final" and p["canvas"].get("fx", {}).get("motionBlur"):
+            subframes = 4 if quality == "final" and p["canvas"].get("fx", {}).get("motionBlur") else 1
+            if subframes > 1:
                 # Filmowe rozmycie ruchu: uśrednienie 4 podklatek w migawce 180°.
                 cmd += ["--subframes", "4", "--shutter", "0.5"]
             with (directory / "render.log").open("w") as log:
-                cp = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=1800)
+                # Długie filmy i rozmycie ruchu (kilka zrzutów na klatkę) potrzebują więcej czasu.
+                frames = p["duration"] * p["canvas"]["fps"] * subframes
+                cp = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=max(1800, frames * 10))
             if cp.returncode:
                 raise EditorError((directory / "render.log").read_text(encoding="utf-8")[-2000:], "render_failed")
             self._update(job_id, progress=.85)

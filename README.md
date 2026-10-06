@@ -216,7 +216,7 @@ python scripts/render-showcase.py       # eksport obu filmów i podglądów do a
 
 | Film | Format | Co pokazuje | Projekt |
 | --- | --- | --- | --- |
-| [▶ Showreel Motion 2.0](assets/framecore-motion2-showreel.mp4) | 16:9 · 24 s | Nowy silnik ruchu, inne przejście ✦ na każdym cięciu, rozmycie ruchu · [klatki](assets/framecore-motion2-showreel-frames.jpg) | `sample --showreel` |
+| [▶ Showreel Motion 2.0](assets/framecore-motion2-showreel.mp4) | 16:9 · 24 s | Nowy silnik ruchu, inne przejście ✦ na każdym cięciu, look kinowy · [klatki](assets/framecore-motion2-showreel-frames.jpg) | `sample --showreel` |
 | [▶ Rolka Motion 2.0](assets/framecore-motion2-reel.mp4) | 9:16 · 12 s | Kinetyczne napisy dla social media, szybka panorama i kinowy zoom · [klatki](assets/framecore-motion2-reel-frames.jpg) | `sample --reel` |
 | [▶ Reklama „Twój pomysł. Wspólna rama.”](assets/framecore-agent-campaign.mp4) | 16:9 · 30 s | Sześć scen po 5 s, tła FrameCore Cinema, własny podkład | `sample --campaign` |
 | [▶ Przykład współpracy](assets/framecore-collaboration.mp4) | 16:9 · 15 s | Sześć scen z polskimi tekstami i ikonami MIT | `sample` |
