@@ -101,7 +101,10 @@ def launch_browser(pw, preferred: str | None, extra_args: list[str] | None = Non
     if preferred:
         attempts.append({"executable_path": preferred} if os.path.exists(preferred) else {"channel": preferred})
     # Prefer browsers with H.264/AAC codecs for imported MP4 media.
-    attempts += [{"channel":"chrome"},{"channel":"msedge"},{}]
+    if os.environ.get('FRAMECORE_PORTABLE_MEDIA') == '1':
+        attempts.append({})  # Frozen app uses its own browser and portable media.
+    else:
+        attempts += [{"channel":"chrome"},{"channel":"msedge"},{}]
     if shutil.which("chromium"):
         attempts.append({"executable_path": shutil.which("chromium")})
     root = os.path.expanduser("~/AppData/Local/ms-playwright")

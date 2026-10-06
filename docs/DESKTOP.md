@@ -28,7 +28,7 @@ Buduj na docelowym systemie. Nie nazywaj kompilacji Linux instalatorem Windows l
 ```bash
 python -m pip install -r packaging/requirements-desktop.txt
 # Ustaw PLAYWRIGHT_BROWSERS_PATH na katalog roboczy przeglądarek.
-python -m playwright install chromium
+python -m playwright install --only-shell chromium
 python scripts/build-desktop.py
 ```
 

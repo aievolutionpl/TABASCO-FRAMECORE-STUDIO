@@ -25,7 +25,8 @@ def test_desktop_data_and_frozen_workers(tmp_path,monkeypatch):
     configure();engine=os.environ['FRAMECORE_ENGINE']
     assert renderer_command(['film.html'],tmp_path/'render.log')==[engine,'--render-worker',str(tmp_path/'render.log'),'film.html']
     assert mcp_config(tmp_path)['args']==['--mcp','--root',str(tmp_path)]
-    assert os.environ['PLAYWRIGHT_BROWSERS_PATH']==str(tmp_path/'resources/browsers')
+    expected=tmp_path/('Resources/browsers' if sys.platform=='darwin' else 'resources/browsers')
+    assert os.environ['PLAYWRIGHT_BROWSERS_PATH']==str(expected)
     assert os.environ['FRAMECORE_PORTABLE_MEDIA']=='1'
 
 

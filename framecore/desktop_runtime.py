@@ -24,7 +24,10 @@ def configure():
     resources = Path(sys._MEIPASS)
     native = resources / 'native'
     os.environ['PATH'] = str(native) + os.pathsep + os.environ.get('PATH', '')
-    os.environ['PLAYWRIGHT_BROWSERS_PATH'] = str(resources / 'browsers')
+    browser_directory = resources / 'browsers'
+    if sys.platform == 'darwin':
+        browser_directory = resources.parent / 'Resources/browsers'
+    os.environ['PLAYWRIGHT_BROWSERS_PATH'] = str(browser_directory)
     os.environ['FRAMECORE_PORTABLE_MEDIA'] = '1'
     certificate=resources/'certificates/cacert.pem'
     if certificate.is_file():os.environ.setdefault('SSL_CERT_FILE',str(certificate))

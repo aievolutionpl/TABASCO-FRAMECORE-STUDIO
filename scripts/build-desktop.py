@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import traceback
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -76,6 +77,18 @@ def main():
             detail=detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
             print('::error title=Native package build::'+detail)
         build.check_returncode()
+        # Keep upstream Chromium bundles intact: PyInstaller rewrites Mach-O files
+        # and cannot safely reconstruct Chrome's nested framework layout.
+        destination=(ROOT/'dist/FrameCore Studio.app/Contents/Resources/browsers'
+                     if sys.platform=='darwin' else ROOT/'dist/FrameCoreStudio/_internal/browsers')
+        shutil.copytree(browsers,destination,symlinks=True,dirs_exist_ok=True)
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    try:
+        main()
+    except Exception:
+        if os.environ.get('GITHUB_ACTIONS')=='true':
+            detail=traceback.format_exc().replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+            print('::error title=Desktop packaging::'+detail)
+        raise

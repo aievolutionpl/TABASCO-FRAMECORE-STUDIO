@@ -1,6 +1,8 @@
 """Acceptance of the actual frozen app: server, data, MCP, MP4 import and export."""
 import argparse
 import json
+import os
+import traceback
 from pathlib import Path
 import re
 import subprocess
@@ -71,4 +73,11 @@ def main():
                 except subprocess.TimeoutExpired:process.kill();process.wait()
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    try:
+        main()
+    except Exception:
+        if os.environ.get('GITHUB_ACTIONS')=='true':
+            detail=traceback.format_exc().replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+            print('::error title=Frozen package acceptance::'+detail)
+        raise

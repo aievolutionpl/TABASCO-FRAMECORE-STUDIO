@@ -38,7 +38,7 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ffmpeg
       - name: Bundled Chromium
-        run: python -m playwright install chromium
+        run: python -m playwright install --only-shell chromium
       - name: Build native app
         run: python scripts/build-desktop.py
       - name: Validate Windows package

@@ -14,7 +14,7 @@ datas = [(str(root/'framecore/static'),'framecore/static'),
          (str(root/'licenses'),'licenses'), (str(root/'LICENSE'),'.'),
          (str(root/'THIRD_PARTY_NOTICES.md'),'.'),
          (str(root/'packaging/TOOL_NOTICES.md'),'desktop-licenses'),
-         (str(native/'tool-manifest.json'),'desktop-licenses'), (str(browsers),'browsers'),
+         (str(native/'tool-manifest.json'),'desktop-licenses'),
          (certifi.where(),'certificates')]
 datas += collect_data_files('webview') + copy_metadata('pywebview') + copy_metadata('playwright')
 datas += [(str(file),'desktop-licenses') for file in (native/'licenses').glob('*')]
