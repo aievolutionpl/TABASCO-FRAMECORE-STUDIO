@@ -1,6 +1,6 @@
 # FrameCore Studio jako aplikacja
 
-Instalatory są publikowane w [GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases). Pierwsza seria ma status **desktop preview**: Windows x64, macOS Apple Silicon i macOS Intel. Linki na stronie produktu aktualizują się dopiero po publikacji rzeczywistych plików.
+Instalatory **0.3.0 desktop preview** są dostępne w [GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.0-desktop.2). Pierwsza seria ma status **desktop preview**: Windows x64, macOS Apple Silicon i macOS Intel. Linki na stronie produktu aktualizują się dopiero po publikacji rzeczywistych plików.
 
 ## Instalacja
 
