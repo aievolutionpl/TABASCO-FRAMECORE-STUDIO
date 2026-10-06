@@ -24,7 +24,8 @@ GUIDE = """Pracujesz w TABASCO CREATIVES + FRAMECORE — STUDIO, projekcie wspó
 17. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
 18. Ruch 2.0: apply_motion przyjmuje wejścia (kind entrance) i tekst kinetyczny (kind kinetic: type-on, word-cascade, char-rise, word-blur, char-wave, scramble-in, word-highlight; tylko tekst i napisy, czas do 4 s). apply_exit nadaje wyjście w ostatnich sekundach klipu (exit_id "none" usuwa). Krzywe: linear, quad-out, cubic-out, quint-out, expo-out, back-out, elastic-out, cubic-in-out.
 19. Wygląd elementu ustawisz przez set_property: style.shadow (none/soft/lift/glow/neon/long), style.shadowColor, style.gradient {from,to,angle} lub null, style.letterSpacing, style.strokeWidth, style.strokeColor, style.blend, style.fit (contain/cover).
-20. set_canvas_fx ustawia look całego filmu: grade (none/cinematic/warm/cool/mono/vivid/faded/noir), vignette 0–1, grain 0–1, letterbox 0–0.25, transition (none/dip/flash/wipe/light-leak/blur) na cięciach między scenami, transitionDuration oraz motionBlur dla finalnego eksportu.
+20. Montaż i efekty: list_editing_presets udostępnia przejścia i looki. set_clip_fx {fx:{look,strength}} zmienia pojedynczy wizualny klip. set_scene_transition {scene_id,transition:{id,duration}} ustawia przejście do sceny; null dziedziczy domyślne. ripple_delete i close_track_gaps działają tylko na odblokowanej ścieżce bez nakładania klipów, nie zmieniają scen ani czasu innych ścieżek. slip_clip {source_start} przesuwa zakres wideo/audio w granicach źródła, zachowując geometrię, czas i animację.
+21. set_canvas_fx ustawia look całego filmu: grade (none/cinematic/warm/cool/mono/vivid/faded/noir), vignette 0–1, grain 0–1, letterbox 0–0.25, transition (katalog list_editing_presets) na cięciach między scenami, transitionDuration oraz motionBlur dla finalnego eksportu.
 """
 
 

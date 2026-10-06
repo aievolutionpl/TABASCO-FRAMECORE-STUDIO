@@ -4,7 +4,6 @@ export const EASING_LABELS=[['cubic-out','Płynna'],['quad-out','Lekka'],['quint
 const SHADOWS=[['none','Bez cienia'],['soft','Miękki'],['lift','Uniesienie'],['glow','Poświata'],['neon','Neon'],['long','Długi cień']];
 const BLENDS=[['normal','Normalny'],['screen','Rozjaśnienie'],['multiply','Mnożenie'],['overlay','Nakładka'],['soft-light','Miękkie światło'],['lighten','Jaśniejszy'],['difference','Różnica']];
 const GRADES=[['none','Naturalny'],['cinematic','Kinowy'],['warm','Ciepły'],['cool','Chłodny'],['vivid','Żywy'],['faded','Wyblakły'],['mono','Czarno-biały'],['noir','Noir']];
-const TRANSITIONS=[['none','Cięcie'],['dip','Przez czerń'],['flash','Błysk'],['wipe','Kurtyna marki'],['light-leak','Light leak'],['blur','Rozmycie']];
 const ENERGY={low:'SPOKOJNA',medium:'ŚREDNIA',high:'WYSOKA'};
 export const FILM_PRESETS={
  clean:{name:'Czysty',fx:{grade:'none',vignette:0,grain:0,letterbox:0,transition:'none',transitionDuration:.5,motionBlur:false}},
@@ -15,7 +14,8 @@ export const FILM_PRESETS={
 };
 
 export function createMotionUI(ctx){
- const {getProject,selected,command,esc,toast,getMotions,getExits,rerenderLibrary,previewMotion,previewExit}=ctx;
+ const {getProject,selected,command,esc,toast,getMotions,getExits,getEditingPresets,rerenderLibrary,previewMotion,previewExit,previewTransition}=ctx;
+ let transitionSceneId=null;
  let filter='all';
  const options=(list,value)=>list.map(([v,l])=>`<option value="${v}" ${value===v?'selected':''}>${l}</option>`).join('');
  const hex=(v,fallback)=>/^#[0-9a-fA-F]{6}$/.test(v||'')?v:fallback;
@@ -69,18 +69,36 @@ export function createMotionUI(ctx){
    </div>${['text','caption','shape'].includes(e.type)||e.assetId&&e.type==='image'?`<label class="production-toggle look-toggle"><input type="checkbox" data-look="gradient-on" ${g?'checked':''}> Wypełnienie gradientem</label>
    ${g?`<div class="gradient-row"><input type="color" data-look="gradient-from" value="${g.from}" aria-label="Kolor początkowy"><span class="gradient-preview" style="background:linear-gradient(${g.angle}deg,${g.from},${g.to})"></span><input type="color" data-look="gradient-to" value="${g.to}" aria-label="Kolor końcowy"><label class="field">Kąt<input data-look="gradient-angle" type="number" min="0" max="360" step="15" value="${g.angle}"></label></div>`:''}`:''}</div>`;
  }
+ function clipFxSection(){
+  const e=selected();
+  if(!e||e.type==='audio')return '<div class="tip-card">Zaznacz klip obrazu, wideo, tekstu lub kształtu, aby nadać mu własny efekt.</div>';
+  const fx=e.clipFx||{look:'none',strength:1};
+  return `<div class="inspector-section"><h3>Efekt zaznaczonego klipu</h3><div class="clip-look-grid">${getEditingPresets().clipLooks.map(pr=>`<button data-clip-look="${pr.id}" aria-pressed="${fx.look===pr.id}" class="clip-look ${fx.look===pr.id?'active':''}"><span class="look-swatch look-${pr.id}"></span>${esc(pr.name)}</button>`).join('')}</div><label class="field full">Siła · ${Math.round(fx.strength*100)}%<input data-clip-strength type="range" min="0" max="1" step=".05" value="${fx.strength}"></label><p class="inspector-note">Efekt zmienia tylko ten klip. Naturalny usuwa korekcję koloru.</p></div>`;
+ }
+ function transitionSection(){
+  const scenes=getProject().scenes.filter(s=>s.start>0).sort((a,b)=>a.start-b.start);
+  const scene=scenes.find(s=>s.id===transitionSceneId)||scenes[0];
+  if(!scene)return '<div class="tip-card">Dodaj plan z co najmniej dwiema scenami, aby używać przejść między scenami.</div>';
+  transitionSceneId=scene.id;
+  const fx=getProject().canvas.fx||{},value=scene.transition||{id:fx.transition||'none',duration:fx.transitionDuration||.5};
+  return `<div class="inspector-section"><h3>Przejście do sceny</h3><label class="field full">Scena<select data-transition-scene>${scenes.map(s=>`<option value="${s.id}" ${s.id===scene.id?'selected':''}>${esc(s.name)} · ${s.start.toFixed(2)} s</option>`).join('')}</select></label><div class="transition-grid">${getEditingPresets().transitions.map(pr=>`<button data-scene-transition="${pr.id}" aria-pressed="${value.id===pr.id}" class="transition-choice ${value.id===pr.id?'active':''}"><span class="transition-demo transition-${pr.id}"><i></i></span>${esc(pr.name)}</button>`).join('')}</div><label class="field full">Czas przejścia · s<input data-scene-transition-duration type="number" min=".1" max="2" step=".1" value="${value.duration}"></label><div class="motion-actions"><button class="secondary-button" data-preview-transition>▶ Podgląd przejścia</button><button class="quiet-button" data-reset-transition>Użyj ustawień filmu</button></div><p class="inspector-note">${scene.transition?'Własne przejście tej sceny.':'Scena dziedziczy ustawienia całego filmu.'} Przejścia zasłaniają lub stylizują cięcie; nie wymagają nakładania nagrań.</p></div>`;
+ }
+ function effectsPanel(){return `<h2 class="panel-heading">Efekty i przejścia</h2><div class="panel-subtitle">Wbudowane, działają offline i trafiają do eksportu.</div>${clipFxSection()}${transitionSection()}${filmSection()}`;}
  function filmSection(){
   const p=getProject(),fx=Object.assign({grade:'none',vignette:0,grain:0,letterbox:0,transition:'none',transitionDuration:.5,motionBlur:false},p.canvas.fx||{});
   const range=(label,key,max,step)=>`<label class="field full range-field">${label}<span class="range-value">${Math.round(fx[key]/max*100)}%</span><input type="range" data-fx="${key}" min="0" max="${max}" step="${step}" value="${fx[key]}"></label>`;
   return `<div class="inspector-section film-section"><h3>Efekty filmowe</h3><div class="film-presets">${Object.entries(FILM_PRESETS).map(([id,pr])=>`<button class="film-preset" data-fx-preset="${id}"><span class="film-swatch ${id}"></span>${pr.name}</button>`).join('')}</div>
    <label class="field full">Kolor (look)<select data-fx="grade">${options(GRADES,fx.grade)}</select></label>
    ${range('Winieta','vignette',1,.05)}${range('Ziarno filmowe','grain',1,.05)}${range('Kaszeta kinowa','letterbox',.25,.01)}
-   <div class="field-grid"><label class="field">Przejścia scen<select data-fx="transition">${options(TRANSITIONS,fx.transition)}</select></label><label class="field">Czas · s<input data-fx="transitionDuration" type="number" min=".1" max="2" step=".1" value="${fx.transitionDuration}"></label></div>
+   <div class="field-grid"><label class="field">Domyślne przejście<select data-fx="transition">${options(getEditingPresets().transitions.map(pr=>[pr.id,pr.name]),fx.transition)}</select></label><label class="field">Czas · s<input data-fx="transitionDuration" type="number" min=".1" max="2" step=".1" value="${fx.transitionDuration}"></label></div>
    <label class="production-toggle"><input type="checkbox" data-fx="motionBlur" ${fx.motionBlur?'checked':''}> Rozmycie ruchu w finalnym eksporcie</label>
    <p class="inspector-note">${p.scenes.length?`Przejścia działają na ${Math.max(0,p.scenes.length-1)} cięciach między scenami.`:'Przejścia pojawią się po dodaniu scen.'} Rozmycie ruchu wydłuża render około 4×.</p></div>`;
  }
  async function onChange(t){
   const e=selected();
+  if(t.hasAttribute('data-transition-scene')){transitionSceneId=t.value;rerenderLibrary();return true;}
+  if(t.hasAttribute('data-scene-transition-duration')){const s=getProject().scenes.find(s=>s.id===transitionSceneId),fx=getProject().canvas.fx||{};await command('set_scene_transition',{scene_id:s.id,transition:{id:s.transition?.id||fx.transition||'none',duration:Number(t.value)}});return true;}
+  if(t.hasAttribute('data-clip-strength')&&e){await command('set_clip_fx',{fx:{look:e.clipFx?.look||'none',strength:Number(t.value)}});return true;}
   if(t.dataset.fx){
    const k=t.dataset.fx,v=t.type==='checkbox'?t.checked:['range','number'].includes(t.type)?Number(t.value):t.value;
    await command('set_canvas_fx',{fx:{[k]:v}});return true;
@@ -105,6 +123,10 @@ export function createMotionUI(ctx){
   return false;
  }
  async function onClick(b){
+  if(b.dataset.clipLook){if(!selected()||selected().type==='audio')return true;await command('set_clip_fx',{fx:{look:b.dataset.clipLook,strength:selected().clipFx?.strength??1}});return true;}
+  if(b.dataset.sceneTransition){const scene=getProject().scenes.find(s=>s.id===transitionSceneId);await command('set_scene_transition',{scene_id:scene.id,transition:{id:b.dataset.sceneTransition,duration:scene.transition?.duration||getProject().canvas.fx?.transitionDuration||.5}});return true;}
+  if(b.hasAttribute('data-reset-transition')){await command('set_scene_transition',{scene_id:transitionSceneId,transition:null});return true;}
+  if(b.hasAttribute('data-preview-transition')){const scene=getProject().scenes.find(s=>s.id===transitionSceneId);await previewTransition(scene);return true;}
   if(b.dataset.motionFilter){filter=b.dataset.motionFilter;rerenderLibrary();return true;}
   if(b.dataset.exit){
    const e=selected();if(!e)return toast('Zaznacz element, aby dodać wyjście.'),true;
@@ -116,5 +138,5 @@ export function createMotionUI(ctx){
   if(b.hasAttribute('data-preview-exit')){await previewExit();return true;}
   return false;
  }
- return {panel,animationSection,lookSection,filmSection,onChange,onClick};
+ return {panel,effectsPanel,clipFxSection,animationSection,lookSection,filmSection,onChange,onClick};
 }

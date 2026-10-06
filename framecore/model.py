@@ -16,7 +16,7 @@ SHADOWS = {"none", "soft", "lift", "glow", "neon", "long"}
 BLENDS = {"normal", "screen", "multiply", "overlay", "soft-light", "difference", "lighten"}
 FITS = {"contain", "cover"}
 GRADES = {"none", "cinematic", "warm", "cool", "mono", "vivid", "faded", "noir"}
-TRANSITIONS = {"none", "dip", "flash", "wipe", "light-leak", "blur"}
+TRANSITIONS = {"none", "dip", "flash", "wipe", "light-leak", "blur", "iris", "diagonal", "zoom-blur", "slide-up", "pixel-dissolve"}
 FX_DEFAULTS = {"grade": "none", "vignette": 0, "grain": 0, "letterbox": 0, "transition": "none", "transitionDuration": .5, "motionBlur": False}
 HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
@@ -171,11 +171,19 @@ def validate(p):
         if a["kind"] not in {"video", "image", "audio", "font"}:
             raise EditorError("Nieobsługiwany typ materiału")
     for scene in p["scenes"]:
+        if 'transition' in scene:
+            from .editing import validate_transition
+            validate_transition(scene['transition'])
         number(scene["start"], "scene start", 0, p["duration"])
         number(scene["duration"], "scene duration", .01, p["duration"])
         if scene["start"] + scene["duration"] > p["duration"] + 1e-6:
             raise EditorError("Scena przekracza długość projektu")
     for e in p["elements"]:
+        if 'clipFx' in e:
+            from .editing import validate_clip_fx
+            validate_clip_fx(e['clipFx'])
+            if e['type'] == 'audio':
+                raise EditorError('Efekty obrazu nie działają na dźwięku')
         if e["type"] not in KINDS or e["trackId"] not in tracks:
             raise EditorError("Nieprawidłowy typ elementu lub ścieżka")
         if e.get("sceneId") and e["sceneId"] not in scenes:

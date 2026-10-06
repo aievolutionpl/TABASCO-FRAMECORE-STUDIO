@@ -65,7 +65,7 @@ jobs:
           mkdir -p dist/dmg-stage dist/installers
           cp -R 'dist/MotionDuo Studio.app' dist/dmg-stage/
           ln -s /Applications dist/dmg-stage/Applications
-          hdiutil create -ov -volname 'MotionDuo Studio' -srcfolder dist/dmg-stage -format UDZO 'dist/installers/MotionDuo-Studio-0.3.1-${{ matrix.platform }}.dmg'
+          hdiutil create -ov -volname 'MotionDuo Studio' -srcfolder dist/dmg-stage -format UDZO 'dist/installers/MotionDuo-Studio-0.3.2-${{ matrix.platform }}.dmg'
       - name: Checksums and source notices
         shell: bash
         run: |
@@ -93,4 +93,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag=$(python -c "import json; print(json.load(open('packaging/version.json'))['release_tag'])")
-          gh release create "$tag" installers/* --title 'MotionDuo Studio 0.3.1 · aplikacja desktopowa (preview)' --notes-file packaging/RELEASE_NOTES.md --prerelease --target '${{ github.sha }}'
+          gh release create "$tag" installers/* --title 'MotionDuo Studio 0.3.2 · aplikacja desktopowa (preview)' --notes-file packaging/RELEASE_NOTES.md --prerelease --target '${{ github.sha }}'

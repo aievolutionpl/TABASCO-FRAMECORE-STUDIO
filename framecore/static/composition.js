@@ -157,7 +157,7 @@
   transition.style.cssText='position:absolute;inset:0;opacity:0';
   fxLayer.append(transition);
   let leak=null;
-  if (fx.transition==='light-leak') {
+  if (fx.transition==='light-leak' || p.scenes.some(s=>s.transition?.id==='light-leak')) {
     leak=document.createElement('div');
     leak.style.cssText=`position:absolute;width:${W*1.4}px;height:${H*1.4}px;border-radius:50%;mix-blend-mode:screen;opacity:0;`+
       `background:radial-gradient(ellipse at center, rgba(255,214,150,.95), rgba(255,120,70,.65) 35%, rgba(255,60,120,.25) 58%, transparent 72%)`;
@@ -183,15 +183,21 @@
     bar.style.cssText=`position:absolute;left:0;right:0;${edge}:0;height:${(H*fx.letterbox/2).toFixed(1)}px;background:#000`;
     fxLayer.append(bar);
   }
-  const boundaries = [...new Set(p.scenes.map(s=>s.start).filter(t=>t>.05&&t<p.duration-.05))].sort((a,b)=>a-b);
+  const boundaries = p.scenes.filter(s=>s.start>.05&&s.start<p.duration-.05).sort((a,b)=>a.start-b.start);
+  const mosaic=document.createElement('canvas');mosaic.width=32;mosaic.height=18;
+  const mosaicCtx=mosaic.getContext('2d');
   function paintFx(t){
     let blur=0;
-    // Peak of the scene transition sits exactly on the cut.
-    const D=fx.transitionDuration, b=boundaries.find(b=>Math.abs(t-b)<D/2);
-    const k = b===undefined ? -1 : (t-(b-D/2))/D, tri = k<0?0:1-Math.abs(2*k-1);
-    transition.style.opacity=0; transition.style.transform='none';
+    // Closest cut wins if short scenes have overlapping transition windows.
+    const scene=boundaries.filter(s=>Math.abs(t-s.start)<(s.transition?.duration||fx.transitionDuration)/2)
+      .sort((a,b)=>Math.abs(t-a.start)-Math.abs(t-b.start))[0];
+    const D=scene?.transition?.duration||fx.transitionDuration;
+    const id=scene?.transition?.id||fx.transition;
+    const k = !scene ? -1 : (t-(scene.start-D/2))/D, tri = k<0?0:1-Math.abs(2*k-1);
+    transition.style.opacity=0; transition.style.transform='none';transition.style.clipPath='none';
+    stage.style.transform='none';stage.style.transformOrigin='50% 50%';
     if(leak) leak.style.opacity=0;
-    if(k>=0) switch(fx.transition){
+    if(k>=0) switch(id){
       case 'dip': transition.style.background='#000'; transition.style.opacity=ease(tri,'cubic-in-out'); break;
       case 'flash': transition.style.background='#fff'; transition.style.opacity=Math.pow(tri,2.2)*.92; break;
       case 'wipe': {
@@ -202,6 +208,23 @@
         leak.style.opacity=ease(tri,'cubic-in-out')*.9;
         leak.style.left=(-W*.7+k*W*1.1)+'px'; leak.style.top=(-H*.5+Math.sin(k*Math.PI)*H*.15)+'px'; break;
       case 'blur': blur=tri*22; transition.style.background='#fff'; transition.style.opacity=tri*.18; break;
+      case 'iris':
+        transition.style.background='#000';transition.style.opacity=1;
+        transition.style.clipPath=`circle(${(ease(tri,'cubic-in-out')*75).toFixed(3)}% at 50% 50%)`;break;
+      case 'diagonal':
+        transition.style.background=accent;transition.style.opacity=1;
+        transition.style.transform=`translateX(${(ease(k,'cubic-in-out')*2-1)*160}%) skewX(-35deg) scaleX(1.4)`;break;
+      case 'slide-up':
+        transition.style.background=accent;transition.style.opacity=1;
+        transition.style.transform=`translateY(${(ease(k,'cubic-in-out')*2-1)*110}%)`;break;
+      case 'zoom-blur':
+        blur=tri*28;stage.style.transform=`scale(${1+tri*.18})`;
+        transition.style.background=accent;transition.style.opacity=tri*.2;break;
+      case 'pixel-dissolve':
+        mosaicCtx.clearRect(0,0,32,18);mosaicCtx.fillStyle=accent;
+        for(let y=0;y<18;y++)for(let x=0;x<32;x++)if(hash(y*32+x,19)<tri)mosaicCtx.fillRect(x,y,1,1);
+        transition.style.background=`url(${mosaic.toDataURL()}) center / 100% 100%`;
+        transition.style.imageRendering='pixelated';transition.style.opacity=1;break;
     }
     const filter=[gradeFilter, blur?`blur(${blur.toFixed(2)}px)`:''].filter(Boolean).join(' ');
     stage.style.filter=filter||'none';
@@ -344,6 +367,11 @@
       n.style.left=keyed(e,'x',local)+'px';n.style.top=keyed(e,'y',local)+'px';
       n.style.opacity=keyed(e,'opacity',local)*alpha;
       const filters=[`blur(${blur}px)`];
+      const look=window.FRAMECORE_EDITING?.clipLooks.find(f=>f.id===e.clipFx?.look);
+      if(look){const strength=e.clipFx.strength??1;for(const [key,value] of Object.entries(look.filters)){
+        const neutral=['brightness','contrast','saturate'].includes(key)?1:0;
+        filters.push(`${key}(${neutral+(value-neutral)*strength}${key==='hue-rotate'?'deg':key==='blur'?'px':''})`);
+      }}
       if(glow) filters.push(`drop-shadow(0 0 ${glow}px ${e.style.color})`);
       else filters.push('drop-shadow(0 0 0px transparent)');
       if(split) filters.push(`drop-shadow(${split.toFixed(2)}px 0 0 rgba(255,0,90,.8)) drop-shadow(${(-split).toFixed(2)}px 0 0 rgba(0,220,255,.8))`);

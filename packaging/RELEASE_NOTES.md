@@ -12,3 +12,5 @@ To wydanie testowe bez komercyjnego certyfikatu wydawcy i bez notaryzacji Apple.
 Automatyczny test każdej paczki uruchamia zamrożony serwer, wczytuje H.264/AAC, eksportuje MP4 z audio, sprawdza zapis projektu i połączenie MCP. Nie zastępuje ręcznego testu całego natywnego okna. Narzędzia mają własne licencje, dołączone do aplikacji; informacje są w TOOL_NOTICES.md. Pliki SHA-256 towarzyszą instalatorom.
 
 Rebranding 0.3.1: nowy znak M, nazwa MotionDuo Studio — by TABASCO CREATIVES + FRAMECORE, polski banner oraz dopracowane panele, timeline i przycisk dodania logo do filmu. Katalog danych i konfiguracja MCP pozostają kompatybilne z 0.3.0.
+
+Nowości 0.3.2: panel Efekty, 11 wariantów przejścia z własnymi ustawieniami dla scen, 7 looków klipu z regulacją siły, pasek scen oraz narzędzia timeline do przycinania, usuwania luk, zsuwania klipów i przesuwania zakresu źródła. Te same komendy są dostępne przez MCP i wspólną historię cofania.

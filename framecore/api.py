@@ -66,6 +66,15 @@ for kind in ("text", "video", "image", "audio", "caption", "shape"):
 
 
 READS.update({"get_storytelling_playbook","plan_visual_lesson","get_lesson_status"})
+READS.add('list_editing_presets')
+WRITES.update({'ripple_delete', 'close_track_gaps', 'slip_clip', 'set_clip_fx', 'set_scene_transition'})
+FIELDS.update({
+    'ripple_delete': {'element_id': 'string'},
+    'close_track_gaps': {'track_id': 'string', 'element_id': 'string'},
+    'slip_clip': {'element_id': 'string', 'source_start': 'number'},
+    'set_clip_fx': {'element_id': 'string', 'fx': 'object'},
+    'set_scene_transition': {'scene_id': 'string', 'transition': None},
+})
 WRITES.update({"replace_clip_asset","add_track","set_project_fps","assemble_visual_lesson","set_learning_brief","set_scene_learning"})
 FIELDS.update({
     "replace_clip_asset":{"element_id":"string","asset_id":"string","fit_source":"boolean"},
@@ -121,6 +130,9 @@ class API:
             if name == "remove_brand_asset": return brands.remove_asset(args["brand_id"], args["expected_version"], args["asset_id"])
             return brands.apply(args["brand_id"], args["expected_version"], pid, revision, args.get("restyle",False), actor)
         if name == "list_projects": return {"projects": self.store.list()}
+        if name == 'list_editing_presets':
+            from .editing import catalog
+            return catalog()
         if name == "list_motion":
             from .motion import exits
             from .production import EASINGS
@@ -232,6 +244,16 @@ class API:
         for name in names:
             props = {"project_id": {"type": "string"}, "expected_revision": {"type": "integer"}}
             props.update({k: ({"type": v} if v else {}) for k,v in FIELDS.get(name, {}).items()})
+            if name in {'set_scene_transition', 'set_clip_fx'}:
+                from .editing import TRANSITION_NAMES, CLIP_LOOKS
+                if name == 'set_scene_transition':
+                    props['transition'] = {'anyOf': [{'type': 'null'}, {'type': 'object', 'additionalProperties': False,
+                        'required': ['id', 'duration'], 'properties': {'id': {'type': 'string', 'enum': list(TRANSITION_NAMES)},
+                        'duration': {'type': 'number', 'minimum': .1, 'maximum': 2}}}]}
+                else:
+                    props['fx'] = {'type': 'object', 'additionalProperties': False, 'required': ['look'],
+                        'properties': {'look': {'type': 'string', 'enum': list(CLIP_LOOKS)},
+                        'strength': {'type': 'number', 'minimum': 0, 'maximum': 1}}}
             if name in {"render", "export"}: props["quality"] = {"type": "string", "enum": ["final", "draft"]}
             if name == "get_job": props["job_id"] = {"type": "string"}
             if name == "add_asset": props.update(source_file={"type": "string"}, role={"type": "string"})
@@ -252,6 +274,9 @@ class API:
             if name.startswith("generate_") or name == "transcribe": props.update(provider_id={"type": "string"}, prompt={"type": "string"})
             required = [] if name in {"list_projects", "list_motion", "list_templates", "list_icons", "list_library", "list_fonts", "list_backgrounds", "get_editing_guide", "get_motion_playbook", "get_providers", "create_project", "get_job"} else ["project_id"]
             if name=="get_storytelling_playbook":required=[]
+            if name == 'list_editing_presets': required = []
+            required += {'set_clip_fx': ['fx'], 'slip_clip': ['source_start'],
+                         'set_scene_transition': ['scene_id', 'transition']}.get(name, [])
             if name in BRAND_TOOLS - {"apply_brand_profile"}: required = []
             if name in BRAND_TOOLS - {"list_brand_profiles", "save_brand_profile"}: required += ["brand_id", "expected_version"] if name != "get_brand_profile" else ["brand_id"]
             if name == "save_brand_profile": required.append("profile")
@@ -276,5 +301,5 @@ class API:
                          "apply_template":["template_id"], "add_library_asset":["asset_id"], "set_background":["background_id"], "set_audio":["audio"], "set_keyframes":["keyframes"], "set_duration":["duration"]}.get(name, [])
             result.append({"name": name, "description": name.replace("_", " ") + ". Wspólny projekt i historia; przed zmianą odczytaj aktualną rewizję.",
                            "inputSchema": {"type": "object", "properties": props, "required": required},
-                           "annotations": {"readOnlyHint": name in READS, "destructiveHint": name in {"delete_clip", "assemble_storyboard", "delete_brand_profile", "remove_brand_asset"}}})
+                           "annotations": {"readOnlyHint": name in READS, "destructiveHint": name in {"ripple_delete", "delete_clip", "assemble_storyboard", "delete_brand_profile", "remove_brand_asset"}}})
         return result

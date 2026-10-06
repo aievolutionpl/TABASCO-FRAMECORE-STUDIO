@@ -252,6 +252,31 @@ def mutate(p, name, args, session):
             e["audio"]["fadeIn"] = min(e["audio"]["fadeIn"], offset)
             second["audio"]["fadeOut"] = min(second["audio"]["fadeOut"], second["duration"])
         p["elements"].append(second)
+    elif name == "ripple_delete":
+        from .editing import ripple_delete
+        ripple_delete(p, target(p, args, session))
+    elif name == "close_track_gaps":
+        from .editing import close_gaps
+        track_id = args.get('track_id') or target(p, args, session)['trackId']
+        close_gaps(p, track_id)
+    elif name == "slip_clip":
+        from .editing import slip
+        slip(p, target(p, args, session), args['source_start'])
+    elif name == "set_clip_fx":
+        from .editing import validate_clip_fx
+        e = target(p, args, session)
+        validate_clip_fx(args.get('fx'))
+        e['clipFx'] = {'strength': 1, **deepcopy(args['fx'])}
+    elif name == "set_scene_transition":
+        from .editing import validate_transition
+        scene = next((s for s in p['scenes'] if s['id'] == args.get('scene_id')), None)
+        if not scene:
+            raise EditorError('Nie znaleziono sceny')
+        if args.get('transition') is None:
+            scene.pop('transition', None)
+        else:
+            validate_transition(args['transition'])
+            scene['transition'] = deepcopy(args['transition'])
     elif name == "delete_clip":
         e = target(p, args, session)
         p["elements"].remove(e)
@@ -370,7 +395,7 @@ def mutate(p, name, args, session):
         raise EditorError(f"Nieobsługiwana komenda: {name}")
     # Editing a focused clip may remove it or move it outside its beat. Keep the
     # narrative description and ask for a new focus rather than blocking editing.
-    if name in {"delete_clip", "trim_clip", "move_clip", "split_clip", "duplicate_scene", "assemble_storyboard", "set_property", "replace_clip_asset"}:
+    if name in {"ripple_delete", "close_track_gaps", "delete_clip", "trim_clip", "move_clip", "split_clip", "duplicate_scene", "assemble_storyboard", "set_property", "replace_clip_asset"}:
         for scene in p["scenes"]:
             beat = scene.get("beat")
             if not beat or not beat.get("focusElementId"): continue

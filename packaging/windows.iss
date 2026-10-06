@@ -1,4 +1,4 @@
-#define AppVersion "0.3.1"
+#define AppVersion "0.3.2"
 [Setup]
 AppId={{238916F1-F4C2-4E34-A34C-586F66365001}
 AppName=MotionDuo Studio

@@ -6,7 +6,7 @@ from PyInstaller.utils.hooks import collect_data_files, copy_metadata
 import certifi
 
 root = Path(SPECPATH).parent
-version = '0.3.1'
+version = '0.3.2'
 native = Path(os.environ['FRAMECORE_NATIVE_DIR'])
 browsers = Path(os.environ['PLAYWRIGHT_BROWSERS_PATH'])
 datas = [(str(root/'framecore/static'),'framecore/static'),
