@@ -4,7 +4,8 @@ from __future__ import annotations
 from copy import deepcopy
 from .model import EditorError, FORMATS, element, number, uid, track_accepts
 
-STYLE_FIELDS = {"fontSize", "fontFamily", "fontWeight", "color", "align", "background", "radius"}
+STYLE_FIELDS = {"fontSize", "fontFamily", "fontWeight", "color", "align", "background", "radius",
+                "shadow", "shadowColor", "gradient", "letterSpacing", "strokeWidth", "strokeColor", "blend", "fit"}
 PROPERTIES = {"text", "x", "y", "width", "height", "rotation", "scale", "opacity", "start", "duration", "sourceStart"}
 
 
@@ -116,13 +117,14 @@ def mutate(p, name, args, session):
     elif name == "apply_motion_rules":
         from .production import MOTION_RULES
         for e in p["elements"]:
-            if e["type"] in MOTION_RULES and e.get("motion"):
+            from .motion import resolve
+            if e["type"] in MOTION_RULES and e.get("motion") and (resolve(e["motion"]["id"]) or {}).get("kind") != "kinetic":
                 target(p, {"element_id": e["id"]}, session)
                 rule = MOTION_RULES[e["type"]]
                 e["motion"].update(duration=max(.1, min(e["duration"], rule["duration"])), easing=rule["easing"])
     elif name.startswith("add_") and name[4:] in {"text", "video", "image", "audio", "caption", "shape"}:
         kind = name[4:]
-        values = {k: deepcopy(v) for k, v in args.items() if k in PROPERTIES | {"id", "trackId", "assetId", "sceneId", "motion"}}
+        values = {k: deepcopy(v) for k, v in args.items() if k in PROPERTIES | {"id", "trackId", "assetId", "sceneId", "motion", "exit"}}
         e = element(p, kind, **values)
         if "style" in args:
             if set(args["style"]) - STYLE_FIELDS:
@@ -243,6 +245,7 @@ def mutate(p, name, args, session):
         second["keyframes"] = slice_keyframes(e.get("keyframes", []), offset, e["duration"])
         e["keyframes"] = slice_keyframes(e.get("keyframes", []), 0, offset)
         e["duration"] = offset
+        e.pop("exit", None)
         if e.get("audio"):
             e["audio"]["fadeOut"] = 0
             second["audio"]["fadeIn"] = 0
@@ -254,8 +257,27 @@ def mutate(p, name, args, session):
         p["elements"].remove(e)
     elif name == "apply_motion":
         e = target(p, args, session)
-        e["motion"] = {"id": args["motion_id"], "duration": args.get("duration", .8), "easing": args.get("easing", "cubic-out")}
+        if args["motion_id"] in (None, "", "none"):
+            e["motion"] = None
+        else:
+            from .motion import resolve
+            defaults = (resolve(args["motion_id"]) or {}).get("defaults", {"duration": .8, "easing": "cubic-out"})
+            e["motion"] = {"id": args["motion_id"], "duration": args.get("duration", defaults["duration"]),
+                           "easing": args.get("easing", defaults["easing"])}
         e.pop("motionOffset", None)
+    elif name == "apply_exit":
+        e = target(p, args, session)
+        if args.get("exit_id") in (None, "", "none"):
+            e.pop("exit", None)
+        else:
+            duration = number(args.get("duration", .6), "exit duration", .1, 2)
+            e["exit"] = {"id": args["exit_id"], "duration": min(duration, e["duration"]), "easing": args.get("easing", "cubic-out")}
+    elif name == "set_canvas_fx":
+        from .model import FX_DEFAULTS
+        if not isinstance(args.get("fx"), dict):
+            raise EditorError("Podaj obiekt fx")
+        fx = {**FX_DEFAULTS, **p["canvas"].get("fx", {}), **deepcopy(args["fx"])}
+        p["canvas"]["fx"] = fx
     elif name == "set_format":
         fmt = args["format"]
         if fmt not in FORMATS:
@@ -268,6 +290,8 @@ def mutate(p, name, args, session):
             for prop in ("y", "height"):
                 e[prop] *= h / oh
             e["style"]["fontSize"] *= w / ow
+            for prop, high in (("letterSpacing", 200), ("strokeWidth", 40)):
+                if e["style"].get(prop): e["style"][prop] = max(-50, min(high, e["style"][prop] * w / ow))
             for keyframe in e.get("keyframes", []):
                 if keyframe["property"] == "x": keyframe["value"] *= w / ow
                 if keyframe["property"] == "y": keyframe["value"] *= h / oh

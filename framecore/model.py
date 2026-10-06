@@ -11,6 +11,52 @@ from . import motion
 
 FORMATS = {"9:16": (1080, 1920), "4:5": (1080, 1350), "1:1": (1080, 1080), "16:9": (1920, 1080)}
 KINDS = {"video", "image", "audio", "text", "caption", "shape"}
+# Wygląd elementu i efekty filmowe: zamknięte słowniki, bez dowolnego CSS z projektu.
+SHADOWS = {"none", "soft", "lift", "glow", "neon", "long"}
+BLENDS = {"normal", "screen", "multiply", "overlay", "soft-light", "difference", "lighten"}
+FITS = {"contain", "cover"}
+GRADES = {"none", "cinematic", "warm", "cool", "mono", "vivid", "faded", "noir"}
+TRANSITIONS = {"none", "dip", "flash", "wipe", "light-leak", "blur"}
+FX_DEFAULTS = {"grade": "none", "vignette": 0, "grain": 0, "letterbox": 0, "transition": "none", "transitionDuration": .5, "motionBlur": False}
+HEX = re.compile(r"#[0-9a-fA-F]{6}")
+
+
+def validate_fx(fx):
+    if not isinstance(fx, dict) or set(fx) - set(FX_DEFAULTS):
+        raise EditorError("Nieznany efekt filmowy")
+    if fx.get("grade", "none") not in GRADES:
+        raise EditorError("Nieobsługiwany look koloru")
+    if fx.get("transition", "none") not in TRANSITIONS:
+        raise EditorError("Nieobsługiwane przejście między scenami")
+    for k, high in (("vignette", 1), ("grain", 1), ("letterbox", .25)):
+        number(fx.get(k, 0), k, 0, high)
+    number(fx.get("transitionDuration", .5), "transitionDuration", .1, 2)
+    if not isinstance(fx.get("motionBlur", False), bool):
+        raise EditorError("motionBlur musi być wartością logiczną")
+    return fx
+
+
+def validate_style_extras(style, kind):
+    if style.get("shadow", "none") not in SHADOWS:
+        raise EditorError("Nieobsługiwany cień")
+    if style.get("blend", "normal") not in BLENDS:
+        raise EditorError("Nieobsługiwany tryb mieszania")
+    if style.get("fit", "contain") not in FITS:
+        raise EditorError("Nieobsługiwane dopasowanie obrazu")
+    number(style.get("letterSpacing", 0), "letterSpacing", -50, 200)
+    number(style.get("strokeWidth", 0), "strokeWidth", 0, 40)
+    for k in ("strokeColor", "shadowColor"):
+        if k in style and (not isinstance(style[k], str) or not HEX.fullmatch(style[k])):
+            raise EditorError("Kolor efektu wymaga wartości hex")
+    gradient = style.get("gradient")
+    if gradient is not None:
+        if not isinstance(gradient, dict) or set(gradient) != {"from", "to", "angle"}:
+            raise EditorError("Gradient wymaga pól from, to i angle")
+        if not all(isinstance(gradient[k], str) and HEX.fullmatch(gradient[k]) for k in ("from", "to")):
+            raise EditorError("Gradient wymaga kolorów hex")
+        number(gradient["angle"], "gradient angle", 0, 360)
+    if kind == "audio" and any(style.get(k) not in (None, d) for k, d in (("shadow", "none"), ("blend", "normal"))):
+        raise EditorError("Dźwięk nie ma efektów obrazu")
 
 
 class EditorError(ValueError):
@@ -95,6 +141,8 @@ def validate(p):
     if p["canvas"].get("backgroundPreset"):
         from .backgrounds import resolve
         resolve(p["canvas"]["backgroundPreset"])
+    if "fx" in p["canvas"]:
+        validate_fx(p["canvas"]["fx"])
     if "backgroundAnimated" in p["canvas"] and not isinstance(p["canvas"]["backgroundAnimated"], bool):
         raise EditorError("Nieprawidłowe ustawienie animacji tła")
     ids = []
@@ -155,12 +203,25 @@ def validate(p):
             raise EditorError("Klip przekracza długość materiału źródłowego")
         m = e.get("motion")
         if m:
-            if not motion.resolve(m["id"]):
+            component = motion.resolve(m["id"])
+            if not component:
                 raise EditorError("Nieznana animacja")
-            number(m["duration"], "motion duration", .1, 2)
+            if component["kind"] == "kinetic" and e["type"] not in component["supported_elements"]:
+                raise EditorError("Ta animacja działa tylko z tekstem i napisami")
+            number(m["duration"], "motion duration", .1, motion.MAX_DURATION)
             from .production import EASINGS
             if m.get("easing", "cubic-out") not in EASINGS:
                 raise EditorError("Nieobsługiwana krzywa ruchu")
+        x = e.get("exit")
+        if x:
+            if not isinstance(x, dict) or set(x) - {"id", "duration", "easing"} or not motion.resolve_exit(x.get("id")):
+                raise EditorError("Nieznana animacja wyjścia")
+            number(x.get("duration"), "exit duration", .1, 2)
+            from .production import EASINGS
+            if x.get("easing", "cubic-out") not in EASINGS:
+                raise EditorError("Nieobsługiwana krzywa ruchu")
+            if e["type"] == "audio":
+                raise EditorError("Dźwięk wycisza się parametrem fadeOut")
         if e.get("effects"):
             raise EditorError("Użyj animacji z biblioteki; efekty własne nie są obsługiwane")
         if not isinstance(e.get("keyframes", []), list) or len(e.get("keyframes", [])) > 200:
@@ -195,6 +256,7 @@ def validate(p):
         number(style["radius"], "radius", 0, 1000)
         if style["align"] not in {"left", "center", "right"}:
             raise EditorError("Nieprawidłowe wyrównanie")
+        validate_style_extras(style, e["type"])
         if not isinstance(e["text"], str) or len(e["text"]) > 10000:
             raise EditorError("Tekst jest zbyt długi")
     logo = p["brand"].get("logoAssetId")

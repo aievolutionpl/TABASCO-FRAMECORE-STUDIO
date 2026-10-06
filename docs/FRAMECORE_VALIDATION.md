@@ -20,6 +20,7 @@ Dodatkowe sprawdzenia nowych funkcji:
 - Duplikowanie klipu oraz blokada zmiany na zablokowanej ścieżce.
 - Ikony MIT jako materiały projektu, również dodawane przez propozycję z zachowaniem identyfikatorów.
 - Dwanaście szablonów i 28 animacji. Każdą animację sprawdzono po przewinięciu w różnej kolejności; stan tego samego czasu był zgodny.
+- Ruch 2.0 (`tests/test_framecore_motion2.py`): 42 wejścia i 10 wyjść; walidacja wyglądu i `canvas.fx`; tekst kinetyczny ukryty po końcu klipu; ten sam czas daje identyczny DOM po przewijaniu w różnej kolejności; panel Animacje, wyjścia i looki filmowe w Chromium; filmy demo przechodzą `inspect_project` bez uwag.
 - Głośność, narastanie i wyciszenie, walidacja czasów oraz ich zachowanie po podziale audio.
 - Polski interfejs, edycja klatek przez panel, kontrola struktury i rzeczywisty obraz klatki przekazywany agentowi. Bez błędów JavaScript w testowanych ścieżkach.
 - Ochrona tokenem, odpowiedź HTTP 409, odrzucanie błędnych ścieżek/SVG oraz bezpieczne traktowanie tekstu zawierającego znaczniki skryptów.

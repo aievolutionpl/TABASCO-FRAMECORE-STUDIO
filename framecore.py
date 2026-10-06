@@ -14,6 +14,8 @@ def main():
     examples.add_argument("--creator-pack", action="store_true", help="Utwórz przykład z lokalną biblioteką materiałów (sample)")
     examples.add_argument("--production", action="store_true", help="Utwórz edytowalny przykład pipeline’u produkcyjnego (sample)")
     examples.add_argument("--campaign", action="store_true", help="Utwórz reklamę 30 s: sześć scen po 5 sekund")
+    examples.add_argument("--showreel", action="store_true", help="Utwórz showreel Ruchu 2.0 (16:9, 24 s)")
+    examples.add_argument("--reel", action="store_true", help="Utwórz rolkę Ruchu 2.0 (9:16, 12 s)")
     args = parser.parse_args()
     store = Store(args.root) if args.root else Store()
     if args.command == "mcp":
@@ -25,7 +27,10 @@ def main():
         print(json.dumps(store.list(), indent=2, ensure_ascii=False))
     elif args.command == "sample":
         from framecore.sample import create_sample, create_creator_pack
-        if args.campaign:
+        if args.showreel or args.reel:
+            from framecore.showcase import create_reel, create_showreel
+            state = create_showreel(store) if args.showreel else create_reel(store)
+        elif args.campaign:
             from framecore.campaign import create_campaign
             state = create_campaign(store)
         else:

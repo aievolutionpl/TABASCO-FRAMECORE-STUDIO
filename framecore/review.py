@@ -45,6 +45,7 @@ def frame_times(p, times=None):
         for offset in (-frame, frame): extra.add(round(min(last, max(0, t+offset)), 6))
     for e in p["elements"]:
         if e.get("motion"): extra.add(round(min(last, e["start"]+e["motion"]["duration"]), 6))
+        if e.get("exit"): extra.add(round(min(last, max(0, e["start"]+e["duration"]-e["exit"]["duration"]/2)), 6))
     extra = sorted(extra-core)
     capacity = max(0, max(24, len(core))-len(core))
     if len(extra) > capacity:

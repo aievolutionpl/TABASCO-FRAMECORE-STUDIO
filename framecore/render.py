@@ -104,6 +104,9 @@ class RenderJobs:
             cmd = [sys.executable, str(renderer), str(html), "-o", str(video), "--size", f'{p["canvas"]["width"]}x{p["canvas"]["height"]}',
                    "--fps", str(p["canvas"]["fps"]), "--duration", str(p["duration"]), "--crf", "18" if quality == "final" else "26",
                    "--preset", "veryfast"]
+            if quality == "final" and p["canvas"].get("fx", {}).get("motionBlur"):
+                # Filmowe rozmycie ruchu: uśrednienie 4 podklatek w migawce 180°.
+                cmd += ["--subframes", "4", "--shutter", "0.5"]
             with (directory / "render.log").open("w") as log:
                 cp = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=1800)
             if cp.returncode:

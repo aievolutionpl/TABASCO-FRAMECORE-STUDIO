@@ -22,6 +22,9 @@ GUIDE = """Pracujesz w TABASCO CREATIVES + FRAMECORE — STUDIO, projekcie wspó
 15. replace_clip_asset zmienia źródło, zachowując geometrię, czas i animację. Krótsze źródło wymaga jawnego fit_source. add_track tworzy warstwę; move_clip track_id może wskazać tylko odblokowaną zgodną ścieżkę (obrazy i wideo mogą współdzielić ścieżkę).
 16. get_storytelling_playbook opisuje lekcję przez historię. plan_visual_lesson to plan startowy; assemble_visual_lesson zapisuje 7 edytowalnych scen. set_scene_learning dodaje narrację, cel, obraz i przejście. get_lesson_status sprawdza kompletność opisów, nie sens ani audio. Nie przedstawiaj planu jako gotowej lekcji.
 17. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
+18. Ruch 2.0: apply_motion przyjmuje wejścia (kind entrance) i tekst kinetyczny (kind kinetic: type-on, word-cascade, char-rise, word-blur, char-wave, scramble-in, word-highlight; tylko tekst i napisy, czas do 4 s). apply_exit nadaje wyjście w ostatnich sekundach klipu (exit_id "none" usuwa). Krzywe: linear, quad-out, cubic-out, quint-out, expo-out, back-out, elastic-out, cubic-in-out.
+19. Wygląd elementu ustawisz przez set_property: style.shadow (none/soft/lift/glow/neon/long), style.shadowColor, style.gradient {from,to,angle} lub null, style.letterSpacing, style.strokeWidth, style.strokeColor, style.blend, style.fit (contain/cover).
+20. set_canvas_fx ustawia look całego filmu: grade (none/cinematic/warm/cool/mono/vivid/faded/noir), vignette 0–1, grain 0–1, letterbox 0–0.25, transition (none/dip/flash/wipe/light-leak/blur) na cięciach między scenami, transitionDuration oraz motionBlur dla finalnego eksportu.
 """
 
 
@@ -54,6 +57,8 @@ def inspect(p):
             issues.append({"code": "small_text", "element_id": e["id"], "message": "Tekst może być zbyt mały na telefonie"})
         if e.get("motion") and e["motion"]["duration"] > e["duration"]:
             issues.append({"code": "unfinished_motion", "element_id": e["id"], "message": "Klip kończy się przed zakończeniem wejścia"})
+        if e.get("motion") and e.get("exit") and e["motion"]["duration"] + e["exit"]["duration"] > e["duration"] + 1e-6:
+            issues.append({"code": "motion_overlap", "element_id": e["id"], "message": "Wejście i wyjście nakładają się; wydłuż klip lub skróć ruch"})
     return {"project_id": p["id"], "revision": p["revision"], "issues": issues,
             "summary": {"elements": len(p["elements"]), "scenes": len(p["scenes"]), "assets": len(p["assets"])},
             "limitations": "Kontrola geometrii bez pomiaru łamania tekstu, obrotów, kolizji i kontrastu. Obejrzyj capture_frame."}

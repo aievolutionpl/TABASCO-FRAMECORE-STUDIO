@@ -13,7 +13,7 @@ CHECKLIST = {
     "continuity": "Wejścia, wyjścia i przejścia zachowują ciągłość",
     "audio": "Sprawdzono rytm i dźwięk albo świadomie wybrano ciszę",
 }
-EASINGS = {"linear", "quad-out", "cubic-out", "quint-out"}
+EASINGS = {"linear", "quad-out", "cubic-out", "quint-out", "expo-out", "back-out", "elastic-out", "cubic-in-out"}
 MOTION_RULES = {
     "text": {"duration": .65, "easing": "cubic-out"},
     "caption": {"duration": .35, "easing": "quad-out"},

@@ -45,13 +45,30 @@ _LOOKS = {
  'launch': ('Bebas Neue','royal','#fff3e1','#e9b2df','center','bounce-in','fluent-sparkles'),
 }
 
+# Ruch 2.0: tekst kinetyczny sceny tytułowej, wyjście nagłówków i look całego filmu.
+_DIRECTION = {
+ 'product': ('word-cascade','blur-out',{'grade':'warm','vignette':.3,'grain':.1,'transition':'dip'}),
+ 'social': ('char-rise','zoom-through',{'grade':'vivid','vignette':.2,'transition':'flash','transitionDuration':.35}),
+ 'explainer': ('type-on','slide-out-left',{'transition':'wipe','transitionDuration':.6}),
+ 'collaboration': ('word-blur','fade-out',{'grade':'cool','vignette':.3,'transition':'light-leak','transitionDuration':.8}),
+ 'cinematic': ('word-blur','blur-out',{'grade':'cinematic','vignette':.5,'grain':.3,'letterbox':.12,'transition':'dip','transitionDuration':.7}),
+ 'editorial': ('word-cascade','wipe-out',{'grade':'faded','grain':.25,'transition':'dip'}),
+ 'neon': ('scramble-in','zoom-through',{'grade':'vivid','vignette':.4,'grain':.15,'transition':'blur'}),
+ 'minimal': ('word-blur','fade-out',{'transition':'dip','transitionDuration':.8}),
+ 'podcast': ('word-highlight','fade-out',{'grade':'warm','vignette':.3,'transition':'light-leak'}),
+ 'event': ('char-wave','scale-out',{'grade':'vivid','transition':'flash'}),
+ 'education': ('type-on','slide-out-left',{'transition':'wipe','transitionDuration':.6}),
+ 'launch': ('char-rise','zoom-through',{'grade':'vivid','vignette':.3,'transition':'flash','transitionDuration':.4}),
+}
+
 
 def look(template_id):
     if template_id not in _LOOKS: raise EditorError('Nieznany szablon')
     font,bg,text,accent,layout,motion,illustration=_LOOKS[template_id]
     from .backgrounds import resolve
     return {'font':font,'background_id':bg,'background':resolve(bg)['preview'],'text':text,
-            'accent':accent,'layout':layout,'motion':motion,'illustration_id':illustration}
+            'accent':accent,'layout':layout,'motion':motion,'illustration_id':illustration,
+            'kinetic':_DIRECTION[template_id][0],'exit':_DIRECTION[template_id][1],'fx':dict(_DIRECTION[template_id][2])}
 
 
 def catalog():
@@ -67,6 +84,10 @@ def apply_look(p, template_id):
     p['canvas'].update(background=resolve(style['background_id'])['colors'][0],backgroundPreset=style['background_id'],backgroundAnimated=True)
     p['brand'].update(font=style['font'], colors={'background':p['canvas']['background'],'text':style['text'],'accent':style['accent']})
     p['metadata']['templateId']=template_id
+    from .model import FX_DEFAULTS
+    from .motion import resolve as resolve_motion
+    p['canvas']['fx']={**FX_DEFAULTS,**style['fx']}
+    hero=p['scenes'][2]['id'] if len(p['scenes'])>2 else None
     face=next(f for f in manifest()['fonts'] if f['family']==style['font'])
     has_visual=any(e['type'] in {'image','video'} for e in p['elements'])
     for e in p['elements']:
@@ -78,7 +99,11 @@ def apply_look(p, template_id):
             if is_title:
                 e.update(y=h*.12 if has_visual else h*.13,height=h*.26)
                 e['style']['fontSize']=w*(.058 if w>h else .075)
-                e['motion']={'id':style['motion'],'duration':.8}
+                e['motion']={'id':style['motion'],'duration':round(min(.8,e['duration']*.6),2)}
+                if hero and e.get('sceneId')==hero:
+                    kinetic=resolve_motion(style['kinetic'])['defaults']
+                    e['motion']={'id':style['kinetic'],'duration':round(max(.3,min(kinetic['duration'],e['duration']*.6)),2),'easing':kinetic['easing']}
+                e['exit']={'id':style['exit'],'duration':round(max(.1,min(.4,e['duration']*.25)),2),'easing':'cubic-out'}
             else:
                 e.update(y=h*.88,height=max(h*.055,w*.019*1.7))
                 e['style']['fontSize']=w*.019 if w>h else w*.027

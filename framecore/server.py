@@ -63,7 +63,10 @@ class Handler(StudioHandler):
                 return self._json(200, {"mcpServers":{"framecore":{"command":sys.executable,
                     "args":[str(root / 'framecore.py'), 'mcp', '--root', str(store.root.resolve())], 'cwd':str(root)}}})
             if path.startswith("/api/assistant/job/"): return self._json(200, self.server.assistant.get(path.split("/")[-1]))
-            if path == "/api/motion": return self._json(200, {"components": registry()})
+            if path == "/api/motion":
+                from .motion import exits
+                from .production import EASINGS
+                return self._json(200, {"components": registry(), "exits": exits(), "easings": sorted(EASINGS)})
             if path == "/api/tools": return self._json(200, {"tools": self.server.api.tools()})
             if path.startswith("/api/project/"): return self._json(200, store.read(path.split("/")[-1]))
             if path.startswith("/api/context/"): return self._json(200, store.context(path.split("/")[-1]))

@@ -27,7 +27,8 @@ Z CartCut przyjmujemy zasadę wspólnej historii edytora i MCP; z FreeCut — od
 | `api.py`, `mcp.py`, `server.py` | API wspólne dla HTTP i MCP; transporty i import |
 | `composition.py`, `static/composition.js` | Kompilacja i odtwarzanie kompozycji |
 | `render.py` | Eksport MP4 i miks dźwięku |
-| `motion.py`, `templates.py`, `library.py`, `backgrounds.py` | 28 animacji, 12 szablonów, 24 tła i audytowany Creator Pack |
+| `motion.py`, `templates.py`, `library.py`, `backgrounds.py` | 42 animacje wejścia (7 kinetycznych), 10 wyjść, 12 szablonów z lookiem filmu, 24 tła i audytowany Creator Pack |
+| `showcase.py` | Edytowalne filmy demo Ruchu 2.0 budowane przez to samo API |
 | `inspection.py` | Kontrola geometrii i rzeczywiste klatki dla agenta |
 | `providers.py` | Interfejsy integracji z dostawcami materiałów |
 | `static/` | Polski interfejs edycji |
