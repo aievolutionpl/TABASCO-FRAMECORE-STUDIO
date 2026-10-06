@@ -1434,6 +1434,66 @@
         "tęcza 3d",
         "3d"
       ]
+    },
+    {
+      "id": "motionduo-mark",
+      "name": "MotionDuo — znak M",
+      "kind": "icon",
+      "collection": "MotionDuo Studio",
+      "license": "AI-generated",
+      "licenseFile": "licenses/FrameCore-Generated-Assets.txt",
+      "source": "Built-in image_gen; reference supplied by user",
+      "source_kind": "generated",
+      "promptFile": "docs/MOTIONDUO_BRAND.md",
+      "file": "framecore/static/library/motionduo/mark.png",
+      "sha256": "1671dbce58dbb865a237174545a88657234bca04b8f837f5b765a3c180b811d4",
+      "tags": [
+        "motionduo",
+        "marka",
+        "logo",
+        "człowiek",
+        "agent"
+      ]
+    },
+    {
+      "id": "motionduo-logo",
+      "name": "MotionDuo — pełne logo",
+      "kind": "illustration",
+      "collection": "MotionDuo Studio",
+      "license": "AI-generated",
+      "licenseFile": "licenses/FrameCore-Generated-Assets.txt",
+      "source": "Built-in image_gen; reference supplied by user",
+      "source_kind": "generated",
+      "promptFile": "docs/MOTIONDUO_BRAND.md",
+      "file": "framecore/static/library/motionduo/logo.png",
+      "sha256": "9443ada699444a82da4a64d13c0789b9c7f9f211f4c919105663b8039fbc952a",
+      "tags": [
+        "motionduo",
+        "marka",
+        "logo",
+        "człowiek",
+        "agent"
+      ]
+    },
+    {
+      "id": "motionduo-banner",
+      "name": "MotionDuo — człowiek i agent",
+      "kind": "illustration",
+      "collection": "MotionDuo Studio",
+      "license": "AI-generated",
+      "licenseFile": "licenses/FrameCore-Generated-Assets.txt",
+      "source": "Built-in image_gen; reference supplied by user",
+      "source_kind": "generated",
+      "promptFile": "docs/MOTIONDUO_BRAND.md",
+      "file": "framecore/static/library/motionduo/banner.png",
+      "sha256": "0eb4374340d621127c20260fbacafc3e4def769c497b750f8cad17906bb72e95",
+      "tags": [
+        "motionduo",
+        "marka",
+        "banner",
+        "człowiek",
+        "agent"
+      ]
     }
   ]
 }

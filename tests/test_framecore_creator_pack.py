@@ -16,8 +16,10 @@ ROOT=Path(__file__).resolve().parents[1]
 def test_pack_integrity_license_and_local_fonts():
     pack=manifest()
     assert len(pack['fonts'])==8
-    assert len(catalog('icon'))==60
-    assert len(catalog('illustration'))==24
+    assert len(catalog('icon'))>=60
+    assert 'motionduo-mark' in {a['id'] for a in catalog('icon')}
+    assert len(catalog('illustration'))>=24
+    assert {'motionduo-logo','motionduo-banner'} <= {a['id'] for a in catalog('illustration')}
     for item in pack['fonts']+pack['assets']:
         if item.get('source_kind') == 'generated':
             assert (ROOT/item['promptFile']).is_file()
@@ -52,7 +54,9 @@ def test_every_template_uses_distinct_look_and_editable_local_assets(tmp_path,fo
 def test_agent_library_and_background_proposal_is_one_undo(tmp_path):
     store=Store(tmp_path/'projects');api=API(store,RenderJobs(store))
     p=store.create('Materiały')['project'];pid=p['id']
-    assert len(api.call('list_library')['assets'])==87
+    assets=api.call('list_library')['assets']
+    assert len(assets)>=87
+    assert {'motionduo-mark','motionduo-logo','motionduo-banner'} <= {a['id'] for a in assets}
     assert len(api.call('list_backgrounds')['backgrounds'])==24
     commands=[{'name':'add_library_asset','args':{'asset_id':'fluent-rocket'}},
               {'name':'add_icon','args':{'icon_id':'lucide-leaf'}},

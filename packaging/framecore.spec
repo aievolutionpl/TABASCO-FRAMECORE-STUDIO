@@ -6,7 +6,7 @@ from PyInstaller.utils.hooks import collect_data_files, copy_metadata
 import certifi
 
 root = Path(SPECPATH).parent
-version = '0.3.0'
+version = '0.3.1'
 native = Path(os.environ['FRAMECORE_NATIVE_DIR'])
 browsers = Path(os.environ['PLAYWRIGHT_BROWSERS_PATH'])
 datas = [(str(root/'framecore/static'),'framecore/static'),
@@ -31,6 +31,6 @@ gui = EXE(pyz,hooks+[entry['desktop_app']],[],exclude_binaries=True,name='FrameC
 engine = EXE(pyz,hooks+[entry['desktop_engine']],[],exclude_binaries=True,name='FrameCoreEngine',console=True)
 coll = COLLECT(gui,engine,a.binaries,a.datas,name='FrameCoreStudio')
 if sys.platform=='darwin':
-    app = BUNDLE(coll,name='FrameCore Studio.app',icon=icon,bundle_identifier='pl.aievolution.framecore.studio',
+    app = BUNDLE(coll,name='MotionDuo Studio.app',icon=icon,bundle_identifier='pl.aievolution.framecore.studio',
         info_plist={'CFBundleShortVersionString':version,'CFBundleVersion':'1','NSHighResolutionCapable':True,
                     'NSLocalNetworkUsageDescription':'Studio łączy lokalny edytor z materiałami i silnikiem eksportu na tym komputerze.'})

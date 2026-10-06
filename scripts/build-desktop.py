@@ -30,7 +30,7 @@ def main():
     parser.add_argument('--system-browser-for-smoke',action='store_true',help='Linux development smoke only; never used for Windows/macOS releases')
     args=parser.parse_args()
     generated=ROOT/'packaging/generated';generated.mkdir(parents=True,exist_ok=True)
-    image=Image.open(ROOT/'assets/framecore-logo-mark.png').convert('RGBA')
+    image=Image.open(ROOT/'assets/motionduo-mark.png').convert('RGBA')
     square=Image.new('RGBA',(1024,1024),'#191c1e');image.thumbnail((750,750));square.alpha_composite(image,((1024-image.width)//2,(1024-image.height)//2))
     square.save(generated/'icon.ico',sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])
     square.save(generated/'icon.icns')
@@ -79,7 +79,7 @@ def main():
         build.check_returncode()
         # Keep upstream Chromium bundles intact: PyInstaller rewrites Mach-O files
         # and cannot safely reconstruct Chrome's nested framework layout.
-        destination=(ROOT/'dist/FrameCore Studio.app/Contents/Resources/browsers'
+        destination=(ROOT/'dist/MotionDuo Studio.app/Contents/Resources/browsers'
                      if sys.platform=='darwin' else ROOT/'dist/FrameCoreStudio/_internal/browsers')
         shutil.copytree(browsers,destination,symlinks=True,dirs_exist_ok=True)
 

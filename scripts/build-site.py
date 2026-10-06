@@ -14,7 +14,7 @@ def main():
     for file in (ROOT/'site').iterdir():
         if file.is_file():shutil.copy2(file,out/file.name)
     assets=out/'assets';assets.mkdir(exist_ok=True)
-    for source,target in [('assets/framecore-logo-mark.png','mark.png'),('assets/framecore-collaborative-editor.png','editor.png'),
+    for source,target in [('assets/motionduo-mark.png','mark.png'),('assets/motionduo-editor.png','editor.png'),
                           ('assets/framecore-visual-lesson-demo.mp4','lesson.mp4'),('framecore/static/library/fonts/manrope.ttf','manrope.ttf'),
                           ('licenses/fonts/manrope-OFL.txt','Manrope-OFL.txt')]:shutil.copy2(ROOT/source,assets/target)
     subprocess.run(['ffmpeg','-y','-v','error','-ss','1.3','-i',str(assets/'lesson.mp4'),'-frames:v','1',str(assets/'lesson-poster.jpg')],check=True)

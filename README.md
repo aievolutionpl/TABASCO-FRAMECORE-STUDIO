@@ -1,19 +1,18 @@
 <div align="center">
 
-<img src="assets/tabasco-framecore-collaboration.jpg" alt="TABASCO CREATIVES + FRAMECORE — STUDIO: człowiek i agent AI tworzą razem" width="100%">
+<img src="assets/motionduo-banner.png" alt="MotionDuo Studio — kreatywność człowieka i moc AI, by TABASCO CREATIVES + FRAMECORE" width="100%">
 
-# TABASCO CREATIVES + FRAMECORE — STUDIO
+# MotionDuo Studio
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/framecore-logo-reversed.svg">
-  <img alt="FrameCore — Wspólna rama" src="assets/framecore-logo.svg" width="640">
-</picture>
+**by TABASCO CREATIVES + FRAMECORE**
+
+<img src="assets/motionduo-logo.png" alt="MotionDuo Studio — dwie splecione wstęgi człowieka i agenta AI" width="260">
 
 **Projekt współpracy: człowiek, agent AI i jeden wspólny montaż.**
 
 Lokalne studio do tworzenia filmów, animacji i rolek. Ty układasz historię i poprawiasz sceny; agent korzysta z tych samych materiałów, zaznaczenia, osi czasu i historii cofania.
 
-![Edytor FrameCore: podgląd filmu, materiały, oś czasu i panel właściwości](assets/framecore-editor.png)
+![Edytor MotionDuo Studio: podgląd filmu, materiały, oś czasu i panel właściwości](assets/motionduo-editor.png)
 
 Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek](THIRD_PARTY_NOTICES.md)
 
@@ -51,7 +50,7 @@ Testy obejmują onboarding i rozmowę w Chromium, rzeczywistą edycję przez nar
 
 ## Strona produktu i aplikacja desktopowa
 
-[**Poznaj FrameCore Studio →**](https://aievolutionpl.github.io/TABASCO-FRAMECORE-STUDIO/)
+[**Poznaj MotionDuo Studio →**](https://aievolutionpl.github.io/TABASCO-FRAMECORE-STUDIO/)
 
 Wersje desktop preview dla Windows i macOS są budowane jako samodzielne aplikacje z własnym oknem, Pythonem i narzędziami eksportu. [Instalatory w GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases) · [Instalacja i dane aplikacji](docs/DESKTOP.md) · [Publikacja strony](docs/PRODUCT_WEBSITE.md).
 
@@ -61,7 +60,7 @@ Grafitowy interfejs, większe opisy i ciepłe akcenty Tabasco pomagają skupić 
 
 Na telefonie biblioteka i właściwości otwierają się jako panele. Obsługują klawiaturę, Escape i powrót do przycisku, który je otworzył. Tworzenie projektu, wybór istniejącego projektu i eksport są dostępne również w małym widoku. [Biblioteka na telefonie](assets/framecore-editor-mobile.png) · [Właściwości](assets/framecore-editor-mobile-properties.png).
 
-W panelu **Marka → Dodaj logo FrameCore** umieścisz nowy znak w filmie. To zwykły edytowalny klip: możesz zmieniać jego pozycję, rozmiar i ruch albo cofnąć dodanie.
+W panelu **Marka → Dodaj logo MotionDuo** umieścisz nowy znak w filmie. To zwykły edytowalny klip: możesz zmieniać jego pozycję, rozmiar i ruch albo cofnąć dodanie.
 
 ## Montaż ręczny i praca z agentem
 
@@ -201,7 +200,7 @@ Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współp
 
 ## Współpraca
 
-**TABASCO CREATIVES + FRAMECORE — STUDIO** to projekt współpracy nad narzędziami twórczymi. Łączymy decyzje człowieka z narzędziami agenta, aby film dało się obejrzeć, poprawić i dalej edytować.
+**MotionDuo Studio — by TABASCO CREATIVES + FRAMECORE** to projekt współpracy nad narzędziami twórczymi. Łączymy decyzje człowieka z narzędziami agenta, aby film dało się obejrzeć, poprawić i dalej edytować.
 
 ## Filmy demo
 
@@ -233,3 +232,18 @@ python scripts/render-showcase.py       # eksport obu filmów i podglądów do a
 ## Rozwój AI Studio — etap P0
 
 Panel **Analiza materiałów** tworzy miniatury, contact sheets, proxy oraz waveform i wykrywa ciszę. Wyniki są buforowane poza projektem i dostępne dla UI oraz agentów przez API/MCP. [Obsługa i ograniczenia](docs/MEDIA_ENGINE.md) · [Audyt i plan P0/P1/P2](docs/AI_STUDIO_AUDIT.md).
+
+## Nowa nazwa i wybór znaku
+
+Produkt nosi nazwę **MotionDuo Studio**, z podpisem **by TABASCO CREATIVES + FRAMECORE**. Wewnętrzny silnik, polecenia `framecore.py`, identyfikatory MCP i dotychczasowe katalogi projektów zachowują kompatybilność. Opublikowane instalatory 0.3.0 oraz wcześniejsze filmy i zrzuty przedstawiają poprzednią nazwę FrameCore Studio.
+
+<details>
+<summary>Wcześniejsza eksploracja: dziewięć koncepcji znaku</summary>
+
+![MotionDuo Studio — dziewięć prostych koncepcji znaku](assets/motionduo-logo-concepts-3x3.png)
+
+</details>
+
+[Logo PNG](assets/motionduo-logo.png) · [Znak z przezroczystością](assets/motionduo-mark.png) · [Banner](assets/motionduo-banner.png) · [Opis rebrandingu](docs/MOTIONDUO_BRAND.md)
+
+W aplikacji wybierz **Biblioteka → kolekcja MotionDuo Studio**, aby dodać znak, pełne logo lub banner do filmu. Te same materiały są dostępne agentowi przez `list_library` i `add_library_asset`.

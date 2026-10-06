@@ -3,7 +3,9 @@ import os
 import sys
 from pathlib import Path
 
-APP_NAME = 'FrameCore Studio'
+APP_NAME = 'MotionDuo Studio'
+# Keep the existing data location across the product rename.
+DATA_DIRECTORY_NAME = 'FrameCore Studio'
 
 
 def data_directory(platform=None):
@@ -14,7 +16,7 @@ def data_directory(platform=None):
         base = Path.home() / 'Library' / 'Application Support'
     else:
         base = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local' / 'share'))
-    return base / APP_NAME
+    return base / DATA_DIRECTORY_NAME
 
 
 def configure():
