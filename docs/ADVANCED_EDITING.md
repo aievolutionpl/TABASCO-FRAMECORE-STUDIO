@@ -4,11 +4,15 @@ Nowe narzędzia MotionDuo rozwijają wspólny montaż człowieka i agenta. [Źr�
 
 ## Wybierz fragment przed wstawieniem
 
+![Monitor źródła MotionDuo: IN/OUT i osobna ścieżka dźwięku](../assets/motionduo-source-monitor.png)
+
 W panelu **Media** kliknij **Zakres / podgląd** pod materiałem. Otwiera się monitor oryginału. Wideo i dźwięk mają pola IN/OUT w sekundach, przyciski ustawiania punktów w aktualnym miejscu odtwarzania oraz **Odtwórz zakres**. Skróty **I** i **O** działają poza polami formularza.
 
 **Wstaw wybrany fragment** dodaje materiał przy wskaźniku timeline. Dla wideo z dźwiękiem możesz zostawić zaznaczone **Dodaj też dźwięk na osobnej ścieżce**. Oba klipy otrzymują ten sam początek, długość i zakres źródła. Całą operację cofniesz jednym kliknięciem. Obraz i dźwięk pozostają osobno edytowalne; nie tworzymy trwałego połączenia między nimi. Wstawianie nie wydłuża filmu automatycznie.
 
 ## Zaznacz i edytuj kilka klipów
+
+![Grupa klipów i prawdziwy waveform na timeline](../assets/motionduo-advanced-editor.png)
 
 **Ctrl / ⌘ / Shift + klik** dodaje lub usuwa klip z zaznaczenia. Przeciągnięcie zaznaczonego klipu przesuwa całą grupę o ten sam czas, zachowując odstępy i ścieżki. Ruch jest ograniczony początkiem i końcem filmu.
 

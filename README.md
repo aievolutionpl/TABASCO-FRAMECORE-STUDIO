@@ -22,6 +22,8 @@ Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek]
 
 ## Szybszy montaż · inspiracje Concat
 
+![Grupowy montaż MotionDuo: monitor filmu, waveform i wspólne operacje klipów](assets/motionduo-advanced-editor.png)
+
 Wybieraj fragmenty **IN/OUT** w monitorze źródła i wstawiaj wideo razem z osobnym dźwiękiem. Zaznacz kilka klipów, aby przesuwać, duplikować, dzielić i stylizować je razem. **Montaż magnetyczny** zsuwa następne klipy po przycięciu, a **rzeczywisty waveform i linia głośności** ułatwiają pracę z audio. Każda operacja trafia do wspólnej historii i jest dostępna dla agenta przez MCP.
 
 [Instrukcja i komendy](docs/ADVANCED_EDITING.md) · [Przegląd Concat, wybór rozwiązań i licencja](docs/CONCAT_REVIEW.md). Funkcje są własną implementacją MotionDuo; silnik Concat nie jest dołączony.
@@ -219,14 +221,9 @@ Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współp
 
 ## Filmy demo
 
-Wszystkie filmy powstały w FrameCore i są edytowalnymi projektami — otwórz je w studiu, zmień tekst, ruch albo look i wyeksportuj własną wersję. Kliknij podgląd, aby obejrzeć pełny MP4 z dźwiękiem.
+Poniższe pliki MP4 są dołączone do repozytorium. Przykłady możesz otworzyć w studiu, zmienić tekst, ruch albo look i wyeksportować własną wersję. Robocza lekcja jest bez lektora.
 
-<table>
-<tr>
-<td width="68%" align="center"><a href="assets/framecore-motion2-showreel.mp4"><img src="assets/framecore-motion2-showreel.gif" alt="Showreel Ruchu 2.0: kinetyczne nagłówki, karty z wejściami i wyjściami, neonowe dekodowanie i look kinowy" width="100%"></a><br><b>Showreel Motion 2.0</b> · 16:9 · 24 s<br><sub>Tekst kinetyczny, karaoke, glitch, przesłona, light leak, rozmycie ruchu</sub></td>
-<td width="32%" align="center"><a href="assets/framecore-motion2-reel.mp4"><img src="assets/framecore-motion2-reel.gif" alt="Rolka 9:16: duże kinetyczne napisy, karaoke i błyski na cięciach" width="100%"></a><br><b>Rolka 9:16</b> · 12 s<br><sub>Napisy karaoke i look „Rolka”</sub></td>
-</tr>
-</table>
+Edytowalny showreel Ruchu 2.0 i pionową rolkę utworzysz lokalnie:
 
 ```bash
 python framecore.py sample --showreel   # edytowalny showreel 16:9
@@ -236,8 +233,6 @@ python scripts/render-showcase.py       # eksport obu filmów i podglądów do a
 
 | Film | Format | Co pokazuje | Projekt |
 | --- | --- | --- | --- |
-| [▶ Showreel Motion 2.0](assets/framecore-motion2-showreel.mp4) | 16:9 · 24 s | Nowy silnik ruchu, look *Kino*, light leaki na cięciach · [klatki](assets/framecore-motion2-showreel-frames.jpg) | `sample --showreel` |
-| [▶ Rolka Motion 2.0](assets/framecore-motion2-reel.mp4) | 9:16 · 12 s | Kinetyczne napisy dla social media, look *Rolka* · [klatki](assets/framecore-motion2-reel-frames.jpg) | `sample --reel` |
 | [▶ Reklama „Twój pomysł. Wspólna rama.”](assets/framecore-agent-campaign.mp4) | 16:9 · 30 s | Sześć scen po 5 s, tła FrameCore Cinema, własny podkład | `sample --campaign` |
 | [▶ Przykład współpracy](assets/framecore-collaboration.mp4) | 16:9 · 15 s | Sześć scen z polskimi tekstami i ikonami MIT | `sample` |
 | [▶ Creator Pack](assets/framecore-creator-pack.mp4) | 16:9 · 12 s | Wbudowane fonty, ilustracje 3D i animowane tła | `sample --creator-pack` |
