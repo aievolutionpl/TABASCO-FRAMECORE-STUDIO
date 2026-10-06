@@ -177,7 +177,8 @@ def start_ffmpeg(args, width: int, height: int, duration: float, out: Path, logf
         return subprocess.Popen(
             ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgba", "-s", f"{src_w}x{src_h}", "-framerate", str(args.fps), "-i", "-",
              "-vf", f"scale={width}:{height}:flags=lanczos:out_color_matrix=bt709:out_range=tv,format=yuva444p10le"] + PRORES_ARGS
-            + ["-r", str(args.fps), "-t", f"{duration:.3f}", str(out)], stdin=subprocess.PIPE, stderr=logfile)
+            + ["-r", str(args.fps), "-t", f"{duration:.3f}", str(out)], stdin=subprocess.PIPE, stderr=logfile,
+            creationflags=0x08000000 if sys.platform=='win32' and getattr(sys,'frozen',False) else 0)
     cmd = [
         "ffmpeg", "-y", "-loglevel", "error",
         "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{src_w}x{src_h}", "-framerate", str(args.fps), "-i", "-",
@@ -195,7 +196,8 @@ def start_ffmpeg(args, width: int, height: int, duration: float, out: Path, logf
         fade_start = max(duration - 0.4, 0)
         cmd += ["-c:a", "aac", "-b:a", "192k", "-af", f"afade=t=out:st={fade_start:.3f}:d=0.4", "-map", "0:v", "-map", "1:a"]
     cmd += ["-t", f"{duration:.3f}", str(out)]
-    return subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=logfile)
+    return subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=logfile,
+                            creationflags=0x08000000 if sys.platform=='win32' and getattr(sys,'frozen',False) else 0)
 
 
 def export_many(args) -> int:

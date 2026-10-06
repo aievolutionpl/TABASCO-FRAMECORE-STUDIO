@@ -17,7 +17,8 @@ from .model import EditorError, uid
 
 
 def probe(path):
-    cp = subprocess.run(["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", str(path)], capture_output=True, text=True, timeout=30)
+    from .desktop_runtime import process_options
+    cp = subprocess.run(["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", str(path)], capture_output=True, text=True, timeout=30, **process_options())
     if cp.returncode:
         raise EditorError("Nieobsługiwany lub uszkodzony plik multimedialny")
     return json.loads(cp.stdout)
@@ -97,18 +98,20 @@ class RenderJobs:
             from .delivery import freeze_notices
             freeze_notices(p,directory)
             html = directory / "index.html"
-            html.write_text(compile_project(p), encoding="utf-8")
-            renderer = Path(__file__).resolve().parents[1] / "vstudio/renderers/html_to_video.py"
+            from .portable_media import for_export
+            html.write_text(compile_project(for_export(p, directory)), encoding="utf-8")
             video = directory / "picture.mp4"
             # Capture at the project viewport; draft changes encoding quality only.
-            cmd = [sys.executable, str(renderer), str(html), "-o", str(video), "--size", f'{p["canvas"]["width"]}x{p["canvas"]["height"]}',
+            from .desktop_runtime import renderer_command
+            cmd = renderer_command([str(html), "-o", str(video), "--size", f'{p["canvas"]["width"]}x{p["canvas"]["height"]}',
                    "--fps", str(p["canvas"]["fps"]), "--duration", str(p["duration"]), "--crf", "18" if quality == "final" else "26",
-                   "--preset", "veryfast"]
+                   "--preset", "veryfast"], directory / 'render.log')
             if quality == "final" and p["canvas"].get("fx", {}).get("motionBlur"):
                 # Filmowe rozmycie ruchu: uśrednienie 4 podklatek w migawce 180°.
                 cmd += ["--subframes", "4", "--shutter", "0.5"]
             with (directory / "render.log").open("w") as log:
-                cp = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=1800)
+                from .desktop_runtime import process_options
+                cp = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT, timeout=1800, **process_options())
             if cp.returncode:
                 raise EditorError((directory / "render.log").read_text(encoding="utf-8")[-2000:], "render_failed")
             self._update(job_id, progress=.85)
@@ -127,7 +130,7 @@ class RenderJobs:
                     filters.append(chain + f',adelay={round(e["start"]*1000)}:all=1[a{idx}]')
                 filters.append("".join(f"[a{i}]" for i in range(1,len(audio)+1))+f'amix=inputs={len(audio)}:normalize=0,apad,atrim=duration={p["duration"]}[out]')
                 args += ["-filter_complex", ";".join(filters), "-map", "0:v", "-map", "[out]", "-c:v", "copy", "-c:a", "aac", "-movflags", "+faststart", str(final)]
-                cp = subprocess.run(args, capture_output=True, text=True, timeout=180)
+                cp = subprocess.run(args, capture_output=True, text=True, timeout=180, **process_options())
                 if cp.returncode:
                     raise EditorError(cp.stderr[-2000:], "audio_mix_failed")
             else:

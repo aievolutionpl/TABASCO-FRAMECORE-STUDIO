@@ -78,6 +78,8 @@ def capture(store, pid, time=None):
             browser = pw.chromium.launch(**({"executable_path": shutil.which("chromium")} if shutil.which("chromium") else {}))
             try:
                 page = browser.new_page(viewport={"width":p["canvas"]["width"], "height":p["canvas"]["height"]})
+                from .portable_media import install_capture_routes
+                install_capture_routes(page, p, store.directory(pid))
                 base = f"http://127.0.0.1:{server.server_port}"
                 page.goto(base)
                 page.set_content(compile_project(p, f"{base}/assets/{pid}/"))

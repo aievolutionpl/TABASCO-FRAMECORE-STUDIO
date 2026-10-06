@@ -58,10 +58,8 @@ class Handler(StudioHandler):
                 from .runtime import diagnostics
                 return self._json(200, diagnostics())
             if path == "/api/mcp-config":
-                import sys
-                root = Path(__file__).resolve().parents[1]
-                return self._json(200, {"mcpServers":{"framecore":{"command":sys.executable,
-                    "args":[str(root / 'framecore.py'), 'mcp', '--root', str(store.root.resolve())], 'cwd':str(root)}}})
+                from .desktop_runtime import mcp_config
+                return self._json(200, {"mcpServers":{"framecore":mcp_config(store.root)}})
             if path.startswith("/api/assistant/job/"): return self._json(200, self.server.assistant.get(path.split("/")[-1]))
             if path == "/api/motion":
                 from .motion import exits

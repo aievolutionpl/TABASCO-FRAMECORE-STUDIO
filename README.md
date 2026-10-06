@@ -49,6 +49,12 @@ python framecore.py sample --campaign
 
 Testy obejmują onboarding i rozmowę w Chromium, rzeczywistą edycję przez narzędzia, konflikty rewizji, zatrzymanie, ochronę konfiguracji i eksport. Szczegóły oraz granice walidacji: [wydanie agenta](docs/AGENT_RELEASE_VALIDATION.md).
 
+## Strona produktu i aplikacja desktopowa
+
+[**Poznaj FrameCore Studio →**](https://aievolutionpl.github.io/TABASCO-FRAMECORE-STUDIO/)
+
+Wersje desktop preview dla Windows i macOS są budowane jako samodzielne aplikacje z własnym oknem, Pythonem i narzędziami eksportu. [Instalatory w GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases) · [Instalacja i dane aplikacji](docs/DESKTOP.md) · [Publikacja strony](docs/PRODUCT_WEBSITE.md).
+
 ## Dopracowany edytor
 
 Grafitowy interfejs, większe opisy i ciepłe akcenty Tabasco pomagają skupić się na filmie. Biblioteka ma **ulubione materiały i filtrowanie kolekcji**; panel tekstu pokazuje typografię przed geometrią. Sześć przycisków wyrównuje element w kadrze, a wybór animacji uruchamia krótki podgląd na zaznaczonym klipie.

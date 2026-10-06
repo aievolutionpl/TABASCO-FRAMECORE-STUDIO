@@ -1,0 +1,96 @@
+name: Desktop installers
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*-desktop.*']
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows-x64
+          - os: macos-15
+            platform: macos-arm64
+          - os: macos-15-intel
+            platform: macos-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: '1'
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/packaging/generated/browsers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: packaging/requirements-desktop.txt
+      - name: Dependencies
+        run: python -m pip install -r packaging/requirements-desktop.txt
+      - name: FFmpeg Windows
+        if: runner.os == 'Windows'
+        run: choco install ffmpeg innosetup --no-progress -y
+      - name: FFmpeg macOS
+        if: runner.os == 'macOS'
+        run: brew install ffmpeg
+      - name: Bundled Chromium
+        run: python -m playwright install chromium
+      - name: Build native app
+        run: python scripts/build-desktop.py
+      - name: Validate Windows package
+        if: runner.os == 'Windows'
+        run: python scripts/check-desktop.py --app dist/FrameCoreStudio/FrameCoreStudio.exe --engine dist/FrameCoreStudio/FrameCoreEngine.exe
+      - name: Validate macOS package
+        if: runner.os == 'macOS'
+        run: python scripts/check-desktop.py --app 'dist/FrameCore Studio.app/Contents/MacOS/FrameCoreStudio' --engine 'dist/FrameCore Studio.app/Contents/MacOS/FrameCoreEngine'
+      - name: Official WebView2 bootstrapper and Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $bootstrap = 'packaging/generated/MicrosoftEdgeWebview2Setup.exe'
+          Invoke-WebRequest 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $bootstrap
+          $signature = Get-AuthenticodeSignature $bootstrap
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') { throw 'Invalid WebView2 signature' }
+          & 'C:/Program Files (x86)/Inno Setup 6/ISCC.exe' packaging/windows.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
+      - name: macOS disk image
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          codesign --force --deep --sign - 'dist/FrameCore Studio.app'
+          mkdir -p dist/dmg-stage dist/installers
+          cp -R 'dist/FrameCore Studio.app' dist/dmg-stage/
+          ln -s /Applications dist/dmg-stage/Applications
+          hdiutil create -ov -volname 'FrameCore Studio' -srcfolder dist/dmg-stage -format UDZO 'dist/installers/FrameCore-Studio-0.3.0-${{ matrix.platform }}.dmg'
+      - name: Checksums and source notices
+        shell: bash
+        run: |
+          python -c "from pathlib import Path; import hashlib; p=Path('dist/installers'); [(f.with_name(f.name+'.sha256').write_text(hashlib.sha256(f.read_bytes()).hexdigest()+'  '+f.name+'\n')) for f in p.iterdir() if f.suffix in ['.exe','.dmg']]"
+          cp packaging/TOOL_NOTICES.md dist/installers/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: dist/installers/*
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: installers
+      - name: Publish tested preview installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(python -c "import json; print(json.load(open('packaging/version.json'))['release_tag'])")
+          gh release create "$tag" installers/* --title 'FrameCore Studio 0.3.0 · aplikacja desktopowa (preview)' --notes-file packaging/RELEASE_NOTES.md --prerelease --target '${{ github.sha }}'

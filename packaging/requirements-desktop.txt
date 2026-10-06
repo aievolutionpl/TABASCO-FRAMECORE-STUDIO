@@ -1,0 +1,4 @@
+-r ../requirements.txt
+pywebview==6.0
+pyinstaller==6.16.0
+certifi==2025.10.5

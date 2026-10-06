@@ -1,5 +1,8 @@
 """Ruch 2.0: tekst kinetyczny, wyjścia, wygląd elementów i efekty filmowe."""
 import shutil
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
 
 import pytest
 from playwright.sync_api import sync_playwright
@@ -18,6 +21,22 @@ def motion_project(tmp_path):
     api = API(store, RenderJobs(store))
     pid = api.call("create_project", {"name": "Ruch 2.0", "format": "16:9", "duration": 6})["project"]["id"]
     return store, api, pid
+
+
+@pytest.fixture
+def motion_http(tmp_path):
+    class Handler(SimpleHTTPRequestHandler):
+        def log_message(self, *_args):
+            pass
+    server = ThreadingHTTPServer(('127.0.0.1', 0), partial(Handler, directory=str(tmp_path)))
+    worker = Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    try:
+        yield f'http://127.0.0.1:{server.server_port}/index.html'
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join()
 
 
 def call(api, store, pid, tool, **args):
@@ -79,7 +98,7 @@ def test_canvas_fx_and_templates_direction(motion_project):
 
 
 @pytest.mark.browser
-def test_runtime_is_deterministic_and_hides_kinetic_text_after_clip(motion_project, tmp_path):
+def test_runtime_is_deterministic_and_hides_kinetic_text_after_clip(motion_project, tmp_path, motion_http):
     store, api, pid = motion_project
     call(api, store, pid, "add_scene", name="A", start=0, duration=3, message="a")
     call(api, store, pid, "add_scene", name="B", start=3, duration=3, message="b")
@@ -95,7 +114,7 @@ def test_runtime_is_deterministic_and_hides_kinetic_text_after_clip(motion_proje
         page = browser.new_page(viewport={"width": 1920, "height": 1080})
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
-        page.goto(html.as_uri())
+        page.goto(motion_http)
         page.wait_for_function("window.READY===true")
         typed = f"()=>[...document.querySelectorAll('[data-element-id=\\'{typer}\\'] .fc-char')].filter(c=>c.style.opacity==='1').length"
         page.evaluate("window.seek(0.65)")

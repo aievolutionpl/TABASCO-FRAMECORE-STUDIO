@@ -26,7 +26,8 @@ _SLOTS = threading.BoundedSemaphore(16)
 
 def _run(args, timeout=120):
     try:
-        result = subprocess.run(args, capture_output=True, timeout=timeout)
+        from .desktop_runtime import process_options
+        result = subprocess.run(args, capture_output=True, timeout=timeout, **process_options())
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise EditorError('Analiza wymaga FFmpeg/FFprobe; sprawdź instalację lub limit czasu.', 'media_analysis_failed') from exc
     if result.returncode:

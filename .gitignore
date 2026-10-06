@@ -45,3 +45,8 @@ delivery/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Generated desktop bundles
+/build/
+/dist/
+/packaging/generated/
