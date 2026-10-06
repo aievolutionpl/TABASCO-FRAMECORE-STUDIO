@@ -20,9 +20,14 @@ ASSETS = ROOT / "assets"
 
 
 def previews(video, stem, vertical, sheet_times):
+    # Repo-friendly MP4: film grain inflates CRF 18 exports, CRF 24 keeps the look at a fraction of the size.
+    small = video.with_suffix(".tmp.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(video), "-c:v", "libx264", "-preset", "slow", "-crf", "24",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", str(small)], check=True)
+    small.replace(video)
     gif = ASSETS / f"{stem}.gif"
-    width = 300 if vertical else 640
-    palette = f"fps=12,scale={width}:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=160:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle"
+    width = 240 if vertical else 480
+    palette = f"fps=10,scale={width}:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(video), "-filter_complex", palette, "-loop", "0", str(gif)], check=True)
     poster = ASSETS / f"{stem}-poster.jpg"
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", str(sheet_times[1]), "-i", str(video), "-frames:v", "1", "-q:v", "3", str(poster)], check=True)
