@@ -147,6 +147,25 @@ class MediaEngine:
             raise EditorError('Analiza nie jest gotowa', 'not_found')
         return path
 
+    def audio_waveform(self, pid, aid, source_start=0, duration=None, points=400):
+        from .model import number
+        report = self.status(pid, aid)
+        if report['status'] != 'ready' or 'waveform.json' not in report.get('artifacts', {}):
+            raise EditorError('Najpierw uruchom analyze_media i poczekaj na analizę dźwięku', 'not_ready')
+        wave = json.loads(self.artifact(pid, aid, 'waveform.json').read_text())
+        start = number(source_start, 'Początek zakresu', 0, wave['duration'])
+        length = number(duration if duration is not None else wave['duration']-start, 'Długość zakresu', .01, wave['duration'])
+        if start+length > wave['duration']+1e-6: raise EditorError('Zakres wykracza poza nagranie')
+        if isinstance(points, bool) or not isinstance(points, int) or not 1 <= points <= 1200:
+            raise EditorError('Podaj 1–1200 punktów waveform')
+        bins = wave['seconds_per_bin']; peaks = wave['peaks']; result = []
+        for i in range(points):
+            lo = min(len(peaks), int((start+length*i/points)/bins))
+            hi = min(len(peaks), max(lo+1, math.ceil((start+length*(i+1)/points)/bins)))
+            result.append(max(peaks[lo:hi], default=0))
+        return {'asset_id': aid, 'source_sha256': report['source_sha256'], 'source_start': start,
+                'duration': length, 'seconds_per_bin': length/points, 'peaks': result}
+
     def _analyze(self, asset, source, directory, report):
         try:
             report['status'] = 'running'

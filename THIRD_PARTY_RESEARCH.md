@@ -30,3 +30,7 @@ Nie kopiujemy źródeł AGPL, GPL ani kodu bez licencji. FFmpeg jest zewnętrzny
 GSAP ma własną licencję. Dotychczasowy renderer vstudio pozostaje dostępny, lecz nowe animacje FrameCore nie dołączają GSAP i go nie wymagają. Licencje mediów i fontów są metadanymi materiałów; import nie przyznaje użytkownikowi nowych praw.
 
 Bibliotekę Player pobrano przez npm z kontrolą integralności rejestru. `LICENSES.json` zapisuje wersję, lokalny SHA-256, źródło i sprawdzoną rewizję. Licencja Apache z katalogu głównego upstream dotyczy pakietu mimo braku osobnego pola licencji w niektórych manifestach przestrzeni roboczej.
+
+## Concat — ergonomia montażu
+
+[jub0t/Concat](https://github.com/jub0t/Concat), commit `7b5cc44bc5c58838967e5f9c511e9f0ae3c9929c`, przeanalizowano pod kątem grup klipów, magnetycznego przycinania, monitora źródła i waveform. W MotionDuo powstały własne implementacje tych ogólnych mechanizmów, z użyciem istniejącego Store, API/MCP i historii cofania. Concat ma licencję AGPL-3.0-or-later; jego kod, silnik i materiały nie są dołączone ani kopiowane. [Pełna analiza i granice integracji](docs/CONCAT_REVIEW.md).

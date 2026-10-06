@@ -67,6 +67,18 @@ for kind in ("text", "video", "image", "audio", "caption", "shape"):
 
 READS.update({"get_storytelling_playbook","plan_visual_lesson","get_lesson_status"})
 READS.add('list_editing_presets')
+READS.add('get_audio_waveform')
+FIELDS['get_audio_waveform'] = {'asset_id':'string', 'source_start':'number', 'duration':'number', 'points':'integer'}
+WRITES.update({'move_clips', 'duplicate_clips', 'delete_clips', 'split_clips', 'set_clip_properties', 'magnetic_trim', 'insert_media_range'})
+FIELDS.update({
+    'move_clips': {'element_ids':'array', 'delta':'number'},
+    'duplicate_clips': {'element_ids':'array', 'delta':'number'},
+    'delete_clips': {'element_ids':'array', 'ripple':'boolean'},
+    'split_clips': {'element_ids':'array', 'time':'number'},
+    'set_clip_properties': {'element_ids':'array', 'properties':'object'},
+    'magnetic_trim': {'element_id':'string', 'edge':'string', 'delta':'number'},
+    'insert_media_range': {'asset_id':'string', 'source_start':'number', 'source_end':'number', 'start':'number', 'include_audio':'boolean'},
+})
 WRITES.update({'ripple_delete', 'close_track_gaps', 'slip_clip', 'set_clip_fx', 'set_scene_transition'})
 FIELDS.update({
     'ripple_delete': {'element_id': 'string'},
@@ -133,6 +145,8 @@ class API:
         if name == 'list_editing_presets':
             from .editing import catalog
             return catalog()
+        if name == 'get_audio_waveform':
+            return self.media.audio_waveform(pid, args['asset_id'], args.get('source_start', 0), args.get('duration'), args.get('points', 400))
         if name == "list_motion":
             from .motion import exits
             from .production import EASINGS
@@ -244,6 +258,9 @@ class API:
         for name in names:
             props = {"project_id": {"type": "string"}, "expected_revision": {"type": "integer"}}
             props.update({k: ({"type": v} if v else {}) for k,v in FIELDS.get(name, {}).items()})
+            if 'element_ids' in props:
+                props['element_ids'] = {'type':'array', 'minItems':0 if name == 'set_selection' else 1, 'maxItems':200, 'uniqueItems':True, 'items':{'type':'string'}}
+            if name == 'magnetic_trim': props['edge'] = {'type':'string', 'enum':['start','end']}
             if name in {'set_scene_transition', 'set_clip_fx'}:
                 from .editing import TRANSITION_NAMES, CLIP_LOOKS
                 if name == 'set_scene_transition':
@@ -277,6 +294,8 @@ class API:
             if name == 'list_editing_presets': required = []
             required += {'set_clip_fx': ['fx'], 'slip_clip': ['source_start'],
                          'set_scene_transition': ['scene_id', 'transition']}.get(name, [])
+            required += {'move_clips': ['delta'], 'set_clip_properties': ['properties'],
+                         'magnetic_trim': ['edge','delta'], 'insert_media_range': ['asset_id']}.get(name, [])
             if name in BRAND_TOOLS - {"apply_brand_profile"}: required = []
             if name in BRAND_TOOLS - {"list_brand_profiles", "save_brand_profile"}: required += ["brand_id", "expected_version"] if name != "get_brand_profile" else ["brand_id"]
             if name == "save_brand_profile": required.append("profile")
@@ -290,7 +309,7 @@ class API:
             required += {"replace_clip_asset":["asset_id"],"add_track":["kind","name"],"set_project_fps":["fps"],
                          "plan_visual_lesson":["brief"],"assemble_visual_lesson":["brief"],"set_learning_brief":["brief"],"set_scene_learning":["scene_id","lesson"]}.get(name,[])
             if name == "analyze_export": props["profile"] = {"type":"string", "enum":["calm","punchy","mute"]}
-            if name in {"get_media_analysis", "analyze_media"}: required.append("asset_id")
+            if name in {"get_media_analysis", "analyze_media", "get_audio_waveform"}: required.append("asset_id")
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
                          "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"], "apply_exit": ["exit_id"], "set_canvas_fx": ["fx"],
                          "set_format": ["format"], "set_brand": ["brand"], "style_captions": ["style"],
@@ -301,5 +320,5 @@ class API:
                          "apply_template":["template_id"], "add_library_asset":["asset_id"], "set_background":["background_id"], "set_audio":["audio"], "set_keyframes":["keyframes"], "set_duration":["duration"]}.get(name, [])
             result.append({"name": name, "description": name.replace("_", " ") + ". Wspólny projekt i historia; przed zmianą odczytaj aktualną rewizję.",
                            "inputSchema": {"type": "object", "properties": props, "required": required},
-                           "annotations": {"readOnlyHint": name in READS, "destructiveHint": name in {"ripple_delete", "delete_clip", "assemble_storyboard", "delete_brand_profile", "remove_brand_asset"}}})
+                           "annotations": {"readOnlyHint": name in READS, "destructiveHint": name in {"delete_clips", "ripple_delete", "delete_clip", "assemble_storyboard", "delete_brand_profile", "remove_brand_asset"}}})
         return result

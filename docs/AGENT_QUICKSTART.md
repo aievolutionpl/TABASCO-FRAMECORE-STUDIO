@@ -28,6 +28,8 @@ MCP: `.venv/Scripts/python.exe framecore.py mcp` na Windows, `.venv/bin/python f
 
 ## HTTP dla własnego klienta
 
+Grupy klipów, fragmenty IN/OUT, magnetyczne przycinanie i odczyt amplitudy audio mają wspólne komendy HTTP/MCP. [Argumenty, zakres zsuwania i zasady synchronizacji](ADVANCED_EDITING.md#komendy-dla-agenta). Zawsze odczytaj aktualną rewizję; do operacji grupowej podaj jawne `element_ids`.
+
 `GET /api/tools` opisuje komendy, `GET /api/runtime` sprawdza lokalne zależności, `GET /api/projects` zwraca projekty. Zmiany przechodzą przez `POST /api/command` i wymagają `X-Studio-Token` oraz zgodnego Origin. Agent korzysta z tego samego `API.call`, bez dostępu do powłoki i dowolnych plików. Wbudowany agent jest ograniczony do jednego projektu i nie ma narzędzia importu dowolnej ścieżki.
 
 Agent HTTP: `GET /api/assistant/status`, `POST /api/assistant/settings`, `POST /api/assistant/models`, `POST /api/assistant/test`, `POST /api/assistant/run` (`project_id`, `prompt`), `GET /api/assistant/job/<id>`, `POST /api/assistant/cancel` (`job_id`). Żaden endpoint nie zwraca klucza API. Odczyt statusu zadania ujawnia tylko wynik i nazwy wykonanych operacji.

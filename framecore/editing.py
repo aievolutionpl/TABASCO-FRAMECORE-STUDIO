@@ -69,3 +69,47 @@ def slip(p, e, source_start):
     if not a.get('duration') or start+e['duration'] > a['duration']+1e-6:
         raise EditorError('Wybrany zakres przekracza długość nagrania')
     e['sourceStart'] = start
+
+
+def selected_clips(p, args, session):
+    """Resolve the full edit set before changing anything; never silently skip locks."""
+    ids = args.get('element_ids', session['selection'])
+    if not isinstance(ids, list) or not 1 <= len(ids) <= 200 or any(not isinstance(i, str) for i in ids) or len(set(ids)) != len(ids):
+        raise EditorError('Wybierz 1–200 różnych klipów')
+    from .commands import target
+    return [target(p, {'element_id': i}, session) for i in ids]
+
+
+def remove_clips(p, clips, ripple=False):
+    if not isinstance(ripple, bool):
+        raise EditorError('ripple musi być wartością logiczną')
+    ids = {e['id'] for e in clips}
+    if ripple:
+        for tid in {e['trackId'] for e in clips}:
+            lane = track_clips(p, tid)
+            removed = [e for e in clips if e['trackId'] == tid]
+            for e in lane:
+                if e['id'] not in ids:
+                    e['start'] -= sum(r['duration'] for r in removed if r['start']+r['duration'] <= e['start']+1e-6)
+    p['elements'][:] = [e for e in p['elements'] if e['id'] not in ids]
+
+
+def magnetic_trim(p, e, edge, delta, session):
+    from .commands import mutate
+    if edge not in {'start', 'end'}:
+        raise EditorError('Wybierz krawędź start lub end')
+    delta = number(delta, 'Przesunięcie krawędzi')
+    lane = track_clips(p, e['trackId'])
+    start, end, length = e['start'], e['start']+e['duration'], e['duration']
+    duration = length-delta if edge == 'start' else length+delta
+    number(duration, 'Długość po przycięciu', .01, p['duration'])
+    if e['type'] in {'video', 'audio'}:
+        a = next(a for a in p['assets'] if a['id'] == e['assetId'])
+        source = e['sourceStart']+(delta if edge == 'start' else 0)
+        if source < 0 or not a.get('duration') or source+duration > a['duration']+1e-6:
+            raise EditorError('Przycięcie przekracza zakres źródła')
+    mutate(p, 'trim_clip', {'element_id': e['id'], 'start': start+(delta if edge == 'start' else 0), 'duration': duration}, session)
+    e['start'] = start
+    for other in lane:
+        if other is not e and other['start'] >= end-1e-6:
+            other['start'] += duration-length

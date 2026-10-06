@@ -10,6 +10,8 @@ Przejścia zasłaniają lub stylizują cięcie między scenami; nie są crossfad
 
 ## Timeline
 
+Monitor źródła IN/OUT, edycja grupy klipów, magnetyczne gesty przycinania i rzeczywisty waveform są opisane w [Zaawansowanym montażu](ADVANCED_EDITING.md).
+
 Pasek scen nad ścieżkami pokazuje granice i pozwala przejść do sceny kliknięciem. Wybierz klip i otwórz **Narzędzia** na pasku timeline lub **Szybki montaż** we Właściwościach:
 
 - **Przytnij początek/koniec do wskaźnika**: wskaźnik musi znajdować się wewnątrz klipu. Przycinanie zachowuje poprawny zakres źródła i przelicza klatki kluczowe.

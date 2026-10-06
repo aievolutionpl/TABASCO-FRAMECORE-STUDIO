@@ -20,6 +20,12 @@ Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek]
 
 </div>
 
+## Szybszy montaż · inspiracje Concat
+
+Wybieraj fragmenty **IN/OUT** w monitorze źródła i wstawiaj wideo razem z osobnym dźwiękiem. Zaznacz kilka klipów, aby przesuwać, duplikować, dzielić i stylizować je razem. **Montaż magnetyczny** zsuwa następne klipy po przycięciu, a **rzeczywisty waveform i linia głośności** ułatwiają pracę z audio. Każda operacja trafia do wspólnej historii i jest dostępna dla agenta przez MCP.
+
+[Instrukcja i komendy](docs/ADVANCED_EDITING.md) · [Przegląd Concat, wybór rozwiązań i licencja](docs/CONCAT_REVIEW.md). Funkcje są własną implementacją MotionDuo; silnik Concat nie jest dołączony.
+
 ## Nowość: Ruch 2.0
 
 Silnik animacji dostał **tekst kinetyczny** (litery i słowa animowane osobno: maszyna do pisania, kaskada, dekodowanie, karaoke), **wyjścia** łączące się z każdym wejściem, nowe kinowe wejścia (Ken Burns, przesłona, glitch, wahadło 3D) i krzywe z odbiciem oraz elastyczne. Elementom nadasz **cień, neon, gradient, obrys i tryb mieszania**, a całemu filmowi **look**: korekcję koloru, winietę, ziarno, kaszetę, przejścia na cięciach scen (light leak, błysk, przez czerń, kurtyna marki) i **rozmycie ruchu** w eksporcie. Pięć looków — *Czysty, Kino, Rolka, Retro, Noir* — ustawisz jednym kliknięciem; każdy z 12 szablonów ma własny kierunek ruchu.
@@ -172,6 +178,7 @@ Lokalny asystent rozpoznaje konkretne polecenia czasu i animacji. Swobodne polec
 | Architektura i wspólny zapis projektu | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Format projektu | [FRAMECORE_PROJECT_SPEC.md](FRAMECORE_PROJECT_SPEC.md) |
 | Integracja agenta | [MCP_SPEC.md](MCP_SPEC.md) |
+| Grupy, montaż magnetyczny, monitor źródła i waveform | [Zaawansowany montaż](docs/ADVANCED_EDITING.md) |
 | Przegląd projektów źródłowych | [THIRD_PARTY_RESEARCH.md](THIRD_PARTY_RESEARCH.md) |
 | Wbudowane materiały, fonty, tła i szablony | [Creator Pack](docs/CREATOR_PACK.md) |
 | Biblioteki, ikony i licencje | [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), [LICENSES.json](LICENSES.json) |

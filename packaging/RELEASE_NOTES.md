@@ -14,3 +14,5 @@ Automatyczny test każdej paczki uruchamia zamrożony serwer, wczytuje H.264/AAC
 Rebranding 0.3.1: nowy znak M, nazwa MotionDuo Studio — by TABASCO CREATIVES + FRAMECORE, polski banner oraz dopracowane panele, timeline i przycisk dodania logo do filmu. Katalog danych i konfiguracja MCP pozostają kompatybilne z 0.3.0.
 
 Nowości 0.3.2: panel Efekty, 11 wariantów przejścia z własnymi ustawieniami dla scen, 7 looków klipu z regulacją siły, pasek scen oraz narzędzia timeline do przycinania, usuwania luk, zsuwania klipów i przesuwania zakresu źródła. Te same komendy są dostępne przez MCP i wspólną historię cofania.
+
+Nowości 0.3.3: monitor źródła IN/OUT z wyrównanym wstawianiem obrazu i osobnego audio, wielokrotne zaznaczanie i operacje grupowe, magnetyczne przycinanie oraz rzeczywisty waveform z przeciąganą linią głośności. Wszystkie zmiany korzystają ze wspólnej historii i komend MCP. Własne implementacje ergonomii montażu inspirowanej Concat; jego silnik i kod AGPL nie są dołączone. Zsuwanie pozostaje lokalne dla ścieżki, a osobne klipy obrazu i audio wymagają świadomej synchronizacji.

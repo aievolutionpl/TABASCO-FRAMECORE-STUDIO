@@ -61,7 +61,55 @@ def storyboard(duration=15, title="Your product", workflow="Product launch"):
 def mutate(p, name, args, session):
     if not isinstance(args, dict):
         raise EditorError("Argumenty komendy muszą być obiektem")
-    if name == "assemble_visual_lesson":
+    if name in {'move_clips', 'duplicate_clips', 'delete_clips', 'split_clips', 'set_clip_properties'}:
+        from .editing import selected_clips, remove_clips
+        clips = selected_clips(p, args, session)
+        if name == 'move_clips':
+            delta = number(args['delta'], 'Przesunięcie grupy')
+            for e in clips: e['start'] += delta
+        elif name == 'duplicate_clips':
+            delta = number(args.get('delta', max(e['start']+e['duration'] for e in clips)-min(e['start'] for e in clips)), 'Przesunięcie kopii')
+            for e in clips:
+                copy = deepcopy(e);copy.update(id=uid('el'), start=e['start']+delta)
+                p['elements'].append(copy)
+        elif name == 'delete_clips':
+            remove_clips(p, clips, args.get('ripple', False))
+        elif name == 'split_clips':
+            at = number(args.get('time', session['playhead']), 'Punkt podziału')
+            eligible = [e for e in clips if e['start']+.01 < at < e['start']+e['duration']-.01]
+            if not eligible: raise EditorError('Wskaźnik nie znajduje się wewnątrz zaznaczonych klipów')
+            for e in eligible: mutate(p, 'split_clip', {'element_id': e['id'], 'time': at}, session)
+        else:
+            properties = args.get('properties')
+            if not isinstance(properties, dict) or not properties or len(properties) > 30 or any(not isinstance(k, str) for k in properties):
+                raise EditorError('Podaj właściwości wspólne dla grupy')
+            for e in clips:
+                for key, value in properties.items():
+                    if key == 'clipFx': mutate(p, 'set_clip_fx', {'element_id': e['id'], 'fx': value}, session)
+                    else: mutate(p, 'set_property', {'element_id': e['id'], 'property': key, 'value': value}, session)
+    elif name == 'magnetic_trim':
+        from .editing import magnetic_trim
+        magnetic_trim(p, target(p, args, session), args.get('edge'), args.get('delta'), session)
+    elif name == 'insert_media_range':
+        a = next((a for a in p['assets'] if a['id'] == args.get('asset_id')), None)
+        if not a or a['kind'] not in {'video', 'audio'} or not a.get('duration'):
+            raise EditorError('Wybierz nagranie wideo lub dźwięku')
+        source = number(args.get('source_start', 0), 'Początek źródła', 0, a['duration'])
+        end = number(args.get('source_end', a['duration']), 'Koniec źródła', 0, a['duration'])
+        number(end-source, 'Długość zakresu', .01, p['duration'])
+        start = number(args.get('start', session['playhead']), 'Początek na osi', 0, p['duration'])
+        audio = args.get('include_audio', False)
+        if not isinstance(audio, bool): raise EditorError('include_audio musi być wartością logiczną')
+        if audio and (a['kind'] != 'video' or not a.get('hasAudio')):
+            raise EditorError('Nagranie nie ma osobnej ścieżki audio')
+        for kind in [a['kind']]+(['audio'] if audio else []):
+            track = next((t for t in p['tracks'] if t['id'] == kind), None)
+            if not track or track['locked']: raise EditorError('Docelowa ścieżka jest zablokowana')
+        values = {'assetId': a['id'], 'start': start, 'duration': end-source, 'sourceStart': source}
+        if a['kind'] == 'video': values.update(x=0, y=0, width=p['canvas']['width'], height=p['canvas']['height'], motion=None)
+        mutate(p, 'add_'+a['kind'], values, session)
+        if audio: mutate(p, 'add_audio', {k:v for k,v in values.items() if k in {'assetId','start','duration','sourceStart'}}, session)
+    elif name == "assemble_visual_lesson":
         from .storytelling import assemble
         assemble(p,args,session)
     elif name == "set_learning_brief":
@@ -395,7 +443,7 @@ def mutate(p, name, args, session):
         raise EditorError(f"Nieobsługiwana komenda: {name}")
     # Editing a focused clip may remove it or move it outside its beat. Keep the
     # narrative description and ask for a new focus rather than blocking editing.
-    if name in {"ripple_delete", "close_track_gaps", "delete_clip", "trim_clip", "move_clip", "split_clip", "duplicate_scene", "assemble_storyboard", "set_property", "replace_clip_asset"}:
+    if name in {"magnetic_trim", "delete_clips", "move_clips", "set_clip_properties", "ripple_delete", "close_track_gaps", "delete_clip", "trim_clip", "move_clip", "split_clip", "duplicate_scene", "assemble_storyboard", "set_property", "replace_clip_asset"}:
         for scene in p["scenes"]:
             beat = scene.get("beat")
             if not beat or not beat.get("focusElementId"): continue

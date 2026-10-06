@@ -85,6 +85,25 @@ def test_invalid_commands_are_atomic_and_provider_errors_hide_key(tmp_path,monke
     assert all('test-key' not in f.read_text() for f in store.root.rglob('*.json'))
 
 
+def test_group_edit_freezes_selection_before_provider_reply(tmp_path,monkeypatch):
+    store,c,pid,eid=setup(tmp_path)
+    state=store.execute(pid,'add_text',{'text':'Drugi','start':1,'duration':2},1)
+    other=state['project']['elements'][-1]['id']
+    store.execute(pid,'set_selection',{'element_ids':[eid,other]})
+    entered=threading.Event();release=threading.Event()
+    def provider(*_):
+        entered.set();release.wait(4)
+        return {'message':'Kolor dwóch napisów','commands':[{'name':'set_clip_properties','args':{'properties':{'style.color':'#00aabb'}}}]}
+    monkeypatch.setattr(c,'_request',provider)
+    c.start(pid,2,'Zmień kolor obu napisów',True);assert entered.wait(2)
+    store.execute(pid,'set_selection',{'element_ids':[other]})
+    release.set();assert wait(c)['status']=='applied'
+    state=store.read(pid);assert state['project']['revision']==3
+    assert all(e['style']['color']=='#00aabb' for e in state['project']['elements'])
+    store.execute(pid,'undo',{},3)
+    assert all(e['style']['color']!='#00aabb' for e in store.read(pid)['project']['elements'])
+
+
 def test_openrouter_request_and_real_cli_process_adapters(tmp_path,monkeypatch):
     store,c,pid,eid=setup(tmp_path)
     import framecore.agent_control as module
