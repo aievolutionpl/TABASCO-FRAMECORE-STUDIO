@@ -101,5 +101,7 @@
 .range-field input[type=range]{width:100%;accent-color:#ef6947;margin-top:6px}
 .range-value{position:absolute;right:0;top:0;font-size:10px;color:#ffb89c;font-variant-numeric:tabular-nums}
 .film-section .production-toggle{margin:10px 0 4px}
+.cut-list{margin:6px 0 4px}
+.cut-row span{display:block;font-size:10px;color:#aab5bb;margin-bottom:4px}
 
 @media(prefers-reduced-motion:reduce){.motion-demo,.motion-demo i{animation:none!important}.motion-grid .motion-tile:hover{transform:none}}

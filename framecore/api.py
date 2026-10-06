@@ -56,9 +56,10 @@ FIELDS.update({
     "analyze_export":{"job_id":"string", "profile":"string"}, "get_quality_report":{"job_id":"string"},
 })
 FIELDS["apply_motion"]["easing"]="string"
-WRITES.update({"apply_exit", "set_canvas_fx"})
+WRITES.update({"apply_exit", "set_canvas_fx", "set_scene_transition"})
 FIELDS.update({"apply_exit": {"element_id": "string", "exit_id": "string", "duration": "number", "easing": "string"},
-               "set_canvas_fx": {"fx": "object"}})
+               "set_canvas_fx": {"fx": "object"},
+               "set_scene_transition": {"scene_id": "string", "transition_id": "string", "duration": "number"}})
 
 for kind in ("text", "video", "image", "audio", "caption", "shape"):
     FIELDS["add_" + kind] = {"trackId":"string", "assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object",
@@ -267,7 +268,7 @@ class API:
             if name == "analyze_export": props["profile"] = {"type":"string", "enum":["calm","punchy","mute"]}
             if name in {"get_media_analysis", "analyze_media"}: required.append("asset_id")
             required += {"move_clip": ["start"], "move_element": ["x", "y"], "resize_element": ["width", "height"],
-                         "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"], "apply_exit": ["exit_id"], "set_canvas_fx": ["fx"],
+                         "set_property": ["property", "value"], "trim_clip": ["duration"], "apply_motion": ["motion_id"], "apply_exit": ["exit_id"], "set_canvas_fx": ["fx"], "set_scene_transition": ["scene_id", "transition_id"],
                          "set_format": ["format"], "set_brand": ["brand"], "style_captions": ["style"],
                          "assemble_storyboard": ["scenes"], "propose_changes": ["commands"],
                          "apply_proposal": ["proposal_id"], "cancel_proposal": ["proposal_id"],

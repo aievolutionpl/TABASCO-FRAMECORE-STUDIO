@@ -272,6 +272,14 @@ def mutate(p, name, args, session):
         else:
             duration = number(args.get("duration", .6), "exit duration", .1, 2)
             e["exit"] = {"id": args["exit_id"], "duration": min(duration, e["duration"]), "easing": args.get("easing", "cubic-out")}
+    elif name == "set_scene_transition":
+        scene = next((sc for sc in p["scenes"] if sc["id"] == args.get("scene_id")), None)
+        if not scene:
+            raise EditorError("Nie znaleziono sceny")
+        if args.get("transition_id") in (None, "", "default"):
+            scene.pop("transition", None)
+        else:
+            scene["transition"] = {"id": args["transition_id"], "duration": number(args.get("duration", .7), "transition duration", .1, 2)}
     elif name == "set_canvas_fx":
         from .model import FX_DEFAULTS
         if not isinstance(args.get("fx"), dict):

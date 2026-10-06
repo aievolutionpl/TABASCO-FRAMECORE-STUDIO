@@ -4,7 +4,9 @@ export const EASING_LABELS=[['cubic-out','Płynna'],['quad-out','Lekka'],['quint
 const SHADOWS=[['none','Bez cienia'],['soft','Miękki'],['lift','Uniesienie'],['glow','Poświata'],['neon','Neon'],['long','Długi cień']];
 const BLENDS=[['normal','Normalny'],['screen','Rozjaśnienie'],['multiply','Mnożenie'],['overlay','Nakładka'],['soft-light','Miękkie światło'],['lighten','Jaśniejszy'],['difference','Różnica']];
 const GRADES=[['none','Naturalny'],['cinematic','Kinowy'],['warm','Ciepły'],['cool','Chłodny'],['vivid','Żywy'],['faded','Wyblakły'],['mono','Czarno-biały'],['noir','Noir']];
-const TRANSITIONS=[['none','Cięcie'],['dip','Przez czerń'],['flash','Błysk'],['wipe','Kurtyna marki'],['light-leak','Light leak'],['blur','Rozmycie']];
+const TRANSITIONS=[['none','Cięcie'],['dip','Przez czerń'],['flash','Błysk'],['wipe','Kurtyna marki'],['light-leak','Light leak'],['blur','Rozmycie'],
+ ['domain-warp','✦ Rozpływ (domain warp)'],['ridged-burn','✦ Wypalenie'],['whip-pan','✦ Szybka panorama'],['sdf-iris','✦ Przesłona z obręczą'],
+ ['cinematic-zoom','✦ Kinowy zoom'],['glitch','✦ Glitch'],['chromatic-split','✦ Rozszczepienie RGB'],['cross-warp','✦ Płynne przenikanie']];
 const ENERGY={low:'SPOKOJNA',medium:'ŚREDNIA',high:'WYSOKA'};
 export const FILM_PRESETS={
  clean:{name:'Czysty',fx:{grade:'none',vignette:0,grain:0,letterbox:0,transition:'none',transitionDuration:.5,motionBlur:false}},
@@ -76,14 +78,19 @@ export function createMotionUI(ctx){
    <label class="field full">Kolor (look)<select data-fx="grade">${options(GRADES,fx.grade)}</select></label>
    ${range('Winieta','vignette',1,.05)}${range('Ziarno filmowe','grain',1,.05)}${range('Kaszeta kinowa','letterbox',.25,.01)}
    <div class="field-grid"><label class="field">Przejścia scen<select data-fx="transition">${options(TRANSITIONS,fx.transition)}</select></label><label class="field">Czas · s<input data-fx="transitionDuration" type="number" min=".1" max="2" step=".1" value="${fx.transitionDuration}"></label></div>
+   ${p.scenes.length>1?`<div class="cut-list"><div class="section-label">PRZEJŚCIA NA CIĘCIACH</div>${[...p.scenes].sort((a,b)=>a.start-b.start).slice(1).map(sc=>`<label class="field full cut-row"><span>${sc.start.toFixed(1)} s → ${esc(sc.name)}</span><select data-scene-transition="${sc.id}"><option value="default" ${sc.transition?'':'selected'}>Domyślne filmu</option>${options(TRANSITIONS,sc.transition?.id)}</select></label>`).join('')}</div>`:''}
    <label class="production-toggle"><input type="checkbox" data-fx="motionBlur" ${fx.motionBlur?'checked':''}> Rozmycie ruchu w finalnym eksporcie</label>
-   <p class="inspector-note">${p.scenes.length?`Przejścia działają na ${Math.max(0,p.scenes.length-1)} cięciach między scenami.`:'Przejścia pojawią się po dodaniu scen.'} Rozmycie ruchu wydłuża render około 4×.</p></div>`;
+   <p class="inspector-note">${p.scenes.length?`Przejścia działają na ${Math.max(0,p.scenes.length-1)} cięciach między scenami.`:'Przejścia pojawią się po dodaniu scen.'} Przejścia ✦ nakładają sceny o połowę czasu przejścia: wchodząca startuje wcześniej, wychodząca trzyma ostatnią klatkę. Rozmycie ruchu wydłuża render około 4×.</p></div>`;
  }
  async function onChange(t){
   const e=selected();
   if(t.dataset.fx){
    const k=t.dataset.fx,v=t.type==='checkbox'?t.checked:['range','number'].includes(t.type)?Number(t.value):t.value;
    await command('set_canvas_fx',{fx:{[k]:v}});return true;
+  }
+  if(t.dataset.sceneTransition){
+   const fx=getProject().canvas.fx||{};
+   await command('set_scene_transition',{scene_id:t.dataset.sceneTransition,transition_id:t.value,duration:fx.transitionDuration||.7});return true;
   }
   if(t.dataset.anim&&e){
    const k=t.dataset.anim;

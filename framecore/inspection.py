@@ -24,7 +24,7 @@ GUIDE = """Pracujesz w TABASCO CREATIVES + FRAMECORE — STUDIO, projekcie wspó
 17. Eksportuj aktualną rewizję, sprawdź get_job i wynik MP4. Nie twierdź, że brakujący dostawca AI wygenerował materiał.
 18. Ruch 2.0: apply_motion przyjmuje wejścia (kind entrance) i tekst kinetyczny (kind kinetic: type-on, word-cascade, char-rise, word-blur, char-wave, scramble-in, word-highlight; tylko tekst i napisy, czas do 4 s). apply_exit nadaje wyjście w ostatnich sekundach klipu (exit_id "none" usuwa). Krzywe: linear, quad-out, cubic-out, quint-out, expo-out, back-out, elastic-out, cubic-in-out.
 19. Wygląd elementu ustawisz przez set_property: style.shadow (none/soft/lift/glow/neon/long), style.shadowColor, style.gradient {from,to,angle} lub null, style.letterSpacing, style.strokeWidth, style.strokeColor, style.blend, style.fit (contain/cover).
-20. set_canvas_fx ustawia look całego filmu: grade (none/cinematic/warm/cool/mono/vivid/faded/noir), vignette 0–1, grain 0–1, letterbox 0–0.25, transition (none/dip/flash/wipe/light-leak/blur) na cięciach między scenami, transitionDuration oraz motionBlur dla finalnego eksportu.
+20. set_canvas_fx ustawia look całego filmu: grade (none/cinematic/warm/cool/mono/vivid/faded/noir), vignette 0–1, grain 0–1, letterbox 0–0.25, transition (none/dip/flash/wipe/light-leak/blur oraz ✦ domain-warp/ridged-burn/whip-pan/sdf-iris/cinematic-zoom/glitch/chromatic-split/cross-warp) na cięciach między scenami, transitionDuration oraz motionBlur dla finalnego eksportu. set_scene_transition ustawia przejście jednego cięcia (transition_id "default" przywraca ustawienie filmu). Przejścia ✦ nakładają sceny o duration/2 i wymagają klipów kończących się i zaczynających na cięciu (np. teł scen).
 """
 
 
@@ -59,6 +59,7 @@ def inspect(p):
             issues.append({"code": "unfinished_motion", "element_id": e["id"], "message": "Klip kończy się przed zakończeniem wejścia"})
         if e.get("motion") and e.get("exit") and e["motion"]["duration"] + e["exit"]["duration"] > e["duration"] + 1e-6:
             issues.append({"code": "motion_overlap", "element_id": e["id"], "message": "Wejście i wyjście nakładają się; wydłuż klip lub skróć ruch"})
+    issues += lint(p)
     return {"project_id": p["id"], "revision": p["revision"], "issues": issues,
             "summary": {"elements": len(p["elements"]), "scenes": len(p["scenes"]), "assets": len(p["assets"])},
             "limitations": "Kontrola geometrii bez pomiaru łamania tekstu, obrotów, kolizji i kontrastu. Obejrzyj capture_frame."}
@@ -89,3 +90,41 @@ def capture(store, pid, time=None):
             finally: browser.close()
     finally:
         server.shutdown(); server.server_close()
+
+
+def lint(p):
+    """Rules adapted from HeyGen HyperFrames lint (Apache-2.0) to the FrameCore JSON model."""
+    from .model import SHADER_TRANSITIONS
+    issues = []
+    for e in p["elements"]:
+        if e["type"] not in {"text", "caption"} or not e["text"].strip():
+            continue
+        st = e["style"]
+        glyph = st["fontSize"] * .58 + st.get("letterSpacing", 0)
+        longest = max((len(w) for w in e["text"].split()), default=0)
+        if longest * glyph > e["width"] * 1.02:
+            issues.append({"code": "text_word_overflow", "element_id": e["id"], "message": "Najdłuższe słowo nie mieści się w szerokości pola tekstu"})
+            continue
+        per_line = max(1, int(e["width"] / glyph))
+        lines = sum(max(1, -(-len(line) // per_line)) for line in e["text"].split("\n"))
+        if lines * st["fontSize"] * 1.08 > e["height"] * 1.2:
+            issues.append({"code": "text_overflow_risk", "element_id": e["id"], "message": "Tekst może wyjść poza wysokość pola po zawinięciu"})
+    for scene in p["scenes"]:
+        mid = scene["start"] + scene["duration"] / 2
+        visible = [e for e in p["elements"] if e["type"] != "audio" and e["start"] <= mid < e["start"] + e["duration"]]
+        if len(visible) > 14:
+            issues.append({"code": "dense_frame", "element_id": None, "message": f"Scena „{scene['name']}” ma {len(visible)} warstw naraz; uprość kadr"})
+    fx = p["canvas"].get("fx", {})
+    ordered = sorted(p["scenes"], key=lambda s: s["start"])
+    for prev, scene in zip(ordered, ordered[1:]):
+        tr = scene.get("transition") or {"id": fx.get("transition", "none"), "duration": fx.get("transitionDuration", .5)}
+        if tr["id"] == "none":
+            continue
+        if min(prev["duration"], scene["duration"]) < tr["duration"]:
+            issues.append({"code": "transition_longer_than_scene", "element_id": None, "message": f"Przejście na {scene['start']:.2f} s jest dłuższe niż sąsiednia scena"})
+        if tr["id"] in SHADER_TRANSITIONS:
+            ends = any(abs(e["start"] + e["duration"] - scene["start"]) < 1e-3 and e["type"] != "audio" for e in p["elements"])
+            starts = any(abs(e["start"] - scene["start"]) < 1e-3 and e["type"] != "audio" for e in p["elements"])
+            if not (ends and starts):
+                issues.append({"code": "transition_without_clips", "element_id": None, "message": f"Przejście ✦ na {scene['start']:.2f} s potrzebuje klipów kończących i zaczynających się na cięciu"})
+    return issues

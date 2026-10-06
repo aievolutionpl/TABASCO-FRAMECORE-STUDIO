@@ -69,7 +69,7 @@ def test_canvas_fx_and_templates_direction(motion_project):
     s = call(api, store, pid, "apply_template", template_id="neon", replace=True)
     p = s["project"]
     titles = [e for e in p["elements"] if e["type"] == "text"]
-    assert p["canvas"]["fx"]["transition"] == "blur"
+    assert p["canvas"]["fx"]["transition"] == "glitch"
     assert all(e["exit"]["id"] == "zoom-through" for e in titles)
     assert [e["motion"]["id"] for e in titles].count("scramble-in") == 1
     report = api.call("inspect_project", {"project_id": pid})
@@ -172,3 +172,62 @@ def test_showcase_projects_are_editable_and_clean(tmp_path, name):
     assert any(e.get("exit") for e in p["elements"]) and p["canvas"]["fx"]["motionBlur"] is True
     assert sum(e["type"] == "audio" for e in p["elements"]) == 1
     assert store.read(p["id"])["history"], "built through the shared command history"
+
+
+def test_scene_transitions_and_lint(motion_project):
+    store, api, pid = motion_project
+    call(api, store, pid, "add_scene", name="A", start=0, duration=3, message="a")
+    s = call(api, store, pid, "add_scene", name="B", start=3, duration=3, message="b")
+    scene_b = s["project"]["scenes"][-1]["id"]
+    s = call(api, store, pid, "set_scene_transition", scene_id=scene_b, transition_id="domain-warp", duration=.8)
+    assert s["project"]["scenes"][-1]["transition"] == {"id": "domain-warp", "duration": .8}
+    for bad in ({"transition_id": "teleport"}, {"transition_id": "glitch", "duration": 5}):
+        with pytest.raises(EditorError):
+            call(api, store, pid, "set_scene_transition", scene_id=scene_b, **bad)
+    codes = lambda: {i["code"] for i in api.call("inspect_project", {"project_id": pid})["issues"]}
+    assert "transition_without_clips" in codes()
+    call(api, store, pid, "add_text", text="A", start=0, duration=3, x=100, y=100, width=800, height=200)
+    call(api, store, pid, "add_text", text="B", start=3, duration=3, x=100, y=100, width=800, height=200)
+    assert "transition_without_clips" not in codes()
+    call(api, store, pid, "add_text", text="Niesamowiciedługiesłowo", start=0, duration=3, x=100, y=500, width=300, height=120)
+    assert "text_word_overflow" in codes()
+    s = call(api, store, pid, "set_scene_transition", scene_id=scene_b, transition_id="default")
+    assert "transition" not in s["project"]["scenes"][-1]
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize("transition", ["domain-warp", "whip-pan", "sdf-iris", "glitch"])
+def test_shader_transitions_overlap_scenes_deterministically(motion_project, tmp_path, transition):
+    store, api, pid = motion_project
+    call(api, store, pid, "add_scene", name="A", start=0, duration=3, message="a")
+    scene_b = call(api, store, pid, "add_scene", name="B", start=3, duration=3, message="b")["project"]["scenes"][-1]["id"]
+    out_id = call(api, store, pid, "add_shape", start=0, duration=3, x=0, y=0, width=1920, height=1080,
+                  style={"background": "#1144ff"}, exit={"id": "fade-out", "duration": .5})["project"]["elements"][-1]["id"]
+    in_id = call(api, store, pid, "add_shape", start=3, duration=3, x=0, y=0, width=1920, height=1080,
+                 style={"background": "#ff4411"})["project"]["elements"][-1]["id"]
+    call(api, store, pid, "set_scene_transition", scene_id=scene_b, transition_id=transition, duration=1.0)
+    html = tmp_path / "index.html"
+    html.write_text(compile_project(store.read(pid)["project"]), encoding="utf-8")
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(**({"executable_path": shutil.which("chromium")} if shutil.which("chromium") else {}))
+        page = browser.new_page(viewport={"width": 1920, "height": 1080})
+        errors = []
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(html.as_uri());page.wait_for_function("window.READY===true")
+        vis = lambda eid: page.evaluate(f"document.querySelector('[data-element-id=\"{eid}\"]').style.visibility")
+        page.evaluate("window.seek(2.7)")
+        # Incoming scene is already on screen half a transition before the cut.
+        assert vis(in_id) == "visible" and vis(out_id) == "visible"
+        page.evaluate("window.seek(3.3)")
+        assert vis(out_id) == "visible"  # outgoing holds its last frame after the cut
+        # The outgoing clip's own exit is replaced by the transition (held, not faded out).
+        if transition in {"domain-warp", "whip-pan", "sdf-iris"}:
+            assert float(page.evaluate(f"document.querySelector('[data-element-id=\"{out_id}\"]').style.opacity")) == 1
+        page.evaluate("window.seek(3.6)")
+        assert vis(out_id) == "hidden"
+        shot = lambda: page.screenshot(clip={"x": 0, "y": 0, "width": 480, "height": 270})
+        page.evaluate("window.seek(3.1)");first = shot()
+        page.evaluate("window.seek(5.0)");page.evaluate("window.seek(0.2)");page.evaluate("window.seek(3.1)")
+        assert shot() == first
+        assert errors == []
+        browser.close()

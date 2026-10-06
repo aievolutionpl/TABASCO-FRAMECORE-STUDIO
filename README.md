@@ -23,9 +23,9 @@ Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek]
 
 ## Nowość: Ruch 2.0
 
-Silnik animacji dostał **tekst kinetyczny** (litery i słowa animowane osobno: maszyna do pisania, kaskada, dekodowanie, karaoke), **wyjścia** łączące się z każdym wejściem, nowe kinowe wejścia (Ken Burns, przesłona, glitch, wahadło 3D) i krzywe z odbiciem oraz elastyczne. Elementom nadasz **cień, neon, gradient, obrys i tryb mieszania**, a całemu filmowi **look**: korekcję koloru, winietę, ziarno, kaszetę, przejścia na cięciach scen (light leak, błysk, przez czerń, kurtyna marki) i **rozmycie ruchu** w eksporcie. Pięć looków — *Czysty, Kino, Rolka, Retro, Noir* — ustawisz jednym kliknięciem; każdy z 12 szablonów ma własny kierunek ruchu.
+Silnik animacji dostał **tekst kinetyczny** (litery i słowa animowane osobno: maszyna do pisania, kaskada, dekodowanie, karaoke), **wyjścia** łączące się z każdym wejściem, nowe kinowe wejścia (Ken Burns, przesłona, glitch, wahadło 3D) i krzywe z odbiciem oraz elastyczne. Elementom nadasz **cień, neon, gradient, obrys i tryb mieszania**, a całemu filmowi **look**: korekcję koloru, winietę, ziarno, kaszetę i **rozmycie ruchu** w eksporcie. Każde cięcie może mieć własne przejście — od light leaka i błysku po **8 przejść ✦ wzorowanych na shaderach [HyperFrames](https://github.com/heygen-com/hyperframes)**: rozpływ z żarzącą się krawędzią, wypalenie, szybką panoramę, przesłonę z obręczą, kinowy zoom, glitch, rozszczepienie RGB i płynne przenikanie. Sceny nakładają się jak w profesjonalnym montażu, a `inspect_project` dostał nowe reguły kontroli wzorowane na lincie HyperFrames. Pięć looków — *Czysty, Kino, Rolka, Retro, Noir* — ustawisz jednym kliknięciem; każdy z 12 szablonów ma własny kierunek ruchu.
 
-Panel **Animacje** ma filtry i podgląd na żywo, a **Właściwości** — osobne sekcje *Ruch* (wejście, wyjście, czas, krzywa, podgląd) i *Wygląd i efekty*. Wszystko działa też przez MCP: `apply_exit`, `set_canvas_fx` i nowe pola `style`. Podgląd i eksport pozostają identyczne klatka w klatkę. [Opis i przykłady wywołań](docs/MOTION_2.md).
+Panel **Animacje** ma filtry i podgląd na żywo, a **Właściwości** — osobne sekcje *Ruch* (wejście, wyjście, czas, krzywa, podgląd) i *Wygląd i efekty*. Wszystko działa też przez MCP: `apply_exit`, `set_canvas_fx`, `set_scene_transition` i nowe pola `style`. Podgląd i eksport pozostają identyczne klatka w klatkę. [Opis i przykłady wywołań](docs/MOTION_2.md).
 
 ## Agent w studiu i nowa kampania
 
@@ -203,8 +203,8 @@ Wszystkie filmy powstały w FrameCore i są edytowalnymi projektami — otwórz 
 
 <table>
 <tr>
-<td width="68%" align="center"><a href="assets/framecore-motion2-showreel.mp4"><img src="assets/framecore-motion2-showreel.gif" alt="Showreel Ruchu 2.0: kinetyczne nagłówki, karty z wejściami i wyjściami, neonowe dekodowanie i look kinowy" width="100%"></a><br><b>Showreel Motion 2.0</b> · 16:9 · 24 s<br><sub>Tekst kinetyczny, karaoke, glitch, przesłona, light leak, rozmycie ruchu</sub></td>
-<td width="32%" align="center"><a href="assets/framecore-motion2-reel.mp4"><img src="assets/framecore-motion2-reel.gif" alt="Rolka 9:16: duże kinetyczne napisy, karaoke i błyski na cięciach" width="100%"></a><br><b>Rolka 9:16</b> · 12 s<br><sub>Napisy karaoke i look „Rolka”</sub></td>
+<td width="68%" align="center"><a href="assets/framecore-motion2-showreel.mp4"><img src="assets/framecore-motion2-showreel.gif" alt="Showreel Ruchu 2.0: kinetyczne nagłówki, karty z wejściami i wyjściami, neonowe dekodowanie i look kinowy" width="100%"></a><br><b>Showreel Motion 2.0</b> · 16:9 · 24 s<br><sub>Tekst kinetyczny, karaoke, przejścia ✦: rozpływ, panorama, glitch, wypalenie, przesłona</sub></td>
+<td width="32%" align="center"><a href="assets/framecore-motion2-reel.mp4"><img src="assets/framecore-motion2-reel.gif" alt="Rolka 9:16: duże kinetyczne napisy, karaoke i błyski na cięciach" width="100%"></a><br><b>Rolka 9:16</b> · 12 s<br><sub>Napisy karaoke, panorama i kinowy zoom</sub></td>
 </tr>
 </table>
 
@@ -216,8 +216,8 @@ python scripts/render-showcase.py       # eksport obu filmów i podglądów do a
 
 | Film | Format | Co pokazuje | Projekt |
 | --- | --- | --- | --- |
-| [▶ Showreel Motion 2.0](assets/framecore-motion2-showreel.mp4) | 16:9 · 24 s | Nowy silnik ruchu, look *Kino*, light leaki na cięciach · [klatki](assets/framecore-motion2-showreel-frames.jpg) | `sample --showreel` |
-| [▶ Rolka Motion 2.0](assets/framecore-motion2-reel.mp4) | 9:16 · 12 s | Kinetyczne napisy dla social media, look *Rolka* · [klatki](assets/framecore-motion2-reel-frames.jpg) | `sample --reel` |
+| [▶ Showreel Motion 2.0](assets/framecore-motion2-showreel.mp4) | 16:9 · 24 s | Nowy silnik ruchu, inne przejście ✦ na każdym cięciu, rozmycie ruchu · [klatki](assets/framecore-motion2-showreel-frames.jpg) | `sample --showreel` |
+| [▶ Rolka Motion 2.0](assets/framecore-motion2-reel.mp4) | 9:16 · 12 s | Kinetyczne napisy dla social media, szybka panorama i kinowy zoom · [klatki](assets/framecore-motion2-reel-frames.jpg) | `sample --reel` |
 | [▶ Reklama „Twój pomysł. Wspólna rama.”](assets/framecore-agent-campaign.mp4) | 16:9 · 30 s | Sześć scen po 5 s, tła FrameCore Cinema, własny podkład | `sample --campaign` |
 | [▶ Przykład współpracy](assets/framecore-collaboration.mp4) | 16:9 · 15 s | Sześć scen z polskimi tekstami i ikonami MIT | `sample` |
 | [▶ Creator Pack](assets/framecore-creator-pack.mp4) | 16:9 · 12 s | Wbudowane fonty, ilustracje 3D i animowane tła | `sample --creator-pack` |

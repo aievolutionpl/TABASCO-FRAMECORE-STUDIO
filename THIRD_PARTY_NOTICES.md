@@ -8,6 +8,8 @@ Copyright 2026 HeyGen, Inc. Licencja Apache License, Version 2.0.
 
 Lokalny, niezmieniony plik `framecore/static/vendor/hyperframes-player-0.8.124.js` pochodzi z opublikowanego pakietu `@hyperframes/player` 0.8.124 i zawiera kod bibliotek HyperFrames. [Pełny tekst licencji](licenses/HyperFrames-Apache-2.0.txt). Źródło: https://github.com/heygen-com/hyperframes. Grafiki marki HyperFrames i materiały ich rejestru nie zostały skopiowane.
 
+Ruch 2.0 (przejścia scen ✦ i reguły kontroli projektu) opiera się na pomysłach z pakietów `@hyperframes/shader-transitions` i `@hyperframes/lint` oraz instrukcji `hyperframes-animation` (Apache-2.0, Copyright HeyGen, Inc.). Implementacja w `framecore/static/composition.js` i `framecore/inspection.py` jest własna; nie kopiowano kodu shaderów ani reguł.
+
 ## Phosphor Icons 2.1.1
 
 Copyright (c) 2023 Phosphor Icons. Licencja MIT. W `framecore/static/icons/` znajduje się 39 niezmienionych ikon SVG z pakietu `@phosphor-icons/core`. Plik licencji i manifest sprawdzono przed skopiowaniem. [Pełny tekst licencji](licenses/Phosphor-MIT.txt).

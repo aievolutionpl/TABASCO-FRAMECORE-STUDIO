@@ -12,6 +12,8 @@ Ruch 2.0 rozbudowuje silnik kompozycji FrameCore. Każdy efekt jest czystą funk
 | **Krzywe ruchu** | Do czterech dotychczasowych dochodzą: ekspresowa (`expo-out`), z odbiciem (`back-out`), elastyczna (`elastic-out`) i miękka S (`cubic-in-out`). |
 | **Wygląd elementu** | Cienie (miękki, uniesienie, poświata, neon, długi cień), wypełnienie gradientem (tekst, kształty, ikony), odstęp liter, obrys tekstu, tryby mieszania i dopasowanie obrazu „wypełnij kadr”. |
 | **Look filmu** | Korekcja koloru (kinowy, ciepły, chłodny, żywy, wyblakły, czarno-biały, noir), winieta, deterministyczne ziarno filmowe, kaszeta kinowa i przejścia na cięciach scen: przez czerń, błysk, kurtyna w kolorze marki, light leak i rozmycie. |
+| **Przejścia ✦ (shaderowe)** | Osiem przejść nakładających dwie sceny naraz: rozpływ z żarzącą się krawędzią (domain warp), wypalenie, szybka panorama z rozmyciem kierunkowym, przesłona z obręczą w kolorze marki, kinowy zoom z aberracją, glitch z przesunięciem bloków, rozszczepienie RGB i płynne przenikanie. Scena wchodząca startuje o połowę przejścia wcześniej, a wychodząca trzyma ostatnią klatkę; przejście zastępuje wyjścia klipów kończących się na cięciu. Każde cięcie może mieć własne przejście. Inspiracja: [HeyGen HyperFrames](https://github.com/heygen-com/hyperframes) (Apache-2.0); implementacja własna na filtrach SVG/CSS, identyczna w podglądzie i eksporcie. |
+| **Kontrola projektu** | Nowe reguły `inspect_project` wzorowane na lincie HyperFrames: `text_word_overflow`, `text_overflow_risk`, `dense_frame`, `transition_longer_than_scene`, `transition_without_clips`. |
 | **Rozmycie ruchu** | Opcja finalnego eksportu: 4 podklatki uśredniane w migawce 180°. Szybkie wejścia wyglądają jak z kamery, kosztem ok. 4× dłuższego renderu. |
 | **Szablony** | Każdy z 12 szablonów ma teraz własny tekst kinetyczny sceny tytułowej, wyjście nagłówków i look filmu. |
 
@@ -20,7 +22,7 @@ Ruch 2.0 rozbudowuje silnik kompozycji FrameCore. Każdy efekt jest czystą funk
 - **Animacje** — filtry *Wszystkie / Wejścia / Tekst kinetyczny / Wyjścia*, podgląd na żywo po najechaniu na kafelek, podświetlenie animacji zaznaczonego klipu. Kliknięcie kafelka nadaje ruch z dobranym czasem i krzywą, a potem odtwarza podgląd wejścia lub końca klipu.
 - **Właściwości → Ruch** — wybór wejścia i wyjścia z listy, czas i krzywa dla każdego oraz przyciski *Podgląd wejścia* / *Podgląd wyjścia*.
 - **Właściwości → Wygląd i efekty** — cień i jego kolor, mieszanie, dopasowanie obrazu, odstęp liter, obrys oraz gradient z podglądem.
-- **Ustawienia projektu → Efekty filmowe** (nic nie zaznaczono) — pięć looków jednym kliknięciem (*Czysty, Kino, Rolka, Retro, Noir*) i ręczne suwaki: kolor, winieta, ziarno, kaszeta, przejścia scen, czas przejścia i rozmycie ruchu.
+- **Ustawienia projektu → Efekty filmowe** (nic nie zaznaczono) — pięć looków jednym kliknięciem (*Czysty, Kino, Rolka, Retro, Noir*), ręczne suwaki: kolor, winieta, ziarno, kaszeta, domyślne przejście i jego czas, lista **Przejścia na cięciach** (osobne przejście dla każdej sceny) oraz rozmycie ruchu.
 
 Wszystkie zmiany trafiają do wspólnej historii cofania i są widoczne dla agenta.
 
@@ -31,6 +33,7 @@ Wszystkie zmiany trafiają do wspólnej historii cofania i są widoczne dla agen
 {"name": "apply_exit", "arguments": {"element_id": "el_…", "exit_id": "blur-out", "duration": 0.5}}
 {"name": "set_property", "arguments": {"element_id": "el_…", "property": "style.gradient",
   "value": {"from": "#fff1dc", "to": "#ff7a45", "angle": 100}}}
+{"name": "set_scene_transition", "arguments": {"scene_id": "scene_…", "transition_id": "domain-warp", "duration": 0.9}}
 {"name": "set_canvas_fx", "arguments": {"fx": {"grade": "cinematic", "vignette": 0.4, "grain": 0.2,
   "transition": "light-leak", "transitionDuration": 0.9, "motionBlur": true}}}
 ```
@@ -49,8 +52,8 @@ python scripts/render-showcase.py       # tworzy oba projekty, eksportuje MP4 i 
 
 | Film | Co pokazuje |
 | --- | --- |
-| [Showreel Motion 2.0](../assets/framecore-motion2-showreel.mp4) | Kinetyczne nagłówki z gradientem, maszynę do pisania, karaoke, karty z przesłoną/sprężyną/ukośnym wjazdem i glitchem ilustracji, neonowe dekodowanie, look *Kino* z light leakami na cięciach i rozmyciem ruchu. |
-| [Rolka 9:16](../assets/framecore-motion2-reel.mp4) | Pionowy format, karaoke dużych napisów, sprężyste emoji, look *Rolka* z błyskami na cięciach. |
+| [Showreel Motion 2.0](../assets/framecore-motion2-showreel.mp4) | Kinetyczne nagłówki z gradientem, maszynę do pisania, karaoke, karty z przesłoną/sprężyną/ukośnym wjazdem i glitchem ilustracji, neonowe dekodowanie, na każdym cięciu inne przejście ✦ (rozpływ, panorama, glitch, wypalenie, przesłona), look kinowy i rozmycie ruchu. |
+| [Rolka 9:16](../assets/framecore-motion2-reel.mp4) | Pionowy format, karaoke dużych napisów, sprężyste emoji, szybka panorama i kinowy zoom na cięciach. |
 
 Tła pochodzą z kolekcji FrameCore Cinema (materiały generowane AI, [pochodzenie](CAMPAIGN_ASSETS.md)); muzyka jest syntetyzowana proceduralnie w `framecore/showcase.py`; ilustracje to Microsoft Fluent Emoji (MIT).
 
@@ -60,3 +63,4 @@ Tła pochodzą z kolekcji FrameCore Cinema (materiały generowane AI, [pochodzen
 - Gradient na tekście kinetycznym jest nakładany na każde słowo lub literę osobno.
 - Rozmycie ruchu działa tylko w finalnym eksporcie, nie w szkicu ani w podglądzie.
 - Przejścia scen działają na granicach scen z planu (`scenes`); projekt bez scen ma zwykłe cięcia.
+- Przejścia ✦ wymagają klipów kończących się i zaczynających dokładnie na cięciu (np. tła scen) — `inspect_project` ostrzega, gdy ich brakuje. Są cięższe w renderze (filtry SVG), ale tylko w oknie przejścia.

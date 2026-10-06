@@ -141,7 +141,7 @@
         }
         n.append(inner);
       } else n.textContent = e.text;
-      stage.append(n); nodes.set(e.id, {node:n, media, units, caret, inner, shadow:shadowFilter(s)});
+      stage.append(n); nodes.set(e.id, {node:n, media, units, caret, inner, shadow:shadowFilter(s), iconMask:!!n.style.maskImage});
     }
   }
 
@@ -153,15 +153,95 @@
     cool:'saturate(.95) hue-rotate(12deg) brightness(1.02) contrast(1.04)', mono:'grayscale(1) contrast(1.12)', vivid:'saturate(1.35) contrast(1.06)',
     faded:'contrast(.88) saturate(.8) brightness(1.06)', noir:'grayscale(1) contrast(1.45) brightness(.92)'};
   const gradeFilter = GRADES[fx.grade] || '';
+  // Transitions live on cuts: a scene's own transition wins over the film default.
+  // Shader-style transitions (ideas from HeyGen HyperFrames, Apache-2.0; own SVG/CSS implementation)
+  // overlap the scenes: the incoming scene starts D/2 early, the outgoing one holds its last frame.
+  const SHADER = new Set(['domain-warp','ridged-burn','whip-pan','sdf-iris','cinematic-zoom','glitch','chromatic-split','cross-warp']);
+  const cutMap = new Map();
+  for (const sc of [...p.scenes].sort((a,b)=>a.start-b.start)) if (sc.start>.05 && sc.start<p.duration-.05)
+    cutMap.set(sc.start, sc.transition || {id:fx.transition, duration:fx.transitionDuration});
+  const cuts = [...cutMap].map(([b,tr])=>({b, id:tr.id, D:tr.duration, shader:SHADER.has(tr.id)})).filter(c=>c.id!=='none');
+  const roles = new Map();
+  for (const c of cuts) if (c.shader) for (const e of p.elements) {
+    if (e.type==='audio') continue;
+    const r = roles.get(e.id) || {};
+    if (Math.abs(e.start+e.duration-c.b)<1e-3 && e.start<c.b-1e-3) r.out=c;
+    if (Math.abs(e.start-c.b)<1e-3) r.in=c;
+    if (r.out||r.in) roles.set(e.id,r);
+  }
   const transition = document.createElement('div');
   transition.style.cssText='position:absolute;inset:0;opacity:0';
   fxLayer.append(transition);
-  let leak=null;
-  if (fx.transition==='light-leak') {
+  let leak=null, ring=null, filt=()=>null;
+  if (cuts.some(c=>c.id==='light-leak')) {
     leak=document.createElement('div');
     leak.style.cssText=`position:absolute;width:${W*1.4}px;height:${H*1.4}px;border-radius:50%;mix-blend-mode:screen;opacity:0;`+
       `background:radial-gradient(ellipse at center, rgba(255,214,150,.95), rgba(255,120,70,.65) 35%, rgba(255,60,120,.25) 58%, transparent 72%)`;
     fxLayer.append(leak);
+  }
+  if (cuts.some(c=>c.id==='sdf-iris')) {
+    ring=document.createElement('div');
+    ring.style.cssText=`position:absolute;border-radius:50%;opacity:0;box-shadow:0 0 0 ${Math.round(W/320)}px ${accent},0 0 ${Math.round(W/40)}px ${Math.round(W/160)}px ${hexA(accent,.55)},inset 0 0 ${Math.round(W/50)}px ${hexA(accent,.45)}`;
+    fxLayer.append(ring);
+  }
+  // Deterministic value-noise textures, rendered once and aligned to the frame (R/G = two fbm fields).
+  function noiseTexture(ridged){
+    const w=320,h=Math.max(2,Math.round(320*H/W)),c=document.createElement('canvas');c.width=w;c.height=h;
+    const ctx=c.getContext('2d'),img=ctx.createImageData(w,h);
+    const vn=(x,y,s)=>{const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+      const a=hash(xi*73856093^yi*19349663,s),b=hash((xi+1)*73856093^yi*19349663,s),cc=hash(xi*73856093^(yi+1)*19349663,s),d=hash((xi+1)*73856093^(yi+1)*19349663,s);
+      return a+(b-a)*u+(cc-a)*v+(a-b-cc+d)*u*v;};
+    const fbm=(x,y,s)=>{let v=0,amp=.5,f=1,norm=0;for(let o=0;o<5;o++){let n=vn(x*f,y*f,s+o);if(ridged)n=1-Math.abs(2*n-1);v+=amp*n;norm+=amp;amp*=.5;f*=2.03;}return v/norm;};
+    let lo=1,hi=0;const vals=new Float32Array(w*h*2);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*2,X=x/w*5,Y=y/w*5;vals[i]=fbm(X,Y,3);vals[i+1]=fbm(X+5.2,Y+1.3,17);lo=Math.min(lo,vals[i]);hi=Math.max(hi,vals[i]);}
+    for(let i=0;i<w*h;i++){img.data[i*4]=Math.round((vals[i*2]-lo)/(hi-lo)*255);img.data[i*4+1]=Math.round(vals[i*2+1]*255);img.data[i*4+3]=255;}
+    ctx.putImageData(img,0,0);return c.toDataURL();
+  }
+  const tex={fbm:'',ridged:''};
+  if (cuts.some(c=>c.shader)) {
+    Object.assign(tex,{fbm:cuts.some(c=>['domain-warp','cross-warp'].includes(c.id))?noiseTexture(false):'',ridged:cuts.some(c=>c.id==='ridged-burn')?noiseTexture(true):''});
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width','0');svg.setAttribute('height','0');svg.style.cssText='position:absolute;width:0;height:0';
+    svg.innerHTML='<defs>'+['out','in'].map(kind=>`<filter id="fct-${kind}" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">`+
+      `<feImage data-r="noise" href="${tex.fbm||tex.ridged}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none" result="noise"/>`+
+      `<feDisplacementMap data-r="warp" in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" result="warped"/>`+
+      `<feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0" result="nA"/>`+
+      `<feComponentTransfer in="nA" result="keep"><feFuncA data-r="keep" type="linear" slope="1" intercept="0"/></feComponentTransfer>`+
+      `<feComponentTransfer in="nA" result="band"><feFuncA data-r="band" type="linear" slope="1" intercept="0"/></feComponentTransfer>`+
+      `<feComposite in="band" in2="keep" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>`+
+      `<feFlood flood-color="${accent}" result="tint"/><feComposite in="tint" in2="edge" operator="in" result="edgeTint"/>`+
+      `<feGaussianBlur data-r="glow" in="edgeTint" stdDeviation="2" result="glow"/>`+
+      `<feComposite in="warped" in2="keep" operator="in" result="cut"/><feComposite in="glow" in2="SourceGraphic" operator="in" result="glowOn"/>`+
+      `<feMerge><feMergeNode in="cut"/><feMergeNode in="glowOn"/></feMerge></filter>`).join('')+
+      `<filter id="fct-warp" x="-5%" y="-5%" width="110%" height="110%"><feImage href="${tex.fbm}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none" result="n"/>`+
+      `<feDisplacementMap data-r="warp" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter>`+
+      `<filter id="fct-whip" x="-25%" y="-2%" width="150%" height="104%"><feGaussianBlur data-r="whip" stdDeviation="0 0"/></filter>`+
+      `<filter id="fct-glitch" x="-10%" y="0%" width="120%" height="100%"><feTurbulence data-r="noise" type="turbulence" baseFrequency="0.00001 0.03" numOctaves="1" seed="1" result="t"/>`+
+      `<feComponentTransfer in="t" result="b"><feFuncR type="discrete" tableValues="0.5 0.15 0.5 0.85 0.5 0.5 0.3 0.7 0.5"/><feFuncG type="linear" slope="0" intercept="0.5"/></feComponentTransfer>`+
+      `<feDisplacementMap data-r="warp" in="SourceGraphic" in2="b" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter></defs>`;
+    root.append(svg);
+    filt=(id,r)=>svg.querySelector(`#${id} [data-r="${r}"]`);
+  }
+  const fCache=new Map();
+  const setF=(id,r,name,v)=>{const key=id+r+name;v=String(v);if(fCache.get(key)===v)return;fCache.set(key,v);const el=filt(id,r);if(el)el.setAttribute(name,v);};
+  function activeCut(t){for(const c of cuts)if(Math.abs(t-c.b)<c.D/2)return {c,k:(t-(c.b-c.D/2))/c.D};return null;}
+  function updateFilters(c,k,t){
+    const kk=ease(k,'cubic-in-out'), tri=1-Math.abs(2*k-1), S=38;
+    if(c.id==='domain-warp'||c.id==='ridged-burn'){
+      const ridged=c.id==='ridged-burn', thr=-.05+1.1*kk, w=ridged?.06:.03;
+      for(const kind of ['out','in']){
+        const id='fct-'+kind, out=kind==='out';
+        setF(id,'noise','href',ridged?tex.ridged:tex.fbm);
+        setF(id,'warp','scale',ridged?0:(150*(out?kk:1-kk)).toFixed(2));
+        setF(id,'keep','slope',out?S:-S); setF(id,'keep','intercept',((out?-thr:thr)*S).toFixed(4));
+        // Only the dissolving outgoing edge glows; the incoming side stays clean.
+        setF(id,'band','slope',out?S:-S); setF(id,'band','intercept',(out?(w-thr)*S:thr*S).toFixed(4));
+        setF(id,'glow','stdDeviation',ridged?3.5:2);
+      }
+    }
+    if(c.id==='cross-warp') setF('fct-warp','warp','scale',(220*tri).toFixed(2));
+    if(c.id==='whip-pan') setF('fct-whip','whip','stdDeviation',`${(W/22*Math.sin(Math.PI*k)).toFixed(2)} 0`);
+    if(c.id==='glitch'){setF('fct-glitch','noise','seed',1+Math.floor(hash(Math.floor(t*FPS),11)*997));setF('fct-glitch','warp','scale',(W/12*tri).toFixed(1));}
   }
   if (fx.vignette>0) {
     const v=document.createElement('div');
@@ -183,29 +263,37 @@
     bar.style.cssText=`position:absolute;left:0;right:0;${edge}:0;height:${(H*fx.letterbox/2).toFixed(1)}px;background:#000`;
     fxLayer.append(bar);
   }
-  const boundaries = [...new Set(p.scenes.map(s=>s.start).filter(t=>t>.05&&t<p.duration-.05))].sort((a,b)=>a-b);
   function paintFx(t){
-    let blur=0;
-    // Peak of the scene transition sits exactly on the cut.
-    const D=fx.transitionDuration, b=boundaries.find(b=>Math.abs(t-b)<D/2);
-    const k = b===undefined ? -1 : (t-(b-D/2))/D, tri = k<0?0:1-Math.abs(2*k-1);
+    let blur=0; const a=activeCut(t);
     transition.style.opacity=0; transition.style.transform='none';
     if(leak) leak.style.opacity=0;
-    if(k>=0) switch(fx.transition){
-      case 'dip': transition.style.background='#000'; transition.style.opacity=ease(tri,'cubic-in-out'); break;
-      case 'flash': transition.style.background='#fff'; transition.style.opacity=Math.pow(tri,2.2)*.92; break;
-      case 'wipe': {
-        transition.style.background=accent; transition.style.opacity=1;
-        transition.style.transform=`translateX(${(ease(k,'cubic-in-out')*2-1)*112}%) skewX(-12deg)`; break;
+    if(ring) ring.style.opacity=0;
+    // Peak of every transition sits exactly on the cut.
+    if(a){
+      const {c,k}=a, tri=1-Math.abs(2*k-1);
+      switch(c.id){
+        case 'dip': transition.style.background='#000'; transition.style.opacity=ease(tri,'cubic-in-out'); break;
+        case 'flash': transition.style.background='#fff'; transition.style.opacity=Math.pow(tri,2.2)*.92; break;
+        case 'wipe':
+          transition.style.background=accent; transition.style.opacity=1;
+          transition.style.transform=`translateX(${(ease(k,'cubic-in-out')*2-1)*112}%) skewX(-12deg)`; break;
+        case 'light-leak':
+          leak.style.opacity=ease(tri,'cubic-in-out')*.9;
+          leak.style.left=(-W*.7+k*W*1.1)+'px'; leak.style.top=(-H*.5+Math.sin(k*Math.PI)*H*.15)+'px'; break;
+        case 'blur': blur=tri*22; transition.style.background='#fff'; transition.style.opacity=tri*.18; break;
+        case 'sdf-iris': {
+          const r=ease(k,'cubic-in-out')*Math.hypot(W,H)*.55;
+          Object.assign(ring.style,{width:2*r+'px',height:2*r+'px',left:W/2-r+'px',top:H/2-r+'px',opacity:Math.min(1,tri*2.5)}); break;
+        }
+        case 'cinematic-zoom': transition.style.background='#fff'; transition.style.opacity=Math.pow(tri,6)*.07; break;
+        case 'chromatic-split': transition.style.background='#fff'; transition.style.opacity=Math.pow(tri,8)*.08; break;
       }
-      case 'light-leak':
-        leak.style.opacity=ease(tri,'cubic-in-out')*.9;
-        leak.style.left=(-W*.7+k*W*1.1)+'px'; leak.style.top=(-H*.5+Math.sin(k*Math.PI)*H*.15)+'px'; break;
-      case 'blur': blur=tri*22; transition.style.background='#fff'; transition.style.opacity=tri*.18; break;
+      if(c.shader) updateFilters(c,k,t);
     }
     const filter=[gradeFilter, blur?`blur(${blur.toFixed(2)}px)`:''].filter(Boolean).join(' ');
     stage.style.filter=filter||'none';
     if(grain){const f=Math.floor(t*FPS);grain.style.transform=`translate(${Math.floor(hash(f,1)*160)-80}px,${Math.floor(hash(f,2)*160)-80}px)`;}
+    return a;
   }
 
   function keyed(e,prop,t) {
@@ -268,10 +356,15 @@
 
   /* ---------- paint ---------- */
   function paint(t) {
-    const waits=[]; time=clamp(t,0,p.duration);paintBackground(time);paintFx(time);
+    const waits=[]; time=clamp(t,0,p.duration);paintBackground(time);const act=paintFx(time);
     for (const e of p.elements) {
       const info=nodes.get(e.id), {node:n,media} = info, track=tracks.get(e.trackId);
-      const local=time-e.start, visible=!track.hidden && local>=0 && local<e.duration;
+      // Overlapped clips: incoming starts half a transition early, outgoing holds its last frame.
+      const role=roles.get(e.id);
+      let start=e.start, dur=e.duration, held=time;
+      if(role?.in){start-=role.in.D/2;dur+=role.in.D/2;}
+      if(role?.out){dur+=role.out.D/2;if(time>=role.out.b)held=role.out.b-.0005;}
+      const local=held-start, visible=!track.hidden && time>=start && time<start+dur;
       n.style.visibility=visible?'visible':'hidden';
       let alpha=1, dx=0,dy=0,scale=1,sx=1,sy=1,skew=0,blur=0,extraRotate=0,flip=0,flipX=0,glow=0,clip='none',origin='50% 50%',split=0;
       const m=e.motion, phase=local+(e.motionOffset||0), u=m?clamp(phase/m.duration):1, z=ease(u,m?.easing);
@@ -308,7 +401,7 @@
         case 'cinema-rise':alpha=z;dy=(1-z)*150;blur=(1-z)*4;break;
         case 'ken-burns': {
           // Continuous over the whole clip: slow push with a gentle drift.
-          const k=clamp(phase/Math.max(e.duration,.1)); alpha=z;
+          const k=clamp(phase/Math.max(dur,.1)); alpha=z;
           scale=1.02+.12*ease(k,'quad-out'); dx=(k-.5)*-e.width*.035; dy=(k-.5)*-e.height*.02; break;
         }
         case 'iris-open': clip=`circle(${(z*75).toFixed(3)}% at 50% 50%)`; scale=1.06-.06*z; break;
@@ -323,9 +416,9 @@
         case 'skew-slide': alpha=z; dx=(1-z)*-140; skew=(1-z)*18; break;
       }
       // Exit runs in the final seconds of the clip and composes with any entrance.
-      const x=e.exit;
+      const x=role?.out?null:e.exit;
       if(x){
-        const xs=Math.max(0,e.duration-x.duration), v=local>xs?easeExit((local-xs)/x.duration,x.easing):0;
+        const xs=Math.max(0,dur-x.duration), v=local>xs?easeExit((local-xs)/x.duration,x.easing):0;
         if(v>0) switch(x.id){
           case 'fade-out': alpha*=1-v; break;
           case 'rise-out': alpha*=1-v; dy-=v*90; break;
@@ -339,6 +432,36 @@
           case 'iris-close': clip=`circle(${((1-v)*75).toFixed(3)}% at 50% 50%)`; break;
         }
       }
+      let tUrl='', mask='none';
+      if(act && role && (role.in===act.c || role.out===act.c)){
+        const out=role.out===act.c, k=act.k, kk=ease(k,'cubic-in-out'), tri=1-Math.abs(2*k-1);
+        const cx=W/2-keyed(e,'x',local), cy=H/2-keyed(e,'y',local);
+        const sm=(a,b)=>{const v=clamp((k-a)/(b-a));return v*v*(3-2*v);};
+        switch(act.c.id){
+          case 'domain-warp': case 'ridged-burn': tUrl=`url(#fct-${out?'out':'in'})`; break;
+          case 'cross-warp': tUrl='url(#fct-warp)'; alpha*=out?1-sm(.2,.8):sm(.2,.8); break;
+          case 'whip-pan': tUrl='url(#fct-whip)'; dx+=(out?-kk:1-kk)*W*1.15; break;
+          case 'sdf-iris': {
+            const r=kk*Math.hypot(W,H)*.55;
+            if(!out) clip=`circle(${r.toFixed(2)}px at ${cx.toFixed(2)}px ${cy.toFixed(2)}px)`;
+            else if(info.iconMask) alpha*=1-sm(.3,.9);
+            else mask=`radial-gradient(circle at ${cx.toFixed(2)}px ${cy.toFixed(2)}px, transparent ${r.toFixed(2)}px, #000 ${(r+1.5).toFixed(2)}px)`;
+            break;
+          }
+          case 'cinematic-zoom':
+            origin=`${cx.toFixed(2)}px ${cy.toFixed(2)}px`; split+=W/140*tri;
+            if(out){scale*=1+.75*k*k;blur+=26*k*k;alpha*=1-sm(.35,.65);}
+            else {scale*=1.4-.4*ease(k,'cubic-out');blur+=26*(1-k)*(1-k);alpha*=sm(.35,.65);}
+            break;
+          case 'chromatic-split': split+=W/64*tri; scale*=1+.05*tri; alpha*=out?1-sm(.42,.58):sm(.42,.58); break;
+          case 'glitch': {
+            tUrl='url(#fct-glitch)'; split+=W/96*tri;
+            const r=hash(Math.floor(time*FPS),9), showIn=k<.5?r<k*1.3:r>=(1-k)*1.3;
+            alpha*=(out?!showIn:showIn)?1:0; break;
+          }
+        }
+      }
+      if(!info.iconMask){n.style.maskImage=mask;n.style.webkitMaskImage=mask;}
       n.style.clipPath=clip; n.style.transformOrigin=origin;
       const tilt=m?.id==='rotate-in'?(1-z)*-18:m?.id==='gentle-tilt'?(1-z)*-8:0;
       n.style.left=keyed(e,'x',local)+'px';n.style.top=keyed(e,'y',local)+'px';
@@ -348,6 +471,7 @@
       else filters.push('drop-shadow(0 0 0px transparent)');
       if(split) filters.push(`drop-shadow(${split.toFixed(2)}px 0 0 rgba(255,0,90,.8)) drop-shadow(${(-split).toFixed(2)}px 0 0 rgba(0,220,255,.8))`);
       if(info.shadow) filters.push(info.shadow);
+      if(tUrl) filters.push(tUrl);
       n.style.filter=filters.join(' ');
       n.style.transform=`perspective(1200px) rotateY(${flip}deg) rotateX(${flipX}deg) translate(${dx}px,${dy}px) rotate(${keyed(e,'rotation',local)+tilt+extraRotate}deg) skewX(${-skew}deg) scale(${keyed(e,'scale',local)*scale}) scale(${sx},${sy})`;
       if (media && ['video','audio'].includes(e.type)) {

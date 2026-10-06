@@ -47,18 +47,18 @@ _LOOKS = {
 
 # Ruch 2.0: tekst kinetyczny sceny tytułowej, wyjście nagłówków i look całego filmu.
 _DIRECTION = {
- 'product': ('word-cascade','blur-out',{'grade':'warm','vignette':.3,'grain':.1,'transition':'dip'}),
- 'social': ('char-rise','zoom-through',{'grade':'vivid','vignette':.2,'transition':'flash','transitionDuration':.35}),
+ 'product': ('word-cascade','blur-out',{'grade':'warm','vignette':.3,'grain':.1,'transition':'domain-warp','transitionDuration':.8}),
+ 'social': ('char-rise','zoom-through',{'grade':'vivid','vignette':.2,'transition':'whip-pan','transitionDuration':.5}),
  'explainer': ('type-on','slide-out-left',{'transition':'wipe','transitionDuration':.6}),
- 'collaboration': ('word-blur','fade-out',{'grade':'cool','vignette':.3,'transition':'light-leak','transitionDuration':.8}),
- 'cinematic': ('word-blur','blur-out',{'grade':'cinematic','vignette':.5,'grain':.3,'letterbox':.12,'transition':'dip','transitionDuration':.7}),
+ 'collaboration': ('word-blur','fade-out',{'grade':'cool','vignette':.3,'transition':'cross-warp','transitionDuration':.8}),
+ 'cinematic': ('word-blur','blur-out',{'grade':'cinematic','vignette':.5,'grain':.3,'letterbox':.12,'transition':'cinematic-zoom','transitionDuration':.7}),
  'editorial': ('word-cascade','wipe-out',{'grade':'faded','grain':.25,'transition':'dip'}),
- 'neon': ('scramble-in','zoom-through',{'grade':'vivid','vignette':.4,'grain':.15,'transition':'blur'}),
+ 'neon': ('scramble-in','zoom-through',{'grade':'vivid','vignette':.4,'grain':.15,'transition':'glitch','transitionDuration':.5}),
  'minimal': ('word-blur','fade-out',{'transition':'dip','transitionDuration':.8}),
  'podcast': ('word-highlight','fade-out',{'grade':'warm','vignette':.3,'transition':'light-leak'}),
- 'event': ('char-wave','scale-out',{'grade':'vivid','transition':'flash'}),
+ 'event': ('char-wave','scale-out',{'grade':'vivid','transition':'sdf-iris','transitionDuration':.8}),
  'education': ('type-on','slide-out-left',{'transition':'wipe','transitionDuration':.6}),
- 'launch': ('char-rise','zoom-through',{'grade':'vivid','vignette':.3,'transition':'flash','transitionDuration':.4}),
+ 'launch': ('char-rise','zoom-through',{'grade':'vivid','vignette':.3,'transition':'ridged-burn','transitionDuration':.8}),
 }
 
 

@@ -19,6 +19,8 @@ Publiczne repozytoria pobrano i przejrzano przed zmianą architektury. Odnośnik
 | `@hyperframes/parsers` | Kandydat do importu źródeł HTML/GSAP i ich edycji. Wymaga adaptera JS oraz testów zapisu i ponownego odczytu. |
 | `@hyperframes/sdk` | Adaptery edycji bez interfejsu, iframe i plików. Nie jest obecną zależnością API Python. |
 | `@hyperframes/producer`, `engine` | Kandydat do nowego renderera. Obecnie zachowano sprawdzony Playwright/FFmpeg. |
+| `@hyperframes/shader-transitions` (rewizja [`6308727b8572`](https://github.com/heygen-com/hyperframes/tree/6308727b85726433e6a1e148b608d8cb11085114)) | Źródło pomysłów dla Ruchu 2.0: katalog przejść (domain-warp, ridged-burn, whip-pan, sdf-iris, cinematic-zoom, glitch, chromatic-split, cross-warp-morph) oraz zasada zakładki scen z instrukcji `hyperframes-animation/transitions` (scena wychodząca trzyma ostatnią klatkę, wchodząca startuje wcześniej). Kod GLSL i przechwytywanie DOM nie zostały skopiowane; FrameCore ma własną implementację na filtrach SVG/CSS, deterministyczną w podglądzie i eksporcie. |
+| `@hyperframes/lint` | Źródło reguł kontroli: ryzyko przepełnienia tekstu, przeładowana klatka, przejście bez klipów na cięciu. Przepisane w `framecore/inspection.py` na model JSON FrameCore. |
 | `@hyperframes/studio` | Interfejs React 19/Zustand/Bun. Nie kopiujemy całej aplikacji; integracja wymaga określonych granic modelu. |
 | `@hyperframes/studio-server` | Serwer Hono, historia i zmiany źródeł. Przejrzany; nie zastępuje bezpośrednio lokalnego API Python. |
 | CLI, instrukcje, rejestr | Kandydaci przyszłej integracji. Materiały i fonty rejestru mają osobne warunki, niezależne od licencji kodu. |

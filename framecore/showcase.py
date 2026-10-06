@@ -97,6 +97,9 @@ def create_showreel(store):
     # Backgrounds first so typography always sits above them.
     for start, asset, opacity in ((0, "shared-frame", .95), (4, "motion-cards", .55), (12, "open-frame", .7), (16, "shared-frame", .5), (20, "open-frame", .9)):
         b.image("campaign-" + asset, start, 4, 0, 0, 1920, 1080, {"id": "ken-burns", "duration": .7, "easing": "quad-out"}, opacity=opacity)
+    # Scene 03 gets its own backdrop so every cut has clips on both sides.
+    b("add_shape", start=8, duration=4, x=0, y=0, width=1920, height=1080, motion={"id": "soft-fade", "duration": .2},
+      style={"gradient": {"from": "#0b0f14", "to": "#2a1a14", "angle": 160}, "radius": 0, "background": "#0b0f14"})
     kicker = dict(fontSize=36, fontWeight=700, color=ACCENT, letterSpacing=6)
     leave = {"id": "fade-out", "duration": .35}
 
@@ -142,10 +145,10 @@ def create_showreel(store):
 
     # 05 — film look
     b.text("04  /  LOOK FILMOWY", 16.15, 3.85, 120, 220, 1100, 50, {"id": "word-cascade", "duration": .7}, leave, **kicker)
-    for i, (word, color) in enumerate((("Kolor.", INK), ("Winieta.", INK), ("Ziarno.", INK), ("Light leak.", ACCENT))):
+    for i, (word, color) in enumerate((("Kolor.", INK), ("Ziarno.", INK), ("Przejścia.", INK), ("Shadery.", ACCENT))):
         b.text(word, 16.4 + i * .35, 3.6 - i * .35, 112, 300 + i * 125, 1000, 125, {"id": "skew-slide", "duration": .6, "easing": "expo-out"},
                {"id": "slide-out-left", "duration": .35}, fontSize=104, color=color, shadow="soft")
-    b.text("Pięć looków jednym kliknięciem:\nCzysty · Kino · Rolka · Retro · Noir", 17.8, 2.2, 1000, 860, 800, 110, {"id": "word-blur", "duration": .8},
+    b.text("Rozpływ · wypalenie · panorama\nglitch · przesłona · kinowy zoom", 17.8, 2.2, 1000, 860, 800, 110, {"id": "word-blur", "duration": .8},
            leave, fontSize=36, fontWeight=500, color="#c9c4bb", align="right")
 
     # 06 — call to action
@@ -162,6 +165,10 @@ def create_showreel(store):
                fontFamily="JetBrains Mono", fontSize=36, fontWeight=500, color="#9a958d", align="right")
     b("set_canvas_fx", fx={"grade": "cinematic", "vignette": .4, "grain": .18, "letterbox": 0, "transition": "light-leak",
                            "transitionDuration": .9, "motionBlur": True})
+    # A different shader-style transition on every cut (inspired by HyperFrames shader transitions).
+    scenes_by_start = {round(sc["start"], 3): sc["id"] for sc in b.state["project"]["scenes"]}
+    for start, transition, duration in ((4, "domain-warp", .9), (8, "whip-pan", .6), (12, "glitch", .5), (16, "ridged-burn", .9), (20, "sdf-iris", .8)):
+        b("set_scene_transition", scene_id=scenes_by_start[start], transition_id=transition, duration=duration)
     b.soundtrack("framecore-motion2-showreel.wav", 24, 4)
     b("set_playhead", time=1.6)
     return b.state
@@ -197,6 +204,9 @@ def create_reel(store):
     b.text("FRAMECORE", 0, 12, 90, 150, 900, 70, {"id": "logo-settle", "duration": .8}, None, fontSize=40, letterSpacing=6, align="center")
     b("set_canvas_fx", fx={"grade": "vivid", "vignette": .3, "grain": .1, "letterbox": 0, "transition": "flash", "transitionDuration": .35,
                            "motionBlur": True})
+    scenes_by_start = {round(sc["start"], 3): sc["id"] for sc in b.state["project"]["scenes"]}
+    b("set_scene_transition", scene_id=scenes_by_start[4], transition_id="whip-pan", duration=.55)
+    b("set_scene_transition", scene_id=scenes_by_start[8], transition_id="cinematic-zoom", duration=.7)
     b.soundtrack("framecore-motion2-reel.wav", 12, 4)
     b("set_playhead", time=1.8)
     return b.state

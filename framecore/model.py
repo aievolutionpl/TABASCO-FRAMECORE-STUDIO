@@ -16,7 +16,8 @@ SHADOWS = {"none", "soft", "lift", "glow", "neon", "long"}
 BLENDS = {"normal", "screen", "multiply", "overlay", "soft-light", "difference", "lighten"}
 FITS = {"contain", "cover"}
 GRADES = {"none", "cinematic", "warm", "cool", "mono", "vivid", "faded", "noir"}
-TRANSITIONS = {"none", "dip", "flash", "wipe", "light-leak", "blur"}
+SHADER_TRANSITIONS = {"domain-warp", "ridged-burn", "whip-pan", "sdf-iris", "cinematic-zoom", "glitch", "chromatic-split", "cross-warp"}
+TRANSITIONS = {"none", "dip", "flash", "wipe", "light-leak", "blur"} | SHADER_TRANSITIONS
 FX_DEFAULTS = {"grade": "none", "vignette": 0, "grain": 0, "letterbox": 0, "transition": "none", "transitionDuration": .5, "motionBlur": False}
 HEX = re.compile(r"#[0-9a-fA-F]{6}")
 
@@ -175,6 +176,11 @@ def validate(p):
         number(scene["duration"], "scene duration", .01, p["duration"])
         if scene["start"] + scene["duration"] > p["duration"] + 1e-6:
             raise EditorError("Scena przekracza długość projektu")
+        tr = scene.get("transition")
+        if tr is not None:
+            if not isinstance(tr, dict) or set(tr) != {"id", "duration"} or tr["id"] not in TRANSITIONS:
+                raise EditorError("Nieobsługiwane przejście sceny")
+            number(tr["duration"], "transition duration", .1, 2)
     for e in p["elements"]:
         if e["type"] not in KINDS or e["trackId"] not in tracks:
             raise EditorError("Nieprawidłowy typ elementu lub ścieżka")
