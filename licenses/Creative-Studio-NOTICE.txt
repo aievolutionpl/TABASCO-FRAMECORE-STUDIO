@@ -1,0 +1,33 @@
+FrameCore Works Creative Studio
+Copyright 2026 FrameCore Works
+
+FrameCore Works original code, instructions and documentation are licensed
+under Apache-2.0. See Creative-Studio-Apache-2.0.txt.
+
+Source: https://github.com/FrameCoreWorks/framecore-works-creative-studio
+Source commit: 909c1f020172a3f65740b2339074090fcaf4f225
+Source version: 1.16.0
+
+Modified adaptation by FrameCore Works for MotionDuo Studio:
+- 12 original mechanism records translated and mapped to existing editor commands;
+- reference roles, approved copy and bounded repair guidance.
+
+Selected original records:
+FC-BRAND-01
+FC-BRAND-04
+FC-BRAND-05
+FC-BRAND-09
+FC-TYPOGRAPHY-04
+FC-TYPOGRAPHY-05
+FC-TYPOGRAPHY-06
+FC-PRODUCT-01
+FC-PRODUCT-05
+FC-PRODUCT-07
+FC-EXPLAINERS-04
+FC-EXPLAINERS-06
+
+Adaptation and source paths: docs/CREATIVE_STUDIO_PLAYBOOK.md.
+The original records are marked not_run. This adaptation does not certify
+rendered output, provider support, third-party media rights or trademark use.
+No Static Graphic Design Creator or Workflow Kit source bundle is copied here;
+those unrelated portions of the upstream NOTICE do not apply to this extraction.

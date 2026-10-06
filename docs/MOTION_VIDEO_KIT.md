@@ -4,7 +4,7 @@ Przejrzeliśmy [echris6/motion-video-kit](https://github.com/echris6/motion-vide
 
 ## Co działa w narzędziu
 
-- **Reguły reżyserskie:** panel Produkcja zawiera wskazówki ciągłości, hierarchii i przyczyny → skutku. Agent otrzymuje pełny polski playbook przez `get_motion_playbook`, w tym sześć receptur możliwych do wykonania istniejącymi klipami i klatkami kluczowymi.
+- **Reguły reżyserskie:** panel Produkcja zawiera wskazówki ciągłości, hierarchii i przyczyny → skutku. Agent otrzymuje pełny polski playbook przez `get_motion_playbook`, w tym sześć receptur Motion Video Kit i [12 oryginalnych mechanizmów Creative Studio](CREATIVE_STUDIO_PLAYBOOK.md) zaadaptowanych do istniejących klipów i klatek kluczowych. To plany montażu, nie potwierdzone rendery.
 - **Powtarzalność klatek:** `create_review` porównuje piksele maksymalnie trzech rzeczywistych klatek po powrotach z innych czasów. Niezgodność tworzy błąd `seek_inconsistent` i uniemożliwia zatwierdzenie przeglądu. To kontrola próbek, nie dowód powtarzalności każdego czasu filmu.
 - **Pomiary gotowego MP4:** po zakończeniu eksportu kliknij **Zmierz rytm i dźwięk**. Wybierz profil spokojny, dynamiczny albo świadomą ciszę. Otrzymasz czasy zastojów, zintegrowaną głośność LUFS, zakres głośności LU i szczyt rzeczywisty dBFS.
 - **Przenośny dowód:** raport JSON wiąże pomiar z `job_id`, zamrożoną rewizją i SHA-256 filmu. Trafia również do ZIP po wykonaniu pomiaru. Zmiana pliku MP4 unieważnia raport; dalsza edycja projektu nie zmienia wyniku starego eksportu.
