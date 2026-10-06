@@ -6,7 +6,7 @@ Projekt jest zapisany jako JSON UTF-8. Czas podajemy w sekundach, geometrię w p
 | --- | --- |
 | `id`, `schemaVersion`, `revision` | Tożsamość, wersja schematu, rewizja |
 | `metadata` | Nazwa, brief, kierunek filmu i daty |
-| `canvas` | Szerokość, wysokość, FPS, tło |
+| `canvas` | Szerokość, wysokość, FPS, tło i opcjonalne `fx` (look filmu) |
 | `duration` | Długość projektu, do 600 sekund |
 | `assets` | Lokalne materiały z pochodzeniem i licencją |
 | `scenes` | Plan scen z tekstem, intencją ruchu i dźwięku |
@@ -28,6 +28,14 @@ Element zawiera `id`, `sceneId`, `trackId`, `type`, `assetId`, `text`, `start`, 
 Lista `keyframes` zawiera obiekty `{"property":"x","time":0,"value":100}`. Obsługiwane właściwości: `x`, `y`, `rotation`, `scale`, `opacity`. Czas jest lokalny względem początku klipu, w zakresie 0–duration. Przed pierwszym i po ostatnim punkcie wartość pozostaje stała; między punktami stosujemy interpolację liniową. Nie może być dwóch punktów tej samej właściwości w tym samym czasie. Limit to 200 punktów na element.
 
 Animacja semantyczna `motion` działa ponad tymi wartościami. Niestandardowe `effects` nie są jeszcze obsługiwane i powodują błąd, zamiast znikać po cichu.
+
+## Ruch 2.0: wejścia, wyjścia, wygląd i look filmu
+
+`motion` to `{"id","duration","easing"}`; czas 0,1–4 s. Animacje rodzaju `kinetic` (np. `type-on`, `char-rise`, `word-highlight`) działają tylko dla tekstu i napisów i animują każde słowo lub literę. Opcjonalne `exit: {"id","duration","easing"}` (0,1–2 s) działa w ostatnich sekundach klipu; krzywa wyjścia jest odbiciem krzywej wejścia. Krzywe: `linear`, `quad-out`, `cubic-out`, `quint-out`, `expo-out`, `back-out`, `elastic-out`, `cubic-in-out`. Podział klipu zostawia wyjście tylko na drugiej części.
+
+`style` może zawierać: `shadow` (`none`, `soft`, `lift`, `glow`, `neon`, `long`), `shadowColor`, `gradient` (`{"from":"#hex","to":"#hex","angle":0–360}` albo `null`), `letterSpacing` (−50–200 px), `strokeWidth` (0–40 px), `strokeColor`, `blend` (`normal`, `screen`, `multiply`, `overlay`, `soft-light`, `lighten`, `difference`) i `fit` (`contain`, `cover`) dla obrazów i wideo. To zamknięte słowniki — projekt nie przenosi dowolnego CSS.
+
+`canvas.fx` opisuje look całego filmu: `grade` (`none`, `cinematic`, `warm`, `cool`, `mono`, `vivid`, `faded`, `noir`), `vignette` 0–1, `grain` 0–1, `letterbox` 0–0,25 wysokości kadru, `transition` (`none`, `dip`, `flash`, `wipe`, `light-leak`, `blur`) na cięciach między scenami, `transitionDuration` 0,1–2 s i `motionBlur` (rozmycie ruchu w finalnym eksporcie: 4 podklatki, migawka 180°). Wszystkie efekty są funkcją czasu filmu, więc podgląd i eksport są identyczne. Szczegóły: [docs/MOTION_2.md](docs/MOTION_2.md).
 
 ## Dźwięk
 
