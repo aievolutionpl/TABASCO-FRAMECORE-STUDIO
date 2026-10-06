@@ -17,7 +17,15 @@ Lokalne studio do tworzenia filmów, animacji i rolek. Ty układasz historię i 
 
 Python 3.11+ · FFmpeg · Chromium · [Kod MIT](LICENSE) · [Licencje bibliotek](THIRD_PARTY_NOTICES.md)
 
+**[▶ Zobacz filmy demo](#filmy-demo)** · [Ruch 2.0](docs/MOTION_2.md)
+
 </div>
+
+## Nowość: Ruch 2.0
+
+Silnik animacji dostał **tekst kinetyczny** (litery i słowa animowane osobno: maszyna do pisania, kaskada, dekodowanie, karaoke), **wyjścia** łączące się z każdym wejściem, nowe kinowe wejścia (Ken Burns, przesłona, glitch, wahadło 3D) i krzywe z odbiciem oraz elastyczne. Elementom nadasz **cień, neon, gradient, obrys i tryb mieszania**, a całemu filmowi **look**: korekcję koloru, winietę, ziarno, kaszetę, przejścia na cięciach scen (light leak, błysk, przez czerń, kurtyna marki) i **rozmycie ruchu** w eksporcie. Pięć looków — *Czysty, Kino, Rolka, Retro, Noir* — ustawisz jednym kliknięciem; każdy z 12 szablonów ma własny kierunek ruchu.
+
+Panel **Animacje** ma filtry i podgląd na żywo, a **Właściwości** — osobne sekcje *Ruch* (wejście, wyjście, czas, krzywa, podgląd) i *Wygląd i efekty*. Wszystko działa też przez MCP: `apply_exit`, `set_canvas_fx` i nowe pola `style`. Podgląd i eksport pozostają identyczne klatka w klatkę. [Opis i przykłady wywołań](docs/MOTION_2.md).
 
 ## Agent w studiu i nowa kampania
 
@@ -134,7 +142,7 @@ Utwórz edytowalną kopię pokazu: `python framecore.py sample --creator-pack`. 
 
 ## Edycja i narzędzia agenta
 
-Studio obsługuje tekst, obrazy, wideo, kształty, napisy i dźwięk na osobnych ścieżkach. Możesz zmieniać geometrię, typografię, czas, markę i format: 9:16, 4:5, 1:1 lub 16:9. Materiały pozostają lokalnie w katalogu projektu. Biblioteka zawiera **28 animacji, 12 szablonów, 60 ikon, 24 ilustracje 3D, 8 rodzin fontów z polskimi znakami oraz 24 tła**. Wszystkie materiały są lokalne; sześć teł ma deterministyczną animację. Szablony dobierają własną typografię, paletę, układ i ruch. Nowe narzędzia obejmują duplikowanie klipów, liniowe klatki kluczowe, głośność oraz narastanie i wyciszenie dźwięku. Agent może przeprowadzić kontrolę struktury i obejrzeć rzeczywistą klatkę filmu.
+Studio obsługuje tekst, obrazy, wideo, kształty, napisy i dźwięk na osobnych ścieżkach. Możesz zmieniać geometrię, typografię, czas, markę i format: 9:16, 4:5, 1:1 lub 16:9. Materiały pozostają lokalnie w katalogu projektu. Biblioteka zawiera **42 animacje wejścia (w tym 7 kinetycznych), 10 wyjść, 8 krzywych ruchu, 5 looków filmowych, 12 szablonów, 60 ikon, 24 ilustracje 3D, 8 rodzin fontów z polskimi znakami oraz 24 tła**. Wszystkie materiały są lokalne; sześć teł ma deterministyczną animację. Szablony dobierają własną typografię, paletę, układ i ruch. Nowe narzędzia obejmują duplikowanie klipów, liniowe klatki kluczowe, głośność oraz narastanie i wyciszenie dźwięku. Agent może przeprowadzić kontrolę struktury i obejrzeć rzeczywistą klatkę filmu.
 
 Uruchom `.venv/bin/python framecore.py mcp` z katalogiem repozytorium ustawionym jako katalog pracy klienta MCP. Na Windows użyj `.venv\Scripts\python.exe`. [Konfiguracja MCP](MCP_SPEC.md) i [instrukcja pracy agenta](skills/framecore/SKILL.md) opisują odczyt kontekstu, zmiany, propozycje i kontrolę jakości.
 
@@ -157,7 +165,7 @@ Lokalny asystent rozpoznaje konkretne polecenia czasu i animacji. Swobodne polec
 | Wyniki sprawdzeń | [Walidacja](docs/FRAMECORE_VALIDATION.md) |
 | Dotychczasowe narzędzia vstudio | [REFERENCE.md](REFERENCE.md), [mapa możliwości](docs/CAPABILITIES.md) |
 
-Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apache-2.0, ikony Phosphor i Tabler oraz ilustracje Fluent — MIT, Lucide — ISC/MIT, a fonty — SIL OFL 1.1. Teksty licencji zachowujemy w oryginale. Własne zdjęcia, nagrania, fonty i ilustracje podlegają prawom ich autorów. Przesłana ilustracja poniżej jest materiałem identyfikacji projektu; licencja kodu nie przenosi praw do niej.
+Kod projektu jest dostępny na licencji MIT. HyperFrames Player ma licencję Apache-2.0, ikony Phosphor i Tabler oraz ilustracje Fluent — MIT, Lucide — ISC/MIT, a fonty — SIL OFL 1.1. Teksty licencji zachowujemy w oryginale. Własne zdjęcia, nagrania, fonty i ilustracje podlegają prawom ich autorów. Ilustracja w nagłówku README jest materiałem identyfikacji projektu; licencja kodu nie przenosi praw do niej.
 
 ## Reżyseria i pomiary filmu — Motion Video Kit
 
@@ -189,9 +197,32 @@ Wybrany znak łączy dwa otwarte narożniki w jedną ramę: dwie strony współp
 
 **TABASCO CREATIVES + FRAMECORE — STUDIO** to projekt współpracy nad narzędziami twórczymi. Łączymy decyzje człowieka z narzędziami agenta, aby film dało się obejrzeć, poprawić i dalej edytować.
 
-Poniższa ilustracja została dostarczona do projektu. Przedstawia jego ideę i identyfikację; aktualny interfejs pokazuje zrzut ekranu na początku README.
+## Filmy demo
 
-![TABASCO CREATIVES + FRAMECORE — STUDIO: człowiek i agent AI wspólnie tworzą film](assets/tabasco-framecore-collaboration.jpg)
+Wszystkie filmy powstały w FrameCore i są edytowalnymi projektami — otwórz je w studiu, zmień tekst, ruch albo look i wyeksportuj własną wersję. Kliknij podgląd, aby obejrzeć pełny MP4 z dźwiękiem.
+
+<table>
+<tr>
+<td width="68%" align="center"><a href="assets/framecore-motion2-showreel.mp4"><img src="assets/framecore-motion2-showreel.gif" alt="Showreel Ruchu 2.0: kinetyczne nagłówki, karty z wejściami i wyjściami, neonowe dekodowanie i look kinowy" width="100%"></a><br><b>Showreel Motion 2.0</b> · 16:9 · 24 s<br><sub>Tekst kinetyczny, karaoke, glitch, przesłona, light leak, rozmycie ruchu</sub></td>
+<td width="32%" align="center"><a href="assets/framecore-motion2-reel.mp4"><img src="assets/framecore-motion2-reel.gif" alt="Rolka 9:16: duże kinetyczne napisy, karaoke i błyski na cięciach" width="100%"></a><br><b>Rolka 9:16</b> · 12 s<br><sub>Napisy karaoke i look „Rolka”</sub></td>
+</tr>
+</table>
+
+```bash
+python framecore.py sample --showreel   # edytowalny showreel 16:9
+python framecore.py sample --reel       # edytowalna rolka 9:16
+python scripts/render-showcase.py       # eksport obu filmów i podglądów do assets/
+```
+
+| Film | Format | Co pokazuje | Projekt |
+| --- | --- | --- | --- |
+| [▶ Showreel Motion 2.0](assets/framecore-motion2-showreel.mp4) | 16:9 · 24 s | Nowy silnik ruchu, look *Kino*, light leaki na cięciach · [klatki](assets/framecore-motion2-showreel-frames.jpg) | `sample --showreel` |
+| [▶ Rolka Motion 2.0](assets/framecore-motion2-reel.mp4) | 9:16 · 12 s | Kinetyczne napisy dla social media, look *Rolka* · [klatki](assets/framecore-motion2-reel-frames.jpg) | `sample --reel` |
+| [▶ Reklama „Twój pomysł. Wspólna rama.”](assets/framecore-agent-campaign.mp4) | 16:9 · 30 s | Sześć scen po 5 s, tła FrameCore Cinema, własny podkład | `sample --campaign` |
+| [▶ Przykład współpracy](assets/framecore-collaboration.mp4) | 16:9 · 15 s | Sześć scen z polskimi tekstami i ikonami MIT | `sample` |
+| [▶ Creator Pack](assets/framecore-creator-pack.mp4) | 16:9 · 12 s | Wbudowane fonty, ilustracje 3D i animowane tła | `sample --creator-pack` |
+| [▶ Pipeline produkcyjny](assets/framecore-production-demo.mp4) | 16:9 · 6 s | Brief, przegląd klatek i paczka dostawy | `sample --production` |
+| [▶ Lekcja przez historię](assets/framecore-visual-lesson-demo.mp4) | 16:9 · 21 s | Roboczy pokaz typograficzny siedmiu scen | [instrukcja](examples/visual-lesson/README.md) |
 
 ## Rozwój AI Studio — etap P0
 
