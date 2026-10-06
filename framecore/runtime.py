@@ -1,5 +1,6 @@
 """Readable startup diagnostics for both humans and agents."""
 import importlib.util
+import os
 import shutil
 from pathlib import Path
 
@@ -10,6 +11,14 @@ def diagnostics():
             from playwright.sync_api import sync_playwright
             with sync_playwright() as pw: browser = Path(pw.chromium.executable_path).exists()
         except Exception: pass
+    # Playwright's executable_path points to full Chrome even when only-shell
+    # was installed. Recognize the officially downloaded headless package too.
+    browser_root = os.environ.get('PLAYWRIGHT_BROWSERS_PATH')
+    if browser_root and browser_root != '0':
+        base = Path(browser_root)
+        browser = browser or any(path.is_file() for name in
+            ('chrome-headless-shell', 'chrome-headless-shell.exe', 'headless_shell', 'headless_shell.exe')
+            for path in base.glob('chromium_headless_shell-*/*/' + name))
     checks = [
         {'id':'ffmpeg','label':'Eksport obrazu i dźwięku','ok':bool(shutil.which('ffmpeg')),'fix':'Zainstaluj FFmpeg i dodaj go do PATH.'},
         {'id':'ffprobe','label':'Odczyt plików multimedialnych','ok':bool(shutil.which('ffprobe')),'fix':'Zainstaluj FFprobe razem z FFmpeg.'},
