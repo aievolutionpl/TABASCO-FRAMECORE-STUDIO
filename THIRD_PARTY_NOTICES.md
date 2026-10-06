@@ -56,3 +56,17 @@ Zasady filmu biznesowego i filtry pomiarowe zaadaptowano z [echris6/motion-video
 ## fframes
 
 Adresowanie klatek, liniowe wagi onion skin i porównanie pikseli zaadaptowano z [dmtrKovalenko/fframes](https://github.com/dmtrKovalenko/fframes/tree/b7fc055f7028f4380ed6102d33040fd1bf491036), commit `b7fc055f7028f4380ed6102d33040fd1bf491036`. Copyright (c) 2025–2026 Dmitriy Kovalenko, MIT. [Pełna licencja](licenses/fframes-MIT.txt). Implementacja w `framecore/motion_evidence.py`; [zakres](docs/FFRAMES.md). Nie redystrybuujemy filmu demonstracyjnego ani fontów i muzyki tego repozytorium.
+
+## FrameCore Works Creative Studio
+
+Copyright 2026 FrameCore Works. Oryginalne instrukcje i mechanizmy na licencji
+Apache License, Version 2.0; [pełna licencja](licenses/Creative-Studio-Apache-2.0.txt)
+i [notice adaptacji](licenses/Creative-Studio-NOTICE.txt).
+
+Źródło: [FrameCoreWorks/framecore-works-creative-studio](https://github.com/FrameCoreWorks/framecore-works-creative-studio/tree/909c1f020172a3f65740b2339074090fcaf4f225),
+wersja źródłowa 1.16.0. Zmodyfikowana adaptacja obejmuje 12 oryginalnych receptur
+w `framecore/playbook.py`, role referencji, dokładny tekst i ograniczoną naprawę
+w playbooku oraz skillu filmu biznesowego. [Mapa źródeł i zakres](docs/CREATIVE_STUDIO_PLAYBOOK.md).
+Nie skopiowano obcych starterów, mediów, providerów ani skilli upstreamowych.
+Status `not_run` nie oznacza wykonania receptur w MotionDuo. Licencja kodu repo
+pozostaje MIT, z zachowaniem Apache-2.0 dla adaptowanych treści.
