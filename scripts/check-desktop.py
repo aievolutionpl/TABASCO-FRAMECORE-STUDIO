@@ -62,10 +62,14 @@ def main():
                 assert (projects/pid/'state.json').is_file()
                 assert (projects/pid/'exports'/job['id']/'framecore.mp4').stat().st_size>1000
                 messages=[{'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2024-11-05'}},
-                          {'jsonrpc':'2.0','id':2,'method':'tools/list','params':{}}]
-                result=subprocess.run([args.engine,'--mcp','--root',str(projects)],input=''.join(json.dumps(m)+'\n' for m in messages),capture_output=True,text=True,timeout=60,check=True)
+                          {'jsonrpc':'2.0','id':2,'method':'tools/list','params':{}},
+                          {'jsonrpc':'2.0','id':3,'method':'tools/call','params':{'name':'create_project','arguments':{'name':'Zażółć gęślą — próba MCP','format':'16:9','duration':1}}}]
+                result=subprocess.run([args.engine,'--mcp','--root',str(projects)],input=''.join(json.dumps(m,ensure_ascii=False)+'\n' for m in messages),capture_output=True,text=True,encoding='utf-8',timeout=60)
+                if result.returncode:raise RuntimeError('Frozen MCP failed: '+result.stderr[-6000:])
                 replies=[json.loads(line) for line in result.stdout.splitlines()]
-                assert 'replace_clip_asset' in {t['name'] for t in replies[-1]['result']['tools']}
+                assert 'replace_clip_asset' in {t['name'] for t in replies[1]['result']['tools']}
+                created=json.loads(replies[2]['result']['content'][0]['text'])
+                assert created['project']['name']=='Zażółć gęślą — próba MCP'
                 print(json.dumps({'packaged_app':'ready','bundled_tools':True,'h264_aac_import_and_export':'passed','stdio_mcp':'passed','project_saved':True}))
             finally:
                 process.terminate()
