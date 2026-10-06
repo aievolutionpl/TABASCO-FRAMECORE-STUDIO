@@ -13,3 +13,9 @@ Natywne testy gotowej paczki dla commitu `71320b9` przeszły na **Windows x64, m
 Workflow **Desktop installers** publikuje instalatory dopiero po powodzeniu wszystkich trzech platform. Test w trybie `--headless` nie zastępuje ręcznej oceny okna WebView ani instalacji na osobistym komputerze. Wydanie preview nie ma komercyjnego podpisu Windows ani notaryzacji Apple.
 
 Publikacja GitHub Pages wymaga włączenia Source: GitHub Actions przez administratora repozytorium. Próba utworzenia strony przez dostępną integrację zwróciła `403 Resource not accessible by integration`; adres strony można traktować jako działający dopiero po poprawnym wdrożeniu i sprawdzeniu publicznego HTTP.
+
+## MotionDuo 0.3.1
+
+Rebranding z commitu `61467c2` przeszedł budowanie i testy rzeczywistych zamrożonych paczek na Windows x64, macOS arm64 i macOS x64 w [GitHub Actions](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/actions/runs/37474357286). Publikacja zakończyła się powodzeniem; [wydanie 0.3.1](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.1-desktop.1) zawiera trzy instalatory. Sprawdzono import, eksport MP4 z dźwiękiem, trwałość danych i połączenie MCP. Zakres pozostaje automatyczny i headless; nie obejmuje ręcznej instalacji na komputerze użytkownika.
+
+Lokalna weryfikacja rebrandingu: 10 testów UI, Ruch 2.0, strony i zgodności danych oraz 9 testów biblioteki, kampanii i strony zaliczonych. Zestaw rdzenia i przeglądarki zaliczył 14 testów; dwa kolejne wymagały aktualizacji oczekiwanej liczby materiałów po dodaniu trzech assetów MotionDuo. Ponowne wykonanie tych dwóch testów zakończyło się powodzeniem (2/2). Edytor sprawdzono także wizualnie przy 1512 × 982 i 390 × 844 px.

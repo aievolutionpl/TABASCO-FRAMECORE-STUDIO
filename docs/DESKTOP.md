@@ -1,16 +1,18 @@
-# FrameCore Studio jako aplikacja
+# MotionDuo Studio jako aplikacja
 
-Instalatory **0.3.0 desktop preview** są dostępne w [GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.0-desktop.2). Pierwsza seria ma status **desktop preview**: Windows x64, macOS Apple Silicon i macOS Intel. Linki na stronie produktu aktualizują się dopiero po publikacji rzeczywistych plików.
+Instalatory **0.3.1 desktop preview** są dostępne w [GitHub Releases](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.1-desktop.1). Pierwsza seria ma status **desktop preview**: Windows x64, macOS Apple Silicon i macOS Intel. Linki na stronie produktu aktualizują się dopiero po publikacji rzeczywistych plików.
 
 ## Instalacja
 
 Windows: pobierz `windows-x64-setup.exe` i uruchom instalator. Powstaje skrót w menu Start; ikona pulpitu jest opcjonalna. Instalator przygotowuje WebView2 z oficjalnego podpisanego bootstrappera Microsoft — ten krok może wymagać internetu. Program instaluje się dla bieżącego użytkownika.
 
-macOS: pobierz DMG dla Apple Silicon (`arm64`) lub Intel (`x64`), otwórz i przeciągnij **FrameCore Studio** do **Applications**. Okno korzysta z systemowego WKWebView.
+macOS: pobierz DMG dla Apple Silicon (`arm64`) lub Intel (`x64`), otwórz i przeciągnij **MotionDuo Studio** do **Applications**. Okno korzysta z systemowego WKWebView.
 
 Nie trzeba instalować Pythona, Git ani FFmpeg. Paczka zawiera własny Python, FFmpeg/FFprobe, Chromium i lokalne materiały studia. Agent lub generowanie przez dostawcę nadal wymagają własnego połączenia. Narzędzia Codex/Claude CLI instalujesz osobno, jeśli wybierasz ten sposób połączenia.
 
 To wydanie bez komercyjnego podpisu Windows i notaryzacji Apple. System może wymagać potwierdzenia konkretnej aplikacji. Na macOS użyj **Prywatność i ochrona → Otwórz mimo to** zgodnie z komunikatem systemu; nie wyłączaj ochrony globalnie. Instrukcje konkretnego wydania i sumy SHA-256 znajdują się przy plikach.
+
+Nowe wydanie zawiera logo MotionDuo, banner oraz odświeżony edytor. Nazwa producentów: **TABASCO CREATIVES + FRAMECORE**.
 
 ## Dane i aktualizacja
 
@@ -18,6 +20,8 @@ To wydanie bez komercyjnego podpisu Windows i notaryzacji Apple. System może wy
 - macOS: `~/Library/Application Support/FrameCore Studio/projects`.
 - Profile marek są w bibliotece projektów; ustawienia agenta obok niej.
 - Log uruchomienia: `desktop.log` w katalogu FrameCore Studio.
+
+Katalogi nadal noszą nazwę FrameCore Studio, aby aktualizacja zachowała dotychczasowe dane.
 
 Instalator i deinstalator nie usuwają osobistych projektów. Aktualizację wykonaj po zamknięciu studia i ukończeniu eksportu. Istniejąca instalacja z kodu zachowuje swój katalog `output/.framecore`; nic nie jest przenoszone lub nadpisywane automatycznie. Aby zachować tamte projekty w aplikacji, zamknij obie wersje i skopiuj zawartość starego katalogu projektów do nowego. Zachowaj kopię oryginału.
 

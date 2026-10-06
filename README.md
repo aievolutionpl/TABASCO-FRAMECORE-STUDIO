@@ -235,7 +235,7 @@ Panel **Analiza materiałów** tworzy miniatury, contact sheets, proxy oraz wave
 
 ## Nowa nazwa i wybór znaku
 
-Produkt nosi nazwę **MotionDuo Studio**, z podpisem **by TABASCO CREATIVES + FRAMECORE**. Wewnętrzny silnik, polecenia `framecore.py`, identyfikatory MCP i dotychczasowe katalogi projektów zachowują kompatybilność. Opublikowane instalatory 0.3.0 oraz wcześniejsze filmy i zrzuty przedstawiają poprzednią nazwę FrameCore Studio.
+Produkt nosi nazwę **MotionDuo Studio**, z podpisem **by TABASCO CREATIVES + FRAMECORE**. Wewnętrzny silnik, polecenia `framecore.py`, identyfikatory MCP i dotychczasowe katalogi projektów zachowują kompatybilność. Aktualne [instalatory 0.3.1 desktop preview](https://github.com/aievolutionpl/TABASCO-FRAMECORE-STUDIO/releases/tag/v0.3.1-desktop.1) zawierają branding MotionDuo. Wcześniejsze instalatory 0.3.0, filmy i zrzuty przedstawiają poprzednią nazwę FrameCore Studio.
 
 <details>
 <summary>Wcześniejsza eksploracja: dziewięć koncepcji znaku</summary>

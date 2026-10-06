@@ -145,7 +145,9 @@ def test_polish_editor_new_tools_and_deterministic_motion(tmp_path):
             assert page.locator('html').get_attribute('lang')=='pl'
             assert page.locator('#export').inner_text()=='Eksport'
             page.click('[data-tab="Shapes"]')
-            assert page.locator('[data-icon]').count()==60
+            from framecore.library import catalog
+            assert page.locator('[data-icon]').count()==len(catalog('icon'))
+            assert page.locator('[data-icon="motionduo-mark"]').count()==1
             page.click('[data-icon="robot"]')
             page.wait_for_function('document.querySelectorAll(".clip.image").length===1')
             page.locator('.clip.text').click()
@@ -213,7 +215,10 @@ def test_creator_pack_offline_ui_fonts_background_and_template(tmp_path):
             page.select_option('[data-property="style.fontFamily"]','Playfair Display')
             page.wait_for_function('document.querySelector("[data-property=\\"style.fontFamily\\"]").value==="Playfair Display"')
             page.click('[data-tab="Library"]')
-            assert page.locator('[data-builtin]').count()==87
+            from framecore.library import catalog
+            assert page.locator('[data-builtin]').count()==len(catalog())
+            for asset_id in ('motionduo-mark','motionduo-logo','motionduo-banner'):
+                assert page.locator(f'[data-builtin="{asset_id}"]').count()==1
             page.fill('#librarySearch','rakieta')
             assert page.locator('[data-builtin]').count()==3
             page.click('[data-builtin="fluent-rocket"]')
