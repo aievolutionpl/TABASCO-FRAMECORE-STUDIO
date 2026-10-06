@@ -13,6 +13,7 @@ Ruch 2.0 rozbudowuje silnik kompozycji FrameCore. Każdy efekt jest czystą funk
 | **Wygląd elementu** | Cienie (miękki, uniesienie, poświata, neon, długi cień), wypełnienie gradientem (tekst, kształty, ikony), odstęp liter, obrys tekstu, tryby mieszania i dopasowanie obrazu „wypełnij kadr”. |
 | **Look filmu** | Korekcja koloru (kinowy, ciepły, chłodny, żywy, wyblakły, czarno-biały, noir), winieta, deterministyczne ziarno filmowe, kaszeta kinowa i przejścia na cięciach scen: przez czerń, błysk, kurtyna w kolorze marki, light leak i rozmycie. |
 | **Przejścia ✦ (shaderowe)** | Osiem przejść nakładających dwie sceny naraz: rozpływ z żarzącą się krawędzią (domain warp), wypalenie, szybka panorama z rozmyciem kierunkowym, przesłona z obręczą w kolorze marki, kinowy zoom z aberracją, glitch z przesunięciem bloków, rozszczepienie RGB i płynne przenikanie. Scena wchodząca startuje o połowę przejścia wcześniej, a wychodząca trzyma ostatnią klatkę; przejście zastępuje wyjścia klipów kończących się na cięciu. Każde cięcie może mieć własne przejście. Inspiracja: [HeyGen HyperFrames](https://github.com/heygen-com/hyperframes) (Apache-2.0); implementacja własna na filtrach SVG/CSS, identyczna w podglądzie i eksporcie. |
+| **Emoji tylko jako akcent** | Emoji i ikony pojawiają się wtedy, gdy podkreślają lub wizualizują konkretne słowo. `emphasize_text` (Właściwości tekstu → *Podkreślenie*) zmienia słowo na kolor akcentu z zakreślaczem i lekkim uniesieniem, a emoji dobrane do znaczenia wskakuje dokładnie w chwili, gdy słowo pojawia się na ekranie. Cztery ruchy akcentu: pop, odbicie, potrząśnięcie, wybuch z poświatą — jeden wyrazisty beat, potem tylko delikatne osiadanie, bez nieskończonych pętli. Szablony dodają najwyżej dwa takie akcenty na film, a `inspect_project` ostrzega przed emoji w pętli (`decorative_emoji_loop`) i ich nadmiarem (`emoji_overuse`, `emoji_crowded`). |
 | **Kontrola projektu** | Nowe reguły `inspect_project` wzorowane na lincie HyperFrames: `text_word_overflow`, `text_overflow_risk`, `dense_frame`, `transition_longer_than_scene`, `transition_without_clips`. |
 | **Rozmycie ruchu** | Opcja finalnego eksportu: 4 podklatki uśredniane w migawce 180°. Szybkie wejścia wyglądają jak z kamery, kosztem ok. 4× dłuższego renderu. |
 | **Szablony** | Każdy z 12 szablonów ma teraz własny tekst kinetyczny sceny tytułowej, wyjście nagłówków i look filmu. |
@@ -33,6 +34,7 @@ Wszystkie zmiany trafiają do wspólnej historii cofania i są widoczne dla agen
 {"name": "apply_exit", "arguments": {"element_id": "el_…", "exit_id": "blur-out", "duration": 0.5}}
 {"name": "set_property", "arguments": {"element_id": "el_…", "property": "style.gradient",
   "value": {"from": "#fff1dc", "to": "#ff7a45", "angle": 100}}}
+{"name": "emphasize_text", "arguments": {"element_id": "el_…", "word": "pomysł", "motion_id": "emoji-bounce"}}
 {"name": "set_scene_transition", "arguments": {"scene_id": "scene_…", "transition_id": "domain-warp", "duration": 0.9}}
 {"name": "set_canvas_fx", "arguments": {"fx": {"grade": "cinematic", "vignette": 0.4, "grain": 0.2,
   "transition": "light-leak", "transitionDuration": 0.9, "motionBlur": true}}}

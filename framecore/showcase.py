@@ -152,8 +152,9 @@ def create_showreel(store):
            leave, fontSize=36, fontWeight=500, color="#c9c4bb", align="right")
 
     # 06 — call to action
-    b.text("Zbuduj film\nz agentem.", 20.3, 3.7, 112, 290, 1150, 330, {"id": "char-rise", "duration": 1.3, "easing": "back-out"}, None,
-           fontSize=136, gradient=WARM, shadow="lift")
+    cta = b.text("Zbuduj film\nz agentem.", 20.3, 3.7, 112, 290, 1150, 330, {"id": "char-rise", "duration": 1.3, "easing": "back-out"}, None,
+                 fontSize=136, shadow="lift")
+    b("emphasize_text", element_id=cta, word="agentem", emoji_id="fluent-robot", motion_id="emoji-pop")
     b.text("$ python framecore.py editor", 21.4, 2.6, 120, 660, 1200, 80, {"id": "type-on", "duration": 1.2, "easing": "linear"}, None,
            fontFamily="JetBrains Mono", fontSize=44, fontWeight=500, color=MINT)
     b.text("TABASCO CREATIVES + FRAMECORE — STUDIO", 22.2, 1.8, 120, 790, 1200, 50, {"id": "word-cascade", "duration": .8}, None, **kicker)
@@ -187,9 +188,10 @@ def create_reel(store):
     leave = {"id": "fade-out", "duration": .3}
     kicker = dict(fontSize=34, fontWeight=700, color=ACCENT, letterSpacing=8, align="center")
     b.text("ROLKA  ·  9:16", .15, 3.85, 90, 330, 900, 60, {"id": "word-cascade", "duration": .7}, leave, **kicker)
-    b.text("Napisy,\nktóre\nzatrzymują.", .3, 3.7, 70, 430, 940, 620, {"id": "char-rise", "duration": 1.4, "easing": "back-out"},
-           {"id": "zoom-through", "duration": .4}, fontSize=124, align="center", gradient=WARM, shadow="lift")
-    b.image("fluent-fire", 1.4, 2.6, 400, 1180, 280, 280, {"id": "stretch-pop", "duration": .7, "easing": "back-out"}, {"id": "scale-out", "duration": .3}, shadow="glow", shadowColor="#ff7a45")
+    hook = b.text("Napisy,\nktóre\nzatrzymują.", .3, 3.7, 70, 430, 940, 620, {"id": "word-cascade", "duration": 1.2, "easing": "back-out"},
+                  {"id": "zoom-through", "duration": .4}, fontSize=124, align="center", shadow="lift")
+    # Emoji only where it amplifies a word: the fire lands together with "zatrzymują".
+    b("emphasize_text", element_id=hook, word="zatrzymują", emoji_id="fluent-fire", motion_id="emoji-bounce")
 
     b.text("KARAOKE", 4.15, 3.85, 90, 380, 900, 60, {"id": "word-cascade", "duration": .6}, leave, **kicker)
     b.text("Każde słowo\nwchodzi\nw rytm.", 4.3, 3.7, 60, 480, 960, 560, {"id": "word-highlight", "duration": 2.4}, {"id": "rise-out", "duration": .35},

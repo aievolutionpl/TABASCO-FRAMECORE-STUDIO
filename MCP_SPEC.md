@@ -32,7 +32,7 @@ Jeśli edytor używa `--root`, dodaj tę samą opcję i ścieżkę do `args`. In
 | Projekt | `create_project`, `rename_project`, `set_duration`, `set_format`, `set_brand`, `set_background`, `set_track` |
 | Materiały i elementy | `add_asset`, `add_library_asset`, `add_icon`, `add_text`, `add_shape`, `add_video`, `add_image`, `add_audio`, `add_caption` |
 | Montaż | `move_clip`, `trim_clip`, `split_clip`, `duplicate_clip`, `delete_clip`, `move_element`, `resize_element`, `set_property` |
-| Ruch i dźwięk | `apply_motion`, `apply_exit`, `set_keyframes`, `set_audio`, `style_captions` |
+| Ruch i dźwięk | `apply_motion`, `apply_exit`, `emphasize_text` (podkreślenie słowa + emoji jako akcent), `set_keyframes`, `set_audio`, `style_captions` |
 | Look filmu | `set_canvas_fx` (kolor, winieta, ziarno, kaszeta, przejścia scen, rozmycie ruchu), `set_scene_transition` (przejście dla jednego cięcia) — [Ruch 2.0](docs/MOTION_2.md) |
 | Plan scen | `plan_storyboard`, `apply_template`, `assemble_storyboard`, `add_scene`, `duplicate_scene` |
 | Współpraca | `propose_changes`, `apply_proposal`, `cancel_proposal`, `undo`, `redo`, `set_selection`, `set_playhead` |

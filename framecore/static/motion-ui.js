@@ -17,11 +17,12 @@ export const FILM_PRESETS={
 };
 
 export function createMotionUI(ctx){
- const {getProject,selected,command,esc,toast,getMotions,getExits,rerenderLibrary,previewMotion,previewExit}=ctx;
+ const {getProject,selected,command,esc,toast,getMotions,getExits,rerenderLibrary,previewMotion,previewExit,getLibrary=()=>[]}=ctx;
  let filter='all';
  const options=(list,value)=>list.map(([v,l])=>`<option value="${v}" ${value===v?'selected':''}>${l}</option>`).join('');
  const hex=(v,fallback)=>/^#[0-9a-fA-F]{6}$/.test(v||'')?v:fallback;
  function demoMarkup(m,i){
+  if(m.kind==='accent')return `<img class="emoji-demo" src="/static/library/illustrations/${['fluent-rocket','fluent-party-popper','fluent-light-bulb','fluent-fire'][i%4]}.png" alt="">`;
   if(m.kind==='kinetic'){
    const text=m.unit==='word'?['Ruch','słów']:[...'Litery'];
    return text.map((t,k)=>`<i style="--i:${k}">${esc(t)}</i>`).join(m.unit==='word'?' ':'');
@@ -38,13 +39,13 @@ export function createMotionUI(ctx){
  }
  function panel(){
   const motions=getMotions(),exits=getExits(),e=selected();
-  const groups=[['all','Wszystkie',motions.length+exits.length],['entrance','Wejścia',motions.filter(m=>m.kind==='entrance').length],['kinetic','Tekst kinetyczny',motions.filter(m=>m.kind==='kinetic').length],['exit','Wyjścia',exits.length]];
+  const groups=[['all','Wszystkie',motions.length+exits.length],['entrance','Wejścia',motions.filter(m=>m.kind==='entrance').length],['kinetic','Tekst kinetyczny',motions.filter(m=>m.kind==='kinetic').length],['accent','Akcenty emoji',motions.filter(m=>m.kind==='accent').length],['exit','Wyjścia',exits.length]];
   const list=filter==='exit'?[]:motions.filter(m=>filter==='all'||m.kind===filter),exitList=['all','exit'].includes(filter)?exits:[];
   const target=e?`<div class="motion-target">Zaznaczono: <strong>${esc(e.type==='text'||e.type==='caption'?e.text.slice(0,32):e.type)}</strong>${e.motion?` · wejście ${esc(motions.find(m=>m.id===e.motion.id)?.name||'')}`:''}${e.exit?` · wyjście ${esc(exits.find(x=>x.id===e.exit.id)?.name||'')}`:''}</div>`:'<div class="motion-target muted">Zaznacz klip na osi czasu, aby nadać mu ruch.</div>';
   return `<h2 class="panel-heading">Ruch z charakterem</h2><div class="panel-subtitle">Wejścia, tekst kinetyczny i wyjścia. Najedź, aby zobaczyć podgląd.</div>${target}<div class="motion-filters" role="group" aria-label="Rodzaj ruchu">${groups.map(([id,n,c])=>`<button data-motion-filter="${id}" class="${filter===id?'active':''}" aria-pressed="${filter===id}">${n}<span>${c}</span></button>`).join('')}</div>`+
    (list.length?`<div class="section-label">WEJŚCIA I AKCENTY <span>${list.length}</span></div><div class="motion-grid">${list.map(tile).join('')}</div>`:'')+
    (exitList.length?`<div class="section-label">WYJŚCIA <span>${exitList.length}</span></div><div class="motion-grid">${exitList.map(exitTile).join('')}</div>`:'')+
-   `<div class="tip-card">Tekst kinetyczny animuje każde słowo lub literę. Wyjście działa w ostatnich sekundach klipu i łączy się z dowolnym wejściem.</div>`;
+   `<div class="tip-card">Tekst kinetyczny animuje każde słowo lub literę. Wyjście działa w ostatnich sekundach klipu. <b>Akcenty emoji</b> stosuj tylko, gdy coś podkreślasz — najwygodniej przez <i>Właściwości tekstu → Podkreślenie</i>.</div>`;
  }
  function animationSection(e){
   const motions=getMotions(),exits=getExits(),textual=['text','caption'].includes(e.type);
@@ -70,6 +71,20 @@ export function createMotionUI(ctx){
    ${textual?`<label class="field">Odstęp liter · px<input data-property="style.letterSpacing" type="number" step="1" min="-50" max="200" value="${s.letterSpacing||0}"></label><label class="field">Obrys · px<input data-property="style.strokeWidth" type="number" step="1" min="0" max="40" value="${s.strokeWidth||0}"></label>${s.strokeWidth?`<label class="field full">Kolor obrysu<input type="color" data-property="style.strokeColor" value="${hex(s.strokeColor,'#000000')}"></label>`:''}`:''}
    </div>${['text','caption','shape'].includes(e.type)||e.assetId&&e.type==='image'?`<label class="production-toggle look-toggle"><input type="checkbox" data-look="gradient-on" ${g?'checked':''}> Wypełnienie gradientem</label>
    ${g?`<div class="gradient-row"><input type="color" data-look="gradient-from" value="${g.from}" aria-label="Kolor początkowy"><span class="gradient-preview" style="background:linear-gradient(${g.angle}deg,${g.from},${g.to})"></span><input type="color" data-look="gradient-to" value="${g.to}" aria-label="Kolor końcowy"><label class="field">Kąt<input data-look="gradient-angle" type="number" min="0" max="360" step="15" value="${g.angle}"></label></div>`:''}`:''}</div>`;
+ }
+ const STOPWORDS=new Set(['i','w','z','na','do','to','się','jest','nie','co','jak','od','o','a','że','po','dla','ten','ta']);
+ function emphasisSection(e){
+  if(!['text','caption'].includes(e.type))return '';
+  const em=e.style.emphasis,words=[...new Set(e.text.split(/\s+/).map(w=>w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,'')).filter(w=>w.length>1&&!STOPWORDS.has(w.toLowerCase())))];
+  const art=getLibrary().filter(a=>a.kind==='illustration');
+  const accents=getMotions().filter(m=>m.kind==='accent');
+  return `<div class="inspector-section emphasis-section"><h3>Podkreślenie</h3>
+   <p class="inspector-note">Emoji pojawia się tylko przy słowie, które chcesz wzmocnić, i wskakuje razem z nim.</p>
+   ${em?`<div class="emphasis-current"><span>Podkreślone: <strong>${esc(em.word)}</strong>${em.emojiElementId?' + emoji':''}</span><button class="quiet-button" data-emph-clear>Usuń</button></div>`:''}
+   <label class="field full">Słowo<select data-emph="word"><option value="">Automatycznie — najmocniejsze słowo</option>${words.map(w=>`<option ${em?.word===w?'selected':''}>${esc(w)}</option>`).join('')}</select></label>
+   <div class="field-grid"><label class="field">Emoji<select data-emph="emoji"><option value="auto">Dobierz do słowa</option><option value="none">Bez emoji</option>${art.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('')}</select></label>
+   <label class="field">Ruch emoji<select data-emph="motion">${accents.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}</select></label></div>
+   <button class="secondary-button" data-emph-apply>✦ Podkreśl słowo</button></div>`;
  }
  function filmSection(){
   const p=getProject(),fx=Object.assign({grade:'none',vignette:0,grain:0,letterbox:0,transition:'none',transitionDuration:.5,motionBlur:false},p.canvas.fx||{});
@@ -118,10 +133,18 @@ export function createMotionUI(ctx){
    if(e.type==='audio')return toast('Dźwięk wycisza się w panelu Dźwięk.'),true;
    await command('apply_exit',{exit_id:b.dataset.exit,duration:Math.min(.6,e.duration),easing:'cubic-out'});await previewExit();toast('Wyjście zastosowane — podgląd końca klipu.');return true;
   }
+  if(b.hasAttribute('data-emph-apply')){
+   const e=selected(),q=k=>document.querySelector(`#inspectorContent [data-emph="${k}"]`)?.value;
+   const emoji=q('emoji'),args={element_id:e.id,emoji:emoji!=='none',motion_id:q('motion')||'emoji-pop'};
+   if(q('word'))args.word=q('word');
+   if(emoji&&!['auto','none'].includes(emoji))args.emoji_id=emoji;
+   await command('emphasize_text',args);await previewMotion();toast('Słowo podkreślone. Emoji wskakuje razem z nim.');return true;
+  }
+  if(b.hasAttribute('data-emph-clear')){await command('emphasize_text',{element_id:selected().id,clear:true});toast('Podkreślenie usunięte.');return true;}
   if(b.dataset.fxPreset){const pr=FILM_PRESETS[b.dataset.fxPreset];await command('set_canvas_fx',{fx:pr.fx});toast(`Look „${pr.name}” zastosowany do całego filmu.`);return true;}
   if(b.hasAttribute('data-preview-motion')){await previewMotion();return true;}
   if(b.hasAttribute('data-preview-exit')){await previewExit();return true;}
   return false;
  }
- return {panel,animationSection,lookSection,filmSection,onChange,onClick};
+ return {panel,animationSection,lookSection,emphasisSection,filmSection,onChange,onClick};
 }

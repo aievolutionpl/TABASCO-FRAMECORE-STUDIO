@@ -129,7 +129,7 @@ class AgentControl:
                 pid=snapshot['project']['id'];revision=snapshot['project']['revision']
                 # Every model response goes through the same atomic validator and history.
                 if answer['commands']:
-                    targeted={'move_element','resize_element','set_property','trim_clip','split_clip','move_clip','delete_clip','apply_motion','apply_exit','duplicate_clip','set_audio','set_keyframes','replace_clip_asset'}
+                    targeted={'move_element','resize_element','set_property','trim_clip','split_clip','move_clip','delete_clip','apply_motion','apply_exit','emphasize_text','duplicate_clip','set_audio','set_keyframes','replace_clip_asset'}
                     for command in answer['commands']:
                         if command['name'] in targeted and not command['args'].get('element_id'):
                             ids=snapshot['session']['selection']

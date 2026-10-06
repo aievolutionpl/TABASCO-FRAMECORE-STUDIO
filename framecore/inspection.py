@@ -25,6 +25,7 @@ GUIDE = """Pracujesz w TABASCO CREATIVES + FRAMECORE — STUDIO, projekcie wspó
 18. Ruch 2.0: apply_motion przyjmuje wejścia (kind entrance) i tekst kinetyczny (kind kinetic: type-on, word-cascade, char-rise, word-blur, char-wave, scramble-in, word-highlight; tylko tekst i napisy, czas do 4 s). apply_exit nadaje wyjście w ostatnich sekundach klipu (exit_id "none" usuwa). Krzywe: linear, quad-out, cubic-out, quint-out, expo-out, back-out, elastic-out, cubic-in-out.
 19. Wygląd elementu ustawisz przez set_property: style.shadow (none/soft/lift/glow/neon/long), style.shadowColor, style.gradient {from,to,angle} lub null, style.letterSpacing, style.strokeWidth, style.strokeColor, style.blend, style.fit (contain/cover).
 20. set_canvas_fx ustawia look całego filmu: grade (none/cinematic/warm/cool/mono/vivid/faded/noir), vignette 0–1, grain 0–1, letterbox 0–0.25, transition (none/dip/flash/wipe/light-leak/blur oraz ✦ domain-warp/ridged-burn/whip-pan/sdf-iris/cinematic-zoom/glitch/chromatic-split/cross-warp) na cięciach między scenami, transitionDuration oraz motionBlur dla finalnego eksportu. set_scene_transition ustawia przejście jednego cięcia (transition_id "default" przywraca ustawienie filmu). Przejścia ✦ nakładają sceny o duration/2 i wymagają klipów kończących się i zaczynających na cięciu (np. teł scen).
+21. Emoji i ikony to akcent, nie dekoracja: użyj ich tylko, gdy podkreślają lub wizualizują konkretne słowo, najwyżej jeden na scenę. emphasize_text podkreśla słowo (kolor akcentu, zakreślacz, mikro-pop) i dodaje emoji dobrane do znaczenia, które wskakuje razem ze słowem (motion_id: emoji-pop, emoji-bounce, emoji-wiggle, emoji-burst; emoji false = samo podkreślenie; clear true usuwa). inspect_project zgłasza decorative_emoji_loop, emoji_overuse i emoji_crowded.
 """
 
 
@@ -114,6 +115,20 @@ def lint(p):
         visible = [e for e in p["elements"] if e["type"] != "audio" and e["start"] <= mid < e["start"] + e["duration"]]
         if len(visible) > 14:
             issues.append({"code": "dense_frame", "element_id": None, "message": f"Scena „{scene['name']}” ma {len(visible)} warstw naraz; uprość kadr"})
+    # Emoji i ikony są akcentem, nie dekoracją: mało, krótko i w powiązaniu z treścią.
+    assets = {a["id"]: a for a in p["assets"]}
+    from .emphasis import is_emoji
+    marks = [e for e in p["elements"] if e["type"] == "image" and is_emoji(assets.get(e.get("assetId")))]
+    loops = {"float", "breathe", "spin-soft", "orbit-compact", "drift-diagonal", "signal-glow"}
+    for e in marks:
+        if (e.get("motion") or {}).get("id") in loops:
+            issues.append({"code": "decorative_emoji_loop", "element_id": e["id"], "message": "Emoji w ciągłej pętli rozprasza; użyj krótkiego akcentu (emoji-pop, emoji-bounce)"})
+    if p["scenes"] and len(marks) > max(4, len(p["scenes"]) * .6):
+        issues.append({"code": "emoji_overuse", "element_id": None, "message": f"{len(marks)} ikon/emoji w {len(p['scenes'])} scenach; zostaw tylko te, które podkreślają treść"})
+    for scene in p["scenes"]:
+        mid = scene["start"] + scene["duration"] / 2
+        if sum(e["start"] <= mid < e["start"] + e["duration"] for e in marks) > 3:
+            issues.append({"code": "emoji_crowded", "element_id": None, "message": f"Scena „{scene['name']}” ma więcej niż 3 ikony naraz"})
     fx = p["canvas"].get("fx", {})
     ordered = sorted(p["scenes"], key=lambda s: s["start"])
     for prev, scene in zip(ordered, ordered[1:]):

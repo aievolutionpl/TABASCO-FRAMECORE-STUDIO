@@ -156,12 +156,16 @@ def mutate(p, name, args, session):
         p["elements"].extend(copies)
     elif name in {"add_icon", "add_library_asset"}:
         from .library import icon_asset, library_asset
+        from .emphasis import is_emoji
         a = icon_asset(args["icon_id"]) if name == "add_icon" else library_asset(args["asset_id"])
         p["assets"].append(a)
         p["elements"].append(element(p, "image", assetId=a["id"], start=args.get("start", session["playhead"]),
                                      duration=args.get("duration", min(3, p["duration"]-session["playhead"])),
                                      x=args.get("x", p["canvas"]["width"]*.1), y=args.get("y", p["canvas"]["height"]*.5),
-                                     width=args.get("width", 160), height=args.get("height", 160)))
+                                     width=args.get("width", 160), height=args.get("height", 160),
+                                     # Ilustracja to akcent: krótki pop zamiast ciągłej pętli.
+                                     motion={"id": "emoji-pop", "duration": .8, "easing": "back-out"} if a.get("role") == "illustration" and is_emoji(a)
+                                     else {"id": "soft-fade", "duration": .6}))
     elif name == "apply_template":
         from .templates import template_scenes
         scenes = template_scenes(args["template_id"], p["duration"], args.get("title", p["metadata"]["name"]))
@@ -272,6 +276,14 @@ def mutate(p, name, args, session):
         else:
             duration = number(args.get("duration", .6), "exit duration", .1, 2)
             e["exit"] = {"id": args["exit_id"], "duration": min(duration, e["duration"]), "easing": args.get("easing", "cubic-out")}
+    elif name == "emphasize_text":
+        from .emphasis import clear, emphasize
+        e = target(p, args, session)
+        if args.get("clear"):
+            clear(p, e)
+        else:
+            emphasize(p, e, word=args.get("word"), emoji=args.get("emoji", True), emoji_id=args.get("emoji_id"),
+                      motion_id=args.get("motion_id", "emoji-pop"), color=args.get("color"), marker=args.get("marker", True))
     elif name == "set_scene_transition":
         scene = next((sc for sc in p["scenes"] if sc["id"] == args.get("scene_id")), None)
         if not scene:

@@ -56,10 +56,12 @@ FIELDS.update({
     "analyze_export":{"job_id":"string", "profile":"string"}, "get_quality_report":{"job_id":"string"},
 })
 FIELDS["apply_motion"]["easing"]="string"
-WRITES.update({"apply_exit", "set_canvas_fx", "set_scene_transition"})
+WRITES.update({"apply_exit", "set_canvas_fx", "set_scene_transition", "emphasize_text"})
 FIELDS.update({"apply_exit": {"element_id": "string", "exit_id": "string", "duration": "number", "easing": "string"},
                "set_canvas_fx": {"fx": "object"},
-               "set_scene_transition": {"scene_id": "string", "transition_id": "string", "duration": "number"}})
+               "set_scene_transition": {"scene_id": "string", "transition_id": "string", "duration": "number"},
+               "emphasize_text": {"element_id": "string", "word": "string", "emoji": "boolean", "emoji_id": "string",
+                                  "motion_id": "string", "color": "string", "marker": "boolean", "clear": "boolean"}})
 
 for kind in ("text", "video", "image", "audio", "caption", "shape"):
     FIELDS["add_" + kind] = {"trackId":"string", "assetId": "string", "text": "string", "start": "number", "duration": "number", "style": "object",

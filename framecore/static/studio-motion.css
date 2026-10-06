@@ -73,6 +73,20 @@
 @keyframes mv-exit-wipe{0%,30%{clip-path:inset(0)}90%,100%{clip-path:inset(0 0 0 100%)}}
 @keyframes mv-exit-iris{0%,30%{clip-path:circle(75% at 50% 50%)}90%,100%{clip-path:circle(0% at 50% 50%)}}
 
+/* Emoji accents and word emphasis */
+.motion-tile[data-kind="accent"] .motion-art{background:radial-gradient(ellipse,#3a2f45,#18141f)}
+.emoji-demo{width:34px;height:34px;object-fit:contain;display:block}
+.motion-tile[data-motion="emoji-pop"]:hover .motion-demo{animation:mv-epop 1.6s cubic-bezier(.34,1.56,.64,1) infinite}
+.motion-tile[data-motion="emoji-bounce"]:hover .motion-demo{transform-origin:50% 100%;animation:mv-ebounce 1.6s ease-out infinite}
+.motion-tile[data-motion="emoji-wiggle"]:hover .motion-demo{animation:mv-ewiggle 1.6s ease-out infinite}
+.motion-tile[data-motion="emoji-burst"]:hover .motion-demo{animation:mv-eburst 1.6s ease-out infinite}
+@keyframes mv-epop{0%{opacity:0;transform:scale(.15) rotate(-14deg)}35%{opacity:1;transform:scale(1.15) rotate(8deg)}55%,85%{transform:none}100%{opacity:0}}
+@keyframes mv-ebounce{0%{opacity:0;transform:translateY(-34px)}30%{opacity:1;transform:translateY(0) scale(1.2,.8)}45%{transform:translateY(-10px)}60%{transform:translateY(0) scale(1.08,.92)}70%,88%{transform:none}100%{opacity:0}}
+@keyframes mv-ewiggle{0%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:rotate(-16deg)}25%{transform:rotate(14deg)}35%{transform:rotate(-10deg)}45%{transform:rotate(6deg)}55%,88%{transform:none}100%{opacity:0}}
+@keyframes mv-eburst{0%{opacity:0;transform:scale(.2);filter:drop-shadow(0 0 0 #ff7a45)}30%{opacity:1;transform:scale(1.25);filter:drop-shadow(0 0 14px #ff7a45)}55%,88%{transform:none;filter:none}100%{opacity:0}}
+.emphasis-current{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#d5dde0;background:#2d2724;border:1px solid #685044;border-radius:8px;padding:8px 10px;margin-bottom:10px}
+.emphasis-current strong{color:#ffb89c}
+
 /* Timeline: entrance and exit spans on clips */
 .motion-span{position:absolute;bottom:2px;height:3px;border-radius:2px;pointer-events:none;opacity:.9}
 .motion-span.in{left:2px;background:linear-gradient(90deg,#ff7a45,#ff7a4500)}

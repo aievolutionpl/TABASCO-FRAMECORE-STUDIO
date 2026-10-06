@@ -56,6 +56,15 @@ def validate_style_extras(style, kind):
         if not all(isinstance(gradient[k], str) and HEX.fullmatch(gradient[k]) for k in ("from", "to")):
             raise EditorError("Gradient wymaga kolorów hex")
         number(gradient["angle"], "gradient angle", 0, 360)
+    emphasis = style.get("emphasis")
+    if emphasis is not None:
+        if (not isinstance(emphasis, dict) or set(emphasis) - {"word", "color", "marker", "emojiElementId"}
+                or not isinstance(emphasis.get("word"), str) or not 0 < len(emphasis["word"]) <= 80
+                or not isinstance(emphasis.get("color"), str) or not HEX.fullmatch(emphasis["color"])
+                or not isinstance(emphasis.get("marker", True), bool)):
+            raise EditorError("Nieprawidłowe podkreślenie słowa")
+        if kind not in {"text", "caption"}:
+            raise EditorError("Podkreślenie działa z tekstem i napisami")
     if kind == "audio" and any(style.get(k) not in (None, d) for k, d in (("shadow", "none"), ("blend", "normal"))):
         raise EditorError("Dźwięk nie ma efektów obrazu")
 

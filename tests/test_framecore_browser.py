@@ -161,7 +161,7 @@ def test_polish_editor_new_tools_and_deterministic_motion(tmp_path):
             result=store.read(pid)
             assert result['project']['elements'][0]['keyframes'][-1]['value']==400
             page.click('[data-tab="Motion"]')
-            assert page.locator('[data-motion]').count()==42 and page.locator('[data-exit]').count()==10
+            assert page.locator('[data-motion]').count()==46 and page.locator('[data-exit]').count()==10
             page.click('#agentTab')
             page.click('[data-inspect]')
             page.locator('#modal').wait_for(state='visible')

@@ -231,3 +231,48 @@ def test_shader_transitions_overlap_scenes_deterministically(motion_project, tmp
         assert shot() == first
         assert errors == []
         browser.close()
+
+
+def test_emphasis_adds_emoji_only_where_it_amplifies_a_word(motion_project):
+    from framecore.emphasis import suggest
+    store, api, pid = motion_project
+    assert suggest("Mniej. Lepiej.") is None
+    assert suggest("Agent pomaga w montażu.") == ("Agent", "fluent-robot")
+    assert suggest("Grafika i forma")[1] == "fluent-artist-palette"  # short stems match exactly
+    eid = call(api, store, pid, "add_text", text="Twój pomysł w kadrze.", start=1, duration=4,
+               motion={"id": "word-cascade", "duration": 1.2})["project"]["elements"][-1]["id"]
+    with pytest.raises(EditorError, match="nie ma"):
+        call(api, store, pid, "emphasize_text", element_id=eid, word="rakieta")
+    s = call(api, store, pid, "emphasize_text", element_id=eid, motion_id="emoji-bounce")
+    text = next(e for e in s["project"]["elements"] if e["id"] == eid)
+    emoji = next(e for e in s["project"]["elements"] if e["id"] == text["style"]["emphasis"]["emojiElementId"])
+    assert text["style"]["emphasis"]["word"] == "pomysł" and emoji["motion"]["id"] == "emoji-bounce"
+    # The emoji lands together with the word: word 2 of 4 in a 1.2 s cascade.
+    assert abs(emoji["start"] - (1 + 1.2 * 2 / 4 - .05)) < 1e-6
+    # Re-emphasising replaces the old emoji instead of stacking another one.
+    s = call(api, store, pid, "emphasize_text", element_id=eid, word="kadrze", emoji=False)
+    assert sum(e["type"] == "image" for e in s["project"]["elements"]) == 0
+    s = call(api, store, pid, "emphasize_text", element_id=eid, clear=True)
+    assert "emphasis" not in s["project"]["elements"][-1]["style"]
+    # Library illustrations default to a short accent instead of an endless loop.
+    s = call(api, store, pid, "add_library_asset", asset_id="fluent-rocket", start=0, duration=2)
+    assert s["project"]["elements"][-1]["motion"]["id"] == "emoji-pop"
+    call(api, store, pid, "set_keyframes", element_id=s["project"]["elements"][-1]["id"], keyframes=[])
+    call(api, store, pid, "apply_motion", element_id=s["project"]["elements"][-1]["id"], motion_id="float")
+    codes = {i["code"] for i in api.call("inspect_project", {"project_id": pid})["issues"]}
+    assert "decorative_emoji_loop" in codes
+
+
+def test_templates_use_at_most_two_emoji_accents(tmp_path):
+    store = Store(tmp_path / "projects")
+    api = API(store, RenderJobs(store))
+    for template in catalog():
+        pid = api.call("create_project", {"name": "Nowa premiera", "format": "9:16", "duration": 18})["project"]["id"]
+        p = api.call("apply_template", {"project_id": pid, "expected_revision": 0, "template_id": template["id"], "replace": True})["project"]
+        images = [e for e in p["elements"] if e["type"] == "image"]
+        assert len(images) <= 2
+        assert all(e["motion"]["id"].startswith("emoji-") for e in images)
+        linked = {e["style"]["emphasis"].get("emojiElementId") for e in p["elements"] if e["style"].get("emphasis")}
+        assert {e["id"] for e in images} <= linked
+        codes = {i["code"] for i in api.call("inspect_project", {"project_id": pid})["issues"]}
+        assert not codes & {"decorative_emoji_loop", "emoji_overuse", "emoji_crowded"}

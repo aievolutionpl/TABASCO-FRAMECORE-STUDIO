@@ -49,6 +49,13 @@ _KINETIC = [
     ("scramble-in","Dekodowanie","TEKST KINETYCZNY","headline_impact","high",["bold","social"],"char"),
     ("word-highlight","Karaoke słów","TEKST KINETYCZNY","caption_emphasis","medium",["social"],"word"),
 ]
+# Akcenty emoji: krótki, wyrazisty ruch, który podkreśla słowo; po nim tylko delikatne osiadanie.
+_ACCENTS = [
+    ("emoji-pop","Pop emoji","AKCENT EMOJI","emphasis","high",["social"]),
+    ("emoji-bounce","Odbicie emoji","AKCENT EMOJI","emphasis","high",["social"]),
+    ("emoji-wiggle","Potrząśnięcie","AKCENT EMOJI","emphasis","medium",["social","editorial"]),
+    ("emoji-burst","Wybuch z poświatą","AKCENT EMOJI","emphasis","high",["bold","social"]),
+]
 # Wyjścia działają w ostatnich sekundach klipu i łączą się z dowolnym wejściem.
 _EXITS = [
     ("fade-out","Wygaszenie","low"),("rise-out","Odlot w górę","medium"),("drop-out","Spadek","medium"),
@@ -78,6 +85,13 @@ _DEFAULTS = {"type-on": (1.6, "linear"), "word-cascade": (1.2, "cubic-out"), "ch
 for component in COMPONENTS:
     duration, easing = _DEFAULTS.get(component["id"], (.8, "cubic-out"))
     component["defaults"] = {"duration": duration, "easing": easing}
+COMPONENTS += [{"id": i, "name": name, "category": cat, "intent": intent, "kind": "accent",
+                "supported_elements": ["image", "text", "caption", "shape"],
+                "duration_range": [0.1, MAX_DURATION], "energy": energy, "style": style,
+                "parameters": {"duration": {"type": "number", "minimum": 0.1, "maximum": MAX_DURATION}},
+                "defaults": {"duration": .8, "easing": "back-out"},
+                "preview": {"type": "live", "motion_id": i}, "license": "MIT"}
+               for i, name, cat, intent, energy, style in _ACCENTS]
 EXITS = [{"id": i, "name": name, "category": "WYJŚCIE", "kind": "exit", "energy": energy,
           "supported_elements": ["text", "caption", "image", "shape", "video"],
           "duration_range": [0.1, 2.0], "defaults": {"duration": .6, "easing": "cubic-out"}, "license": "MIT"}

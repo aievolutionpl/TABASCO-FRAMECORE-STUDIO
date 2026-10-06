@@ -66,6 +66,14 @@
   const easeExit = (u,curve='cubic-out') => 1-(EASE[curve]||EASE['cubic-out'])(clamp(1-u));
   const hash = (a,b=0) => { let h = Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ Math.imul(b + 0x632be5ab, 0xc2b2ae35); h ^= h >>> 15; h = Math.imul(h, 0x27d4eb2f); return ((h ^ (h >>> 13)) >>> 0) / 4294967296; };
   const hexA = (hex,a) => { const n=parseInt(String(hex).slice(1),16); return Number.isFinite(n)&&String(hex).length===7?`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`:`rgba(0,0,0,${a})`; };
+  const bounceOut=x=>{const n=7.5625,d=2.75;if(x<1/d)return n*x*x;if(x<2/d)return n*(x-=1.5/d)*x+.75;if(x<2.5/d)return n*(x-=2.25/d)*x+.9375;return n*(x-=2.625/d)*x+.984375;};
+  const cleanWord = w => String(w).toLowerCase().replace(/[^\p{L}\p{N}_]/gu,'');
+  // Same formula as framecore/emphasis.py: the moment the emphasised word is on screen.
+  function emphasisTime(e,index,count){
+    const m=e.motion; if(!m) return .15;
+    if(KINETIC[m.id] && index!=null){const span=m.id==='word-highlight'?Math.max(m.duration,e.duration-.3):m.duration;return Math.min(e.duration-.05,span*(index+1)/count);}
+    return Math.min(e.duration-.05,m.duration);
+  }
   const KINETIC = {'type-on':'char','word-cascade':'word','char-rise':'char','word-blur':'word','char-wave':'char','scramble-in':'char','word-highlight':'word'};
   const SCRAMBLE = 'ABCDEFGHJKLMNOPRSTUWXYZ0123456789#%&*+=<>/';
   function shadowFilter(s){
@@ -98,7 +106,7 @@
       if(s.letterSpacing) n.style.letterSpacing = s.letterSpacing+'px';
       if(s.blend && s.blend!=='normal') n.style.mixBlendMode = s.blend;
       if(s.strokeWidth){ n.style.webkitTextStroke = `${s.strokeWidth}px ${s.strokeColor||'#000000'}`; n.style.paintOrder='stroke fill'; }
-      let media, units=[], inner=null, caret=null;
+      let media, units=[], inner=null, caret=null, emph=null, emphIndex=null;
       const motionId = e.motion?.id, unitKind = ['text','caption'].includes(e.type) ? KINETIC[motionId] : null;
       if (['image','video','audio'].includes(e.type)) {
         const a = assets.get(e.assetId); media = document.createElement(e.type==='image'?'img':e.type);
@@ -113,21 +121,24 @@
         n.append(media);
       } else if (e.type === 'shape') {
         if(s.gradient) n.style.background = gradientCss(s.gradient);
-      } else if (unitKind || s.gradient) {
+      } else if (unitKind || s.gradient || s.emphasis) {
         // Kinetic text: words keep line wrapping (nowrap inside a word, spaces between words).
         inner = document.createElement('span'); inner.className='fc-text';
         inner.style.cssText='display:block;width:100%;white-space:break-spaces';
+        let wordCount=0;
         for (const token of e.text.split(/(\s+)/)) {
           if (!token) continue;
           if (/^\s+$/.test(token)) { inner.append(document.createTextNode(token)); continue; }
           const word = document.createElement('span'); word.className='fc-word';
           word.style.cssText='display:inline-block;white-space:nowrap';
+          if (s.emphasis && emph===null && cleanWord(token)===cleanWord(s.emphasis.word)) { emph=word; emphIndex=wordCount; word.classList.add('fc-emph'); }
+          wordCount++;
           if (unitKind==='char') {
             for (const ch of Array.from(token)) {
               const c = document.createElement('span'); c.className='fc-char'; c.textContent=ch; c.dataset.char=ch;
               c.style.display='inline-block'; word.append(c); units.push(c);
             }
-          } else { word.textContent = token; if(unitKind) units.push(word); }
+          } else { word.textContent = token; if(unitKind){ units.push(word); word.dataset.unit='1'; } }
           inner.append(word);
         }
         if (s.gradient) {
@@ -140,8 +151,9 @@
           inner.append(caret);
         }
         n.append(inner);
+        if (emph) emph.dataset.at = emphasisTime(e, emphIndex, Math.max(1, e.text.trim().split(/\s+/).length));
       } else n.textContent = e.text;
-      stage.append(n); nodes.set(e.id, {node:n, media, units, caret, inner, shadow:shadowFilter(s), iconMask:!!n.style.maskImage});
+      stage.append(n); nodes.set(e.id, {node:n, media, units, caret, inner, shadow:shadowFilter(s), iconMask:!!n.style.maskImage, emph});
     }
   }
 
@@ -354,6 +366,24 @@
     });
   }
 
+  /* ---------- emphasis ---------- */
+  function paintEmphasis(e,span,phase){
+    const em=e.style.emphasis, color=em.color||accent, q=clamp((phase-Number(span.dataset.at))/.4), qq=ease(q,'cubic-out');
+    if(!e.style.gradient){
+      if(q>0) span.style.color=color;
+      else if(!(info_is_unit(span)&&e.motion?.id==='word-highlight')) span.style.color='inherit';
+      if(em.marker!==false){
+        span.style.backgroundImage=`linear-gradient(transparent 62%, ${hexA(color,.32)} 62%, ${hexA(color,.32)} 92%, transparent 92%)`;
+        span.style.backgroundSize=`${(qq*100).toFixed(2)}% 100%`; span.style.backgroundRepeat='no-repeat';
+      }
+    }
+    const base=span.style.transform&&span.style.transform!=='none'&&info_is_unit(span)?span.style.transform:'';
+    span.style.transformOrigin='50% 85%';
+    // Lift instead of scale, so neighbouring words keep their spacing.
+    span.style.transform=`${base} translateY(${(-.07*e.style.fontSize*Math.sin(Math.PI*q)).toFixed(2)}px)`.trim();
+  }
+  const info_is_unit = span => span.dataset.unit==='1';
+
   /* ---------- paint ---------- */
   function paint(t) {
     const waits=[]; time=clamp(t,0,p.duration);paintBackground(time);const act=paintFx(time);
@@ -366,10 +396,11 @@
       if(role?.out){dur+=role.out.D/2;if(time>=role.out.b)held=role.out.b-.0005;}
       const local=held-start, visible=!track.hidden && time>=start && time<start+dur;
       n.style.visibility=visible?'visible':'hidden';
-      let alpha=1, dx=0,dy=0,scale=1,sx=1,sy=1,skew=0,blur=0,extraRotate=0,flip=0,flipX=0,glow=0,clip='none',origin='50% 50%',split=0;
+      let alpha=1, dx=0,dy=0,scale=1,sx=1,sy=1,skew=0,blur=0,extraRotate=0,flip=0,flipX=0,glow=0,glowColor=e.style.color,clip='none',origin='50% 50%',split=0;
       const m=e.motion, phase=local+(e.motionOffset||0), u=m?clamp(phase/m.duration):1, z=ease(u,m?.easing);
       const kinetic = m && info.units.length;
       if(m && kinetic) { paintUnits(e,info,phase); }
+      if(info.emph) paintEmphasis(e,info.emph,phase);
       else if(m) switch(m.id) {
         case 'premium-blur-reveal': alpha=z;dy=(1-z)*28;blur=(1-z)*18;break;
         case 'impact-rise':alpha=z;dy=(1-z)*90;scale=.85+.15*z;break;
@@ -414,6 +445,18 @@
         case 'swing-in': alpha=clamp(u*2); flipX=(1-z)*-95; origin='50% 0%'; break;
         case 'stretch-pop': alpha=clamp(u*3); sx=1+(1-z)*.55*Math.cos(u*Math.PI*1.5); sy=1/Math.max(.4,sx); scale=.6+.4*z; break;
         case 'skew-slide': alpha=z; dx=(1-z)*-140; skew=(1-z)*18; break;
+        // Emoji accents: one expressive beat, then only a gentle settle (no endless loops).
+        case 'emoji-pop': {
+          alpha=clamp(u*5); scale=.15+.85*ease(u,'back-out'); extraRotate=Math.sin(u*Math.PI*3)*14*(1-u);
+          const idle=Math.max(0,phase-m.duration); dy=-Math.sin(idle*2.6)*e.height*.02*Math.min(1,idle*2)*Math.exp(-idle*.35); break;
+        }
+        case 'emoji-bounce': {
+          alpha=clamp(u*6); dy=-(1-bounceOut(u))*e.height*1.4; origin='50% 100%';
+          const squash=Math.exp(-Math.pow((u-.364)/.045,2))*.24+Math.exp(-Math.pow((u-.727)/.04,2))*.12+Math.exp(-Math.pow((u-.909)/.03,2))*.05;
+          sx=1+squash; sy=1-squash; break;
+        }
+        case 'emoji-wiggle': alpha=clamp(u*4); scale=.6+.4*ease(clamp(u*2),'back-out'); extraRotate=Math.sin(phase*16)*16*Math.exp(-phase*2.4); break;
+        case 'emoji-burst': alpha=clamp(u*5); scale=.2+.8*ease(u,'elastic-out'); glow=e.width*.12*(1-u)*(u>0?1:0); glowColor=accent; break;
       }
       // Exit runs in the final seconds of the clip and composes with any entrance.
       const x=role?.out?null:e.exit;
@@ -467,7 +510,7 @@
       n.style.left=keyed(e,'x',local)+'px';n.style.top=keyed(e,'y',local)+'px';
       n.style.opacity=keyed(e,'opacity',local)*alpha;
       const filters=[`blur(${blur}px)`];
-      if(glow) filters.push(`drop-shadow(0 0 ${glow}px ${e.style.color})`);
+      if(glow) filters.push(`drop-shadow(0 0 ${glow}px ${glowColor})`);
       else filters.push('drop-shadow(0 0 0px transparent)');
       if(split) filters.push(`drop-shadow(${split.toFixed(2)}px 0 0 rgba(255,0,90,.8)) drop-shadow(${(-split).toFixed(2)}px 0 0 rgba(0,220,255,.8))`);
       if(info.shadow) filters.push(info.shadow);

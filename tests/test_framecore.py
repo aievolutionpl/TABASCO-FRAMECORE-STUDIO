@@ -217,8 +217,8 @@ def test_library_templates_inspection_proposal_assets(fc):
     store,pid,eid=fc
     api=API(store,RenderJobs(store))
     motion=api.call('list_motion')
-    assert len(motion['components'])==42 and len(motion['exits'])==10
-    assert {m['kind'] for m in motion['components']}=={'entrance','kinetic'}
+    assert len(motion['components'])==46 and len(motion['exits'])==10
+    assert {m['kind'] for m in motion['components']}=={'entrance','kinetic','accent'}
     assert len(api.call('list_templates')['templates'])==12
     templates=[api.call('plan_storyboard',{'project_id':pid,'template_id':tid}) for tid in ('product','social','explainer','collaboration')]
     assert len({t['scenes'][0]['message'] for t in templates})==4

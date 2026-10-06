@@ -61,6 +61,8 @@ _DIRECTION = {
  'launch': ('char-rise','zoom-through',{'grade':'vivid','vignette':.3,'transition':'ridged-burn','transitionDuration':.8}),
 }
 
+_EMOJI = {'social':'emoji-bounce','launch':'emoji-burst','event':'emoji-bounce','neon':'emoji-burst','editorial':'emoji-wiggle','minimal':'emoji-wiggle'}
+
 
 def look(template_id):
     if template_id not in _LOOKS: raise EditorError('Nieznany szablon')
@@ -68,7 +70,7 @@ def look(template_id):
     from .backgrounds import resolve
     return {'font':font,'background_id':bg,'background':resolve(bg)['preview'],'text':text,
             'accent':accent,'layout':layout,'motion':motion,'illustration_id':illustration,
-            'kinetic':_DIRECTION[template_id][0],'exit':_DIRECTION[template_id][1],'fx':dict(_DIRECTION[template_id][2])}
+            'kinetic':_DIRECTION[template_id][0],'emoji_motion':_EMOJI.get(template_id,'emoji-pop'),'exit':_DIRECTION[template_id][1],'fx':dict(_DIRECTION[template_id][2])}
 
 
 def catalog():
@@ -110,7 +112,14 @@ def apply_look(p, template_id):
         elif e['type']=='image' and e.get('assetId') != p['brand'].get('logoAssetId'):
             e.update(x=w*.19,y=h*.43,width=w*.62,height=h*.38)
     if not has_visual:
-        asset=library_asset(style['illustration_id']);p['assets'].append(asset)
-        for scene in p['scenes']:
-            p['elements'].append(element(p,'image',assetId=asset['id'],sceneId=scene['id'],start=scene['start'],duration=scene['duration'],
-                                         x=w*.32,y=h*.43,width=w*.36,height=h*.37,motion={'id':'float','duration':.8}))
+        # Emoji tylko tam, gdzie podkreślają treść: najwyżej dwie sceny, w których tekst niesie
+        # konkretne pojęcie (najpierw scena tytułowa i finał). Pozostałe sceny zostają czyste.
+        from .emphasis import emphasize, suggest
+        titles={e['sceneId']:e for e in p['elements'] if e['type']=='text' and e.get('sceneId')}
+        order=[p['scenes'][i] for i in (2,len(p['scenes'])-1) if 0<=i<len(p['scenes'])]+p['scenes']
+        chosen=[]
+        for scene in order:
+            title=titles.get(scene['id'])
+            if len(chosen)>=2 or not title or scene['id'] in chosen or not suggest(title['text']): continue
+            emphasize(p,title,motion_id=style['emoji_motion'])
+            chosen.append(scene['id'])
